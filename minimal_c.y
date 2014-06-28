@@ -20,15 +20,16 @@ main()
 %}
 
 %token TYPE IDENTIFIER RETURN NUMBER
+%token OPEN_BRACE CLOSE_BRACE
 
 %%
 
 program:
-	| expression
+	function
         ;
 
 function:
-	TYPE IDENTIFIER '{' expression '}'
+	TYPE IDENTIFIER OPEN_BRACE expression CLOSE_BRACE
         ;
 
 expression:
