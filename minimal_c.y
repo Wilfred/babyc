@@ -29,7 +29,7 @@ program:
         ;
 
 function:
-	TYPE IDENTIFIER OPEN_BRACE expression CLOSE_BRACE
+	TYPE IDENTIFIER '(' ')' OPEN_BRACE expression CLOSE_BRACE
         ;
 
 expression:

@@ -10,6 +10,8 @@
 
 "{"        { return OPEN_BRACE; }
 "}"        { return CLOSE_BRACE; }
+"("        { return '('; }
+")"        { return ')'; }
 ";"        { return ';'; }
 [0-9]+     { return NUMBER; }
 "return"   { return RETURN; }
