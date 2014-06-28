@@ -12,9 +12,9 @@ int yywrap()
 	return 1;
 }
 
-main()
+int main()
 {
-	yyparse();
+	return yyparse();
 }
 
 %}
