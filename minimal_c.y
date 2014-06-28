@@ -12,9 +12,18 @@ int yywrap()
 	return 1;
 }
 
-int main()
+extern FILE *yyin;
+
+int main(int argc, char *argv[])
 {
-	return yyparse();
+    ++argv, --argc;  /* Skip over program name. */
+    if (argc > 0) {
+        yyin = fopen(argv[0], "r");
+    } else {
+        yyin = stdin;
+    }
+
+    return yyparse();
 }
 
 %}
