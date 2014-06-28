@@ -28,13 +28,18 @@ int main(int argc, char *argv[])
 
 %}
 
+%token INCLUDE HEADER_NAME
 %token TYPE IDENTIFIER RETURN NUMBER
 %token OPEN_BRACE CLOSE_BRACE
 
 %%
 
 program:
-	function
+	header function
+        ;
+
+header:
+        INCLUDE HEADER_NAME
         ;
 
 function:
