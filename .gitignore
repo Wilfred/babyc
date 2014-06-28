@@ -2,3 +2,6 @@ centric
 lex.yy.c
 one
 a.out
+
+y.tab.c
+y.tab.h
