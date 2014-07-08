@@ -1,7 +1,9 @@
 centric
 lex.yy.c
 one
+hello
 a.out
+*.o
 
 y.tab.c
 y.tab.h
