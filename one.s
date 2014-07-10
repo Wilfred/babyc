@@ -1,7 +1,7 @@
 /* Build me with:
  * $ as one.s -o one.o
  * $ ld -s -o one one.o
- * Disassible me with:
+ * Disassemble me with:
  * $ objdump -d --no-show-raw-insn one.o > one_dis.s
  */
 .text
