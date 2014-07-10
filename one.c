@@ -1,4 +1,4 @@
-// An outrageously simple C program that we hope to compile with Centric.
+// An outrageously simple C program that we hope to compile with Babyc.
 //
 // To test with GCC:
 //   $ gcc -Wall one.c -o one

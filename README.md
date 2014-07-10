@@ -1,4 +1,4 @@
-# Centric
+# Babyc
 
 An educational foray into compiler writing.
 
