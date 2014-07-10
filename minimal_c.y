@@ -14,6 +14,23 @@ int yywrap()
 
 extern FILE *yyin;
 
+void write_skeleton() {
+    FILE *out = fopen("out.s", "wb");
+
+    fprintf(out, ".text\n");
+    // We seem to require at least 8 spaces for indentation.
+    fprintf(out, "    .global _start\n\n");
+    fprintf(out, "_start:\n");
+
+    // Exit code of zero.
+    fprintf(out, "    movl    $0, %%ebx\n");
+
+    fprintf(out, "    movl    $1, %%eax\n");
+    fprintf(out, "    int     $0x80\n");
+    
+    fclose(out);
+}
+
 int main(int argc, char *argv[])
 {
     ++argv, --argc;  /* Skip over program name. */
@@ -23,7 +40,15 @@ int main(int argc, char *argv[])
         yyin = stdin;
     }
 
-    return yyparse();
+    yyparse();
+
+    write_skeleton();
+    printf("Written out.s.\n");
+    printf("Build it with:\n");
+    printf("    $ as out.s -o out.o\n");
+    printf("    $ ld -s -o out out.o\n");
+
+    return 0;
 }
 
 %}
