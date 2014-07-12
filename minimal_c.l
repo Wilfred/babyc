@@ -13,7 +13,12 @@
 "("           { return '('; }
 ")"           { return ')'; }
 ";"           { return ';'; }
-[0-9]+        { return NUMBER; }
+[0-9]+        {
+                /* TODO: check numbers are in the legal range, and don't start with 0. */
+                printf("yytext: %s\n", yytext);
+                printf("yylval: %d\n", atoi(yytext));
+                yylval=atoi(yytext); return NUMBER;
+              }
 "return"      { return RETURN; }
 
 "int"         { return TYPE; }

@@ -14,6 +14,9 @@ int yywrap()
 
 extern FILE *yyin;
 
+// Shameful hack. We should build a proper AST and traverse it.
+static int return_code;
+
 void write_skeleton() {
     FILE *out = fopen("out.s", "wb");
 
@@ -22,8 +25,9 @@ void write_skeleton() {
     fprintf(out, "    .global _start\n\n");
     fprintf(out, "_start:\n");
 
-    // Exit code of zero.
-    fprintf(out, "    movl    $0, %%ebx\n");
+    // Exit code as specified.
+    // TODO: convert to hex properly.
+    fprintf(out, "    movl    $%d, %%ebx\n", return_code);
 
     fprintf(out, "    movl    $1, %%eax\n");
     fprintf(out, "    int     $0x80\n");
@@ -73,5 +77,6 @@ function:
 
 expression:
 	RETURN NUMBER ';'
+        { return_code = $2; }
         ;
 
