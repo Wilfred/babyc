@@ -64,11 +64,7 @@ int main(int argc, char *argv[])
 %%
 
 program:
-	header function
-        ;
-
-header:
-        INCLUDE HEADER_NAME
+	function
         ;
 
 function:
