@@ -38,12 +38,13 @@ void write_skeleton() {
 int main(int argc, char *argv[])
 {
     ++argv, --argc;  /* Skip over program name. */
-    if (argc > 0) {
-        yyin = fopen(argv[0], "r");
-    } else {
-        yyin = stdin;
+    if (argc != 1) {
+        printf("Please specify a file to compile.\n");
+        printf("    $ babyc <your file here>\n");
+        return 1;
     }
 
+    yyin = fopen(argv[0], "r");
     yyparse();
 
     write_skeleton();
