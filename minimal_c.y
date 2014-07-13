@@ -45,6 +45,13 @@ int main(int argc, char *argv[])
     }
 
     yyin = fopen(argv[0], "r");
+
+    if (yyin == NULL) {
+        // TODO: work out what the error was.
+        // TODO: Unit test this.
+        printf("Failed to open file.\n");
+        return 2;
+    }
     yyparse();
 
     write_skeleton();
