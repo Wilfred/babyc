@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -ex
+
+as out.s -o out.o
+ld -s -o out out.o
+rm out.o
