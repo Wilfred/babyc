@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <string.h>
+#include "syntax.c"
 
 void yyerror(const char *str)
 {
@@ -14,8 +15,7 @@ int yywrap()
 
 extern FILE *yyin;
 
-// Shameful hack. We should build a proper AST and traverse it.
-static int return_code;
+static Syntax *syntax;
 
 void write_skeleton() {
     FILE *out = fopen("out.s", "wb");
@@ -27,7 +27,7 @@ void write_skeleton() {
 
     // Exit code as specified.
     // TODO: convert to hex properly.
-    fprintf(out, "    movl    $%d, %%ebx\n", return_code);
+    fprintf(out, "    movl    $%d, %%ebx\n", syntax->value);
 
     fprintf(out, "    movl    $1, %%eax\n");
     fprintf(out, "    int     $0x80\n");
@@ -81,6 +81,11 @@ function:
 
 expression:
 	RETURN NUMBER ';'
-        { return_code = $2; }
+        {
+            // TODO: fix the memory leak here.
+            Syntax *immediate = malloc(sizeof(Syntax));
+            immediate->value = $2;
+            syntax = immediate;
+        }
         ;
 
