@@ -8,3 +8,7 @@ y.tab.c: babyc.y
 
 babyc: lex.yy.c y.tab.c syntax.c
 	gcc -Wall lex.yy.c y.tab.c -o babyc
+
+.PHONY: clean
+clean:
+	rm -f babyc y.tab.c lex.yy.c
