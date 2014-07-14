@@ -1,6 +1,5 @@
 %{
 #include <stdio.h>
-#include <string.h>
 #include "syntax.c"
 
 void yyerror(const char *str)
@@ -15,7 +14,7 @@ int yywrap()
 
 extern FILE *yyin;
 
-static Syntax *syntax;
+Syntax *syntax;
 
 void write_skeleton(Syntax *syntax) {
     FILE *out = fopen("out.s", "wb");
@@ -61,6 +60,11 @@ int main(int argc, char *argv[])
     printf("    $ ld -s -o out out.o\n");
 
     return 0;
+/* Syntax *babyc_parse(FILE *file) { */
+/*     yyin = file; */
+/*     yyparse(); */
+
+/*     return syntax; */
 }
 
 %}

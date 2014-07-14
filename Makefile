@@ -3,11 +3,11 @@ CFLAGS = -Wall
 
 all: babyc
 
-lex.yy.c: babyc.l
-	lex babyc.l
+lex.yy.c: babyc_lex.l
+	lex $<
 
-y.tab.c: babyc.y
-	yacc -d babyc.y
+y.tab.c: babyc_parse.y
+	yacc -d $<
 
 babyc: lex.yy.c y.tab.c syntax.c
 	$(CC) $(CFLAGS) lex.yy.c y.tab.c -o babyc
