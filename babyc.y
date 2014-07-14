@@ -17,7 +17,7 @@ extern FILE *yyin;
 
 static Syntax *syntax;
 
-void write_skeleton() {
+void write_skeleton(Syntax *syntax) {
     FILE *out = fopen("out.s", "wb");
 
     fprintf(out, ".text\n");
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     }
     yyparse();
 
-    write_skeleton();
+    write_skeleton(syntax);
     printf("Written out.s.\n");
     printf("Build it with:\n");
     printf("    $ as out.s -o out.o\n");
