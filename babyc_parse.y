@@ -24,9 +24,15 @@ void write_skeleton(Syntax *syntax) {
     fprintf(out, "    .global _start\n\n");
     fprintf(out, "_start:\n");
 
-    // Exit code as specified.
-    // TODO: convert to hex properly.
-    fprintf(out, "    movl    $%d, %%ebx\n", syntax->value);
+    // TODO: do everything in eax, then move to ebx for exit.
+    // TODO: recurse
+    if (syntax->type == UNARY_OPERATOR) {
+        fprintf(out, "    movl    $%d, %%ebx\n", syntax->expression->value);
+        fprintf(out, "    not     %%ebx\n", syntax->expression->value);
+    } else {
+        // Exit code as specified.
+        fprintf(out, "    movl    $%d, %%ebx\n", syntax->value);
+    }
 
     fprintf(out, "    movl    $1, %%eax\n");
     fprintf(out, "    int     $0x80\n");
@@ -60,11 +66,6 @@ int main(int argc, char *argv[])
     printf("    $ ld -s -o out out.o\n");
 
     return 0;
-/* Syntax *babyc_parse(FILE *file) { */
-/*     yyin = file; */
-/*     yyparse(); */
-
-/*     return syntax; */
 }
 
 %}
@@ -72,6 +73,7 @@ int main(int argc, char *argv[])
 %token INCLUDE HEADER_NAME
 %token TYPE IDENTIFIER RETURN NUMBER
 %token OPEN_BRACE CLOSE_BRACE
+%token BITWISE_NEGATE
 
 %%
 
@@ -80,16 +82,29 @@ program:
         ;
 
 function:
-	TYPE IDENTIFIER '(' ')' OPEN_BRACE expression CLOSE_BRACE
+	TYPE IDENTIFIER '(' ')' OPEN_BRACE statement CLOSE_BRACE
+        ;
+
+statement:
+        RETURN expression ';'
         ;
 
 expression:
-	RETURN NUMBER ';'
+	NUMBER
         {
             // TODO: fix the memory leak here.
             Syntax *immediate = malloc(sizeof(Syntax));
-            immediate->value = $2;
+            immediate->type = IMMEDIATE;
+            immediate->value = $1;
             syntax = immediate;
+        }
+        |
+        BITWISE_NEGATE expression
+        {
+            Syntax *unary = malloc(sizeof(Syntax));
+            unary->type = UNARY_OPERATOR;
+            unary->expression = syntax;
+            syntax = unary;
         }
         ;
 

@@ -2,13 +2,21 @@
 #ifndef BABYC_SYNTAX
 #define BABYC_SYNTAX
 
-typedef enum { IMMEDIATE } SyntaxType;
+typedef enum { IMMEDIATE, UNARY_OPERATOR } SyntaxType;
 
-typedef struct {
+struct Syntax;
+typedef struct Syntax Syntax;
+
+struct Syntax {
     SyntaxType type;
     union {
+        // Immediate
         int value;
+
+        // Unary operators
+        // TODO: store which operator
+        struct Syntax* expression;
     };
-} Syntax;
+};
 
 #endif
