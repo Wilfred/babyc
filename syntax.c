@@ -1,3 +1,7 @@
+// TODO: this should be a header.
+#ifndef BABYC_SYNTAX
+#define BABYC_SYNTAX
+
 typedef enum { IMMEDIATE } SyntaxType;
 
 typedef struct {
@@ -6,3 +10,5 @@ typedef struct {
         int value;
     };
 } Syntax;
+
+#endif
