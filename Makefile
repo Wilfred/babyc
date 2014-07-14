@@ -6,5 +6,5 @@ lex.yy.c: babyc.l
 y.tab.c: babyc.y
 	yacc -d babyc.y
 
-babyc: lex.yy.c y.tab.c
+babyc: lex.yy.c y.tab.c syntax.c
 	gcc -Wall lex.yy.c y.tab.c -o babyc
