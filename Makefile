@@ -14,4 +14,4 @@ babyc: lex.yy.c y.tab.c syntax.c
 
 .PHONY: clean
 clean:
-	rm -f babyc y.tab.c lex.yy.c
+	rm -f babyc y.tab.c y.tab.h lex.yy.c
