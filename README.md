@@ -10,4 +10,15 @@ of C that it's academic.
 
 ## License
 
-GPL license.
+GPL v2 license.
+
+## Usage
+
+```
+# Compile the compiler.
+$ make
+# Run it, producing an assembly file.
+$ babyc test_programs/just_a_number__return_1.c
+# Use the GNU toolchain to assemble and link.
+$ ./link
+```
