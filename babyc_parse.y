@@ -92,11 +92,8 @@ statement:
 expression:
 	NUMBER
         {
-            // TODO: fix the memory leak here.
-            Syntax *immediate = malloc(sizeof(Syntax));
-            immediate->type = IMMEDIATE;
-            immediate->value = $1;
-            syntax = immediate;
+            // TODO: write a syntax_free function and fix this memory leak.
+            syntax = immediate_new($1);
         }
         |
         BITWISE_NEGATE expression

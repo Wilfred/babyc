@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 // TODO: this should be a header.
 #ifndef BABYC_SYNTAX
 #define BABYC_SYNTAX
@@ -15,8 +17,17 @@ struct Syntax {
 
         // Unary operators
         // TODO: store which operator
-        struct Syntax* expression;
+        Syntax* expression;
     };
 };
+
+Syntax *immediate_new(int value) {
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    syntax->type = IMMEDIATE;
+    syntax->value = value;
+
+    return syntax;
+}
 
 #endif
