@@ -28,7 +28,7 @@ void write_skeleton(Syntax *syntax) {
     // TODO: recurse
     if (syntax->type == UNARY_OPERATOR) {
         fprintf(out, "    movl    $%d, %%ebx\n", syntax->expression->value);
-        fprintf(out, "    not     %%ebx\n", syntax->expression->value);
+        fprintf(out, "    not     %%ebx\n");
     } else {
         // Exit code as specified.
         fprintf(out, "    movl    $%d, %%ebx\n", syntax->value);
