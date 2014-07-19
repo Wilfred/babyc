@@ -1,3 +1,6 @@
 language: c
 script:
+  # We deliberately separate building babyc from building the tests,
+  # to make it clearer where warnings are coming from.
+  - "make"
   - "make test"
