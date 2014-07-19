@@ -30,4 +30,13 @@ Syntax *immediate_new(int value) {
     return syntax;
 }
 
+Syntax *unary_new(Syntax *expression) {
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    syntax->type = UNARY_OPERATOR;
+    syntax->expression = expression;
+
+    return syntax;
+}
+
 #endif

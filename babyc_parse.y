@@ -100,10 +100,7 @@ expression:
         |
         BITWISE_NEGATE expression
         {
-            Syntax *unary = malloc(sizeof(Syntax));
-            unary->type = UNARY_OPERATOR;
-            unary->expression = syntax;
-            syntax = unary;
+            syntax = unary_new(syntax);
         }
         ;
 
