@@ -14,4 +14,9 @@ babyc: lex.yy.c y.tab.c syntax.c
 
 .PHONY: clean
 clean:
-	rm -f babyc y.tab.c y.tab.h lex.yy.c
+	rm -f babyc y.tab.c y.tab.h lex.yy.c test
+
+.PHONY: test
+test: run_tests.c babyc
+	$(CC) $(CFLAGS) $< -o $@
+	./test
