@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include "syntax.c"
 
+int yyparse(void);
+
 void yyerror(const char *str)
 {
 	fprintf(stderr,"error: %s\n",str);
