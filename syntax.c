@@ -39,4 +39,11 @@ Syntax *unary_new(Syntax *expression) {
     return syntax;
 }
 
+void syntax_free(Syntax *syntax) {
+    if (syntax->type == UNARY_OPERATOR) {
+        syntax_free(syntax->expression);
+    }
+    free(syntax);
+}
+
 #endif

@@ -62,6 +62,8 @@ int main(int argc, char *argv[])
     yyparse();
 
     write_skeleton(syntax);
+    syntax_free(syntax);
+
     printf("Written out.s.\n");
     printf("Build it with:\n");
     printf("    $ as out.s -o out.o\n");
@@ -94,7 +96,6 @@ statement:
 expression:
 	NUMBER
         {
-            // TODO: write a syntax_free function and fix this memory leak.
             syntax = immediate_new($1);
         }
         |
