@@ -13,6 +13,7 @@
 "("           { return '('; }
 ")"           { return ')'; }
 "~"           { return BITWISE_NEGATE; }
+"!"           { return LOGICAL_NEGATE; }
 ";"           { return ';'; }
 [0-9]+        {
                 /* TODO: check numbers are in the legal range, and don't start with 0. */

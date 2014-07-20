@@ -30,8 +30,15 @@ void write_skeleton(Syntax *syntax) {
     // TODO: recurse
     if (syntax->type == UNARY_OPERATOR) {
         UnarySyntax *unary_syntax = syntax->expression;
+
         fprintf(out, "    movl    $%d, %%ebx\n", unary_syntax->expression->value);
-        fprintf(out, "    not     %%ebx\n");
+
+        if (unary_syntax->unary_type == BITWISE_NEGATION) {
+            fprintf(out, "    not     %%ebx\n");
+        } else {
+            fprintf(out, "    test    $0xFFFFFFFF, %%ebx\n");
+            fprintf(out, "    setz    %%bl\n");
+        }
     } else {
         // Exit code as specified.
         fprintf(out, "    movl    $%d, %%ebx\n", syntax->value);
@@ -78,7 +85,7 @@ int main(int argc, char *argv[])
 %token INCLUDE HEADER_NAME
 %token TYPE IDENTIFIER RETURN NUMBER
 %token OPEN_BRACE CLOSE_BRACE
-%token BITWISE_NEGATE
+%token BITWISE_NEGATE LOGICAL_NEGATE
 
 %%
 
@@ -103,6 +110,11 @@ expression:
         BITWISE_NEGATE expression
         {
             syntax = bitwise_negation_new(syntax);
+        }
+        |
+        LOGICAL_NEGATE expression
+        {
+            syntax = logical_negation_new(syntax);
         }
         ;
 

@@ -49,6 +49,20 @@ Syntax *bitwise_negation_new(Syntax *expression) {
     return syntax;
 }
 
+Syntax *logical_negation_new(Syntax *expression) {
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    UnarySyntax *unary_syntax = malloc(sizeof(UnarySyntax));
+
+    unary_syntax->unary_type = LOGICAL_NEGATION;
+    unary_syntax->expression = expression;
+
+    syntax->type = UNARY_OPERATOR;
+    syntax->expression = unary_syntax;
+
+    return syntax;
+}
+
 void syntax_free(Syntax *syntax) {
     if (syntax->type == UNARY_OPERATOR) {
         syntax_free(syntax->expression->expression);
