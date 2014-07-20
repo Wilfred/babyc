@@ -9,6 +9,8 @@ lex.yy.c: babyc_lex.l
 y.tab.c: babyc_parse.y
 	yacc -d $<
 
+.INTERMEDIATE: y.tab.c lex.yy.c
+
 babyc: lex.yy.c y.tab.c syntax.c
 	$(CC) $(CFLAGS) lex.yy.c y.tab.c -o babyc
 
