@@ -12,8 +12,8 @@
 "}"           { return CLOSE_BRACE; }
 "("           { return '('; }
 ")"           { return ')'; }
-"~"           { return BITWISE_NEGATE; }
-"!"           { return LOGICAL_NEGATE; }
+"~"           { return '~'; }
+"!"           { return '!'; }
 ";"           { return ';'; }
 [0-9]+        {
                 /* TODO: check numbers are in the legal range, and don't start with 0. */

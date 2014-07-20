@@ -54,7 +54,6 @@ int main(int argc, char *argv[])
 %token INCLUDE HEADER_NAME
 %token TYPE IDENTIFIER RETURN NUMBER
 %token OPEN_BRACE CLOSE_BRACE
-%token BITWISE_NEGATE LOGICAL_NEGATE
 
 %%
 
@@ -76,12 +75,12 @@ expression:
             syntax = immediate_new($1);
         }
         |
-        BITWISE_NEGATE expression
+        '~' expression
         {
             syntax = bitwise_negation_new(syntax);
         }
         |
-        LOGICAL_NEGATE expression
+        '!' expression
         {
             syntax = logical_negation_new(syntax);
         }
