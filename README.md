@@ -8,6 +8,14 @@ to x86 assembly.
 Technically targetting C11, but we will implement such a small subset
 of C that it's academic.
 
+Current feature set:
+
+* main function (no function definition yet)
+* integers (no other types yet)
+* integer constants
+* logical negation (`!FOO`)
+* bitwise negation (`~FOO`)
+
 ## License
 
 GPL v2 license.
