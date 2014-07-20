@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include "syntax.c"
 
-void write_skeleton(Syntax *syntax) {
-    FILE *out = fopen("out.s", "wb");
-
+void write_header(FILE *out) {
     fprintf(out, ".text\n");
     // We seem to require at least 8 spaces for indentation.
     fprintf(out, "    .global _start\n\n");
     fprintf(out, "_start:\n");
+}
 
+void write_syntax(FILE *out, Syntax *syntax) {
     // TODO: do everything in eax, then move to ebx for exit.
     // TODO: recurse
     if (syntax->type == UNARY_OPERATOR) {
@@ -29,10 +29,13 @@ void write_skeleton(Syntax *syntax) {
 
     fprintf(out, "    movl    $1, %%eax\n");
     fprintf(out, "    int     $0x80\n");
-    
-    fclose(out);
 }
 
 void write_assembly(Syntax *syntax) {
-    write_skeleton(syntax);
+    FILE *out = fopen("out.s", "wb");
+
+    write_header(out);
+    write_syntax(out, syntax);
+    
+    fclose(out);
 }
