@@ -11,7 +11,7 @@ y.tab.c: babyc_parse.y
 
 .INTERMEDIATE: y.tab.c lex.yy.c
 
-babyc: lex.yy.c y.tab.c syntax.c
+babyc: lex.yy.c y.tab.c syntax.c assembly.c
 	$(CC) $(CFLAGS) lex.yy.c y.tab.c -o babyc
 
 .PHONY: clean
