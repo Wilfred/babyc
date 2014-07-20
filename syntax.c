@@ -5,9 +5,15 @@
 #define BABYC_SYNTAX
 
 typedef enum { IMMEDIATE, UNARY_OPERATOR } SyntaxType;
+typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnarySyntaxType;
 
 struct Syntax;
 typedef struct Syntax Syntax;
+
+typedef struct UnarySyntax {
+    UnarySyntaxType unary_type;
+    Syntax *expression;
+} UnarySyntax;
 
 struct Syntax {
     SyntaxType type;
@@ -16,8 +22,7 @@ struct Syntax {
         int value;
 
         // Unary operators
-        // TODO: store which operator
-        Syntax* expression;
+        UnarySyntax *expression;
     };
 };
 
@@ -30,18 +35,23 @@ Syntax *immediate_new(int value) {
     return syntax;
 }
 
-Syntax *unary_new(Syntax *expression) {
+Syntax *bitwise_negation_new(Syntax *expression) {
     Syntax *syntax = malloc(sizeof(Syntax));
 
+    UnarySyntax *unary_syntax = malloc(sizeof(UnarySyntax));
+
+    unary_syntax->unary_type = BITWISE_NEGATION;
+    unary_syntax->expression = expression;
+
     syntax->type = UNARY_OPERATOR;
-    syntax->expression = expression;
+    syntax->expression = unary_syntax;
 
     return syntax;
 }
 
 void syntax_free(Syntax *syntax) {
     if (syntax->type == UNARY_OPERATOR) {
-        syntax_free(syntax->expression);
+        syntax_free(syntax->expression->expression);
     }
     free(syntax);
 }

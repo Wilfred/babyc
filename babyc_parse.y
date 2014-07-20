@@ -29,7 +29,8 @@ void write_skeleton(Syntax *syntax) {
     // TODO: do everything in eax, then move to ebx for exit.
     // TODO: recurse
     if (syntax->type == UNARY_OPERATOR) {
-        fprintf(out, "    movl    $%d, %%ebx\n", syntax->expression->value);
+        UnarySyntax *unary_syntax = syntax->expression;
+        fprintf(out, "    movl    $%d, %%ebx\n", unary_syntax->expression->value);
         fprintf(out, "    not     %%ebx\n");
     } else {
         // Exit code as specified.
@@ -101,7 +102,7 @@ expression:
         |
         BITWISE_NEGATE expression
         {
-            syntax = unary_new(syntax);
+            syntax = bitwise_negation_new(syntax);
         }
         ;
 
