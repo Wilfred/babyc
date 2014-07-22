@@ -8,5 +8,5 @@ a.out
 out
 out.s
 
-y.tab.c
-y.tab.h
+*.tab.c
+*.tab.h
