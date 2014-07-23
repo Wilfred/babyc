@@ -96,4 +96,11 @@ expression:
             Syntax *current_syntax = stack_pop(syntax_stack);
             stack_push(syntax_stack, logical_negation_new(current_syntax));
         }
+        |
+        expression '+' expression
+        {
+            Syntax *left = stack_pop(syntax_stack);
+            Syntax *right = stack_pop(syntax_stack);
+            stack_push(syntax_stack, addition_new(left, right));
+        }
         ;

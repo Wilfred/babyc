@@ -6,6 +6,8 @@ void write_header(FILE *out) {
     // We seem to require at least 8 spaces for indentation.
     fprintf(out, "    .global _start\n\n");
     fprintf(out, "_start:\n");
+    fprintf(out, "    movl    %%esp, %%ebp\n");
+    fprintf(out, "    subl    $4, %%esp\n");
 }
 
 void write_footer(FILE *out) {
@@ -16,7 +18,7 @@ void write_footer(FILE *out) {
 void write_syntax(FILE *out, Syntax *syntax) {
     // TODO: do everything in eax, then move to ebx for exit.
     if (syntax->type == UNARY_OPERATOR) {
-        UnarySyntax *unary_syntax = syntax->expression;
+        UnarySyntax *unary_syntax = syntax->unary_expression;
 
         write_syntax(out, unary_syntax->expression);
 
@@ -28,6 +30,15 @@ void write_syntax(FILE *out, Syntax *syntax) {
         }
     } else if (syntax->type == IMMEDIATE) {
         fprintf(out, "    movl    $%d, %%ebx\n", syntax->value);
+    } else if (syntax->type == BINARY_OPERATOR) {
+        BinarySyntax *binary_syntax = syntax->binary_expression;
+
+        // TODO: we should keep track of local intermediates instead
+        // of always writing to the same place in memory.
+        write_syntax(out, binary_syntax->left);
+        fprintf(out, "    mov     %%ebx, -0x4(%%ebp)\n");
+        write_syntax(out, binary_syntax->right);
+        fprintf(out, "    add     -0x4(%%ebp), %%ebx\n");
     }
 }
 
