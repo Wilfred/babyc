@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "syntax.c"
 #include "assembly.c"
+#include "stack.h"
 
 int yyparse(void);
 
@@ -17,7 +18,7 @@ int yywrap()
 
 extern FILE *yyin;
 
-Syntax *syntax;
+Stack *syntax_stack;
 
 int main(int argc, char *argv[])
 {
@@ -36,10 +37,19 @@ int main(int argc, char *argv[])
         printf("Failed to open file.\n");
         return 2;
     }
+
+    syntax_stack = stack_new();
     yyparse();
 
-    write_assembly(syntax);
-    syntax_free(syntax);
+    Syntax *complete_syntax = stack_pop(syntax_stack);
+    write_assembly(complete_syntax);
+
+    if (syntax_stack->size > 0) {
+        printf("WARNING: Did not consume the whole syntax stack during parsing!");
+    }
+
+    stack_free(syntax_stack);
+    syntax_free(complete_syntax);
 
     printf("Written out.s.\n");
     printf("Build it with:\n");
@@ -72,17 +82,18 @@ statement:
 expression:
 	NUMBER
         {
-            syntax = immediate_new($1);
+            stack_push(syntax_stack, immediate_new($1));
         }
         |
         '~' expression
         {
-            syntax = bitwise_negation_new(syntax);
+            Syntax *current_syntax = stack_pop(syntax_stack);
+            stack_push(syntax_stack, bitwise_negation_new(current_syntax));
         }
         |
         '!' expression
         {
-            syntax = logical_negation_new(syntax);
+            Syntax *current_syntax = stack_pop(syntax_stack);
+            stack_push(syntax_stack, logical_negation_new(current_syntax));
         }
         ;
-

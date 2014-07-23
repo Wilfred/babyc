@@ -9,10 +9,13 @@ lex.yy.c: babyc_lex.l
 y.tab.c: babyc_parse.y
 	yacc -d $<
 
-.INTERMEDIATE: y.tab.c lex.yy.c
+stack.o: stack.c
+	$(CC) $(CFLAGS) -c $^
 
-babyc: lex.yy.c y.tab.c syntax.c assembly.c
-	$(CC) $(CFLAGS) lex.yy.c y.tab.c -o babyc
+.INTERMEDIATE: y.tab.c lex.yy.c stack.o
+
+babyc: lex.yy.c y.tab.c syntax.c assembly.c stack.o
+	$(CC) $(CFLAGS) lex.yy.c y.tab.c stack.o -o babyc
 
 .PHONY: clean
 clean:
