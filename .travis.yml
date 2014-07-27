@@ -1,5 +1,7 @@
 language: c
 script:
+  # Babyc works best on 32-bit kernels, so check what we're running.
+  - "uname -a"
   # We deliberately separate building babyc from building the tests,
   # to make it clearer where warnings are coming from.
   - "make"
