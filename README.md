@@ -11,10 +11,11 @@ of C that it's academic.
 Current feature set:
 
 * main function (no function definition yet)
-* integers (no other types yet)
+* positive integers (no other types yet)
 * integer constants
 * logical negation (`!FOO`)
 * bitwise negation (`~FOO`)
+* addition (`foo + bar`)
 
 ## License
 
