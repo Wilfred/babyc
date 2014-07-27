@@ -1,20 +1,29 @@
 #include <stdio.h>
 #include "syntax.c"
 
+void emit_header(FILE *out, char *name) {
+    // The assembler requries at least 4 spaces for indentation.
+    fprintf(out, "%s\n", name);
+}
+
+void emit_insn(FILE *out, char *insn) {
+    // The assembler requries at least 4 spaces for indentation.
+    fprintf(out, "    %s\n", insn);
+}
+
 void write_header(FILE *out) {
-    fprintf(out, ".text\n");
-    // We seem to require at least 8 spaces for indentation.
-    fprintf(out, "    .global _start\n\n");
-    fprintf(out, "_start:\n");
-    fprintf(out, "    movl    %%esp, %%ebp\n");
-    fprintf(out, "    subl    $4, %%esp\n");
-    fprintf(out, "\n");
+    emit_header(out, ".text");
+    emit_insn(out, ".global _start\n");
+    emit_header(out, "_start:");
+    emit_insn(out, "movl    %esp, %ebp");
+    emit_insn(out, "subl    $4, %esp");
+    emit_header(out, "");
 }
 
 void write_footer(FILE *out) {
-    fprintf(out, "    mov     %%eax, %%ebx\n");
-    fprintf(out, "    movl    $1, %%eax\n");
-    fprintf(out, "    int     $0x80\n");
+    emit_insn(out, "mov     %eax, %ebx");
+    emit_insn(out, "movl    $1, %eax");
+    emit_insn(out, "int     $0x80");
 }
 
 void write_syntax(FILE *out, Syntax *syntax) {
@@ -24,10 +33,10 @@ void write_syntax(FILE *out, Syntax *syntax) {
         write_syntax(out, unary_syntax->expression);
 
         if (unary_syntax->unary_type == BITWISE_NEGATION) {
-            fprintf(out, "    not     %%eax\n");
+            emit_insn(out, "not     %eax");
         } else {
-            fprintf(out, "    test    $0xFFFFFFFF, %%eax\n");
-            fprintf(out, "    setz    %%al\n");
+            emit_insn(out, "test    $0xFFFFFFFF, %eax");
+            emit_insn(out, "setz    %al");
         }
     } else if (syntax->type == IMMEDIATE) {
         fprintf(out, "    movl    $%d, %%eax\n", syntax->value);
@@ -37,9 +46,9 @@ void write_syntax(FILE *out, Syntax *syntax) {
         // TODO: we should keep track of local intermediates instead
         // of always writing to the same place in memory.
         write_syntax(out, binary_syntax->left);
-        fprintf(out, "    mov     %%eax, -0x4(%%ebp)\n");
+        emit_insn(out, "mov     %eax, -0x4(%ebp)");
         write_syntax(out, binary_syntax->right);
-        fprintf(out, "    add     -0x4(%%ebp), %%eax\n");
+        emit_insn(out, "add     -0x4(%ebp), %eax");
     }
 }
 
