@@ -8,6 +8,7 @@ void write_header(FILE *out) {
     fprintf(out, "_start:\n");
     fprintf(out, "    movl    %%esp, %%ebp\n");
     fprintf(out, "    subl    $4, %%esp\n");
+    fprintf(out, "\n");
 }
 
 void write_footer(FILE *out) {
