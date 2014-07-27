@@ -12,34 +12,34 @@ void write_header(FILE *out) {
 }
 
 void write_footer(FILE *out) {
+    fprintf(out, "    mov     %%eax, %%ebx\n");
     fprintf(out, "    movl    $1, %%eax\n");
     fprintf(out, "    int     $0x80\n");
 }
 
 void write_syntax(FILE *out, Syntax *syntax) {
-    // TODO: do everything in eax, then move to ebx for exit.
     if (syntax->type == UNARY_OPERATOR) {
         UnarySyntax *unary_syntax = syntax->unary_expression;
 
         write_syntax(out, unary_syntax->expression);
 
         if (unary_syntax->unary_type == BITWISE_NEGATION) {
-            fprintf(out, "    not     %%ebx\n");
+            fprintf(out, "    not     %%eax\n");
         } else {
-            fprintf(out, "    test    $0xFFFFFFFF, %%ebx\n");
-            fprintf(out, "    setz    %%bl\n");
+            fprintf(out, "    test    $0xFFFFFFFF, %%eax\n");
+            fprintf(out, "    setz    %%al\n");
         }
     } else if (syntax->type == IMMEDIATE) {
-        fprintf(out, "    movl    $%d, %%ebx\n", syntax->value);
+        fprintf(out, "    movl    $%d, %%eax\n", syntax->value);
     } else if (syntax->type == BINARY_OPERATOR) {
         BinarySyntax *binary_syntax = syntax->binary_expression;
 
         // TODO: we should keep track of local intermediates instead
         // of always writing to the same place in memory.
         write_syntax(out, binary_syntax->left);
-        fprintf(out, "    mov     %%ebx, -0x4(%%ebp)\n");
+        fprintf(out, "    mov     %%eax, -0x4(%%ebp)\n");
         write_syntax(out, binary_syntax->right);
-        fprintf(out, "    add     -0x4(%%ebp), %%ebx\n");
+        fprintf(out, "    add     -0x4(%%ebp), %%eax\n");
     }
 }
 
