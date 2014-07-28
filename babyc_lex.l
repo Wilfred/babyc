@@ -30,13 +30,13 @@
 "<"[a-z.]+">" { return HEADER_NAME; }
 %%
 
-#define EOF 0
+#define INPUT_EOF 0
 
 void comment(void) {
     /* Consume characters up to the closing comment marker. */
     char c, prev = 0;
   
-    while ((c = input()) != EOF) {
+    while ((c = input()) != INPUT_EOF) {
         if (c == '/' && prev == '*')
             return;
         prev = c;
