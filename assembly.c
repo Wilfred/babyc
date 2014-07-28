@@ -22,6 +22,7 @@ void write_header(FILE *out) {
 }
 
 void write_footer(FILE *out) {
+    emit_header(out, "");
     emit_insn(out, "mov     %eax, %ebx");
     emit_insn(out, "movl    $1, %eax");
     emit_insn(out, "int     $0x80");
