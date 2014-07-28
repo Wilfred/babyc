@@ -16,6 +16,7 @@ Current feature set:
 * logical negation (`!FOO`)
 * bitwise negation (`~FOO`)
 * addition (`foo + bar`)
+* comments (`// foo` and `/* foo */`)
 
 ## License
 

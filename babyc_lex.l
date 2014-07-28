@@ -5,7 +5,8 @@
 
 
 %%
-"//"[^\n]*    { /* Discard comments. */ }
+"//"[^\n]*    { /* Discard c99 comments. */ }
+"/*"          { comment(); }
 [ \t\n]+      { /* Ignore whitespace */ }
 
 "{"           { return OPEN_BRACE; }
@@ -28,3 +29,17 @@
 "#include"    { return INCLUDE; }
 "<"[a-z.]+">" { return HEADER_NAME; }
 %%
+
+#define EOF 0
+
+void comment(void) {
+    /* Consume characters up to the closing comment marker. */
+    char c, prev = 0;
+  
+    while ((c = input()) != EOF) {
+        if (c == '/' && prev == '*')
+            return;
+        prev = c;
+    }
+    error("unterminated comment");
+}
