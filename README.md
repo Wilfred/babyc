@@ -50,3 +50,16 @@ $ gdb out
 ... shows the current state of the registers (`layout reg' also
 ... provides this data)
 ```
+
+If you want to debug a program that doesn't segfault, you can set a
+breakpoint to the entrypoint:
+
+```
+$ gdb out
+(gdb) info files
+    ...
+    Entry point: 0x80000000
+    ...
+(gdb) break *0x80000000
+(gdb) run
+```
