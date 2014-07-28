@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
 
     stack_free(syntax_stack);
     syntax_free(complete_syntax);
+    fclose(yyin);
 
     printf("Written out.s.\n");
     printf("Build it with:\n");
