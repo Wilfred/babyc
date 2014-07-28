@@ -17,14 +17,14 @@ void write_header(FILE *out) {
     emit_header(out, ".text");
     emit_insn(out, ".global _start\n");
     emit_header(out, "_start:");
-    emit_insn(out, "movl    %esp, %ebp");
+    emit_insn(out, "mov     %esp, %ebp");
     emit_header(out, "");
 }
 
 void write_footer(FILE *out) {
     emit_header(out, "");
     emit_insn(out, "mov     %eax, %ebx");
-    emit_insn(out, "movl    $1, %eax");
+    emit_insn(out, "mov     $1, %eax");
     emit_insn(out, "int     $0x80");
 }
 
@@ -41,7 +41,7 @@ void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
             emit_insn(out, "setz    %al");
         }
     } else if (syntax->type == IMMEDIATE) {
-        fprintf(out, "    movl    $%d, %%eax\n", syntax->value);
+        fprintf(out, "    mov     $%d, %%eax\n", syntax->value);
     } else if (syntax->type == BINARY_OPERATOR) {
         BinarySyntax *binary_syntax = syntax->binary_expression;
 
