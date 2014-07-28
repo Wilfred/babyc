@@ -15,10 +15,13 @@ stack.o: stack.c
 assembly.o: assembly.c
 	$(CC) $(CFLAGS) -c $^
 
-.INTERMEDIATE: y.tab.c lex.yy.c stack.o assembly.o
+syntax.o: syntax.c
+	$(CC) $(CFLAGS) -c $^
 
-babyc: lex.yy.c y.tab.c syntax.c assembly.o stack.o
-	$(CC) $(CFLAGS) lex.yy.c y.tab.c stack.o -o babyc
+.INTERMEDIATE: y.tab.c lex.yy.c stack.o assembly.o syntax.o
+
+babyc: lex.yy.c y.tab.c syntax.o assembly.o stack.o
+	$(CC) $(CFLAGS) lex.yy.c y.tab.c syntax.o stack.o -o babyc
 
 .PHONY: clean
 clean:

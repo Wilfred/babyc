@@ -1,38 +1,5 @@
 #include <stdlib.h>
-
-// TODO: this should be a header.
-#ifndef BABYC_SYNTAX
-#define BABYC_SYNTAX
-
-typedef enum { IMMEDIATE, UNARY_OPERATOR, BINARY_OPERATOR } SyntaxType;
-typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnarySyntaxType;
-typedef enum { ADDITION } BinarySyntaxType;
-
-struct Syntax;
-typedef struct Syntax Syntax;
-
-typedef struct UnarySyntax {
-    UnarySyntaxType unary_type;
-    Syntax *expression;
-} UnarySyntax;
-
-typedef struct BinarySyntax {
-    BinarySyntaxType binary_type;
-    Syntax *left;
-    Syntax *right;
-} BinarySyntax;
-
-struct Syntax {
-    SyntaxType type;
-    union {
-        // Immediate
-        int value;
-
-        UnarySyntax *unary_expression;
-
-        BinarySyntax *binary_expression;
-    };
-};
+#include "syntax.h"
 
 Syntax *immediate_new(int value) {
     Syntax *syntax = malloc(sizeof(Syntax));
@@ -97,5 +64,3 @@ void syntax_free(Syntax *syntax) {
     }
     free(syntax);
 }
-
-#endif

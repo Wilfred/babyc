@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "syntax.c"
+#include "syntax.h"
 
 void emit_header(FILE *out, char *name) {
     // The assembler requries at least 4 spaces for indentation.

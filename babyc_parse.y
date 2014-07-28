@@ -1,6 +1,6 @@
 %{
 #include <stdio.h>
-#include "syntax.c"
+#include "syntax.h"
 #include "assembly.c"
 #include "stack.h"
 
