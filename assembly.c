@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include "syntax.h"
 
-#define WORD_SIZE 4
-
 void emit_header(FILE *out, char *name) {
     // The assembler requries at least 4 spaces for indentation.
     fprintf(out, "%s\n", name);
@@ -28,11 +26,11 @@ void write_footer(FILE *out) {
     emit_insn(out, "int     $0x80");
 }
 
-void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
+void write_syntax(FILE *out, Syntax *syntax) {
     if (syntax->type == UNARY_OPERATOR) {
         UnarySyntax *unary_syntax = syntax->unary_expression;
 
-        write_syntax(out, unary_syntax->expression, stack_offset);
+        write_syntax(out, unary_syntax->expression);
 
         if (unary_syntax->unary_type == BITWISE_NEGATION) {
             emit_insn(out, "not     %eax");
@@ -45,11 +43,10 @@ void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
     } else if (syntax->type == BINARY_OPERATOR) {
         BinarySyntax *binary_syntax = syntax->binary_expression;
 
-        emit_insn(out, "sub     $4, %esp");
-        write_syntax(out, binary_syntax->left, stack_offset - WORD_SIZE);
-        fprintf(out, "    mov     %%eax, %d(%%ebp)\n", stack_offset);
-        write_syntax(out, binary_syntax->right, stack_offset);
-        fprintf(out, "    add     %d(%%ebp), %%eax\n", stack_offset);
+        write_syntax(out, binary_syntax->left);
+        emit_insn(out, "mov     %eax, -0x4(%ebp)");
+        write_syntax(out, binary_syntax->right);
+        emit_insn(out, "add     -0x4(%ebp), %eax");
     }
 }
 
@@ -57,7 +54,7 @@ void write_assembly(Syntax *syntax) {
     FILE *out = fopen("out.s", "wb");
 
     write_header(out);
-    write_syntax(out, syntax, -1 * WORD_SIZE);
+    write_syntax(out, syntax);
     write_footer(out);
     
     fclose(out);
