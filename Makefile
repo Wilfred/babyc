@@ -25,9 +25,12 @@ babyc: lex.yy.c y.tab.c syntax.o assembly.o stack.o
 
 .PHONY: clean
 clean:
-	rm -f babyc y.tab.c y.tab.h lex.yy.c test
+	rm -f babyc y.tab.c y.tab.h lex.yy.c run_tests
 
-.PHONY: test
-test: run_tests.c babyc
+run_tests: run_tests.c babyc
 	$(CC) $(CFLAGS) $< -o $@
 	./test
+
+.PHONY: test
+test: run_tests
+	./run_tests
