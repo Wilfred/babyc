@@ -21,7 +21,7 @@ syntax.o: syntax.c
 .INTERMEDIATE: y.tab.c lex.yy.c stack.o assembly.o syntax.o
 
 babyc: lex.yy.c y.tab.c syntax.o assembly.o stack.o
-	$(CC) $(CFLAGS) lex.yy.c y.tab.c syntax.o stack.o -o babyc
+	$(CC) $(CFLAGS) $^ -o babyc
 
 .PHONY: clean
 clean:

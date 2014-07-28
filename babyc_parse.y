@@ -1,7 +1,7 @@
 %{
 #include <stdio.h>
 #include "syntax.h"
-#include "assembly.c"
+#include "assembly.h"
 #include "stack.h"
 
 int yyparse(void);
