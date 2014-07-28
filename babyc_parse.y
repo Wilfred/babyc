@@ -79,6 +79,9 @@ cleanup_file:
 %token TYPE IDENTIFIER RETURN NUMBER
 %token OPEN_BRACE CLOSE_BRACE
 
+/* Left associate operators, least precedence first. */
+%left '+' '*'
+
 %%
 
 program:
@@ -116,5 +119,12 @@ expression:
             Syntax *left = stack_pop(syntax_stack);
             Syntax *right = stack_pop(syntax_stack);
             stack_push(syntax_stack, addition_new(left, right));
+        }
+        |
+        expression '*' expression
+        {
+            Syntax *left = stack_pop(syntax_stack);
+            Syntax *right = stack_pop(syntax_stack);
+            stack_push(syntax_stack, multiplication_new(left, right));
         }
         ;

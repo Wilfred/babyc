@@ -46,10 +46,15 @@ void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
         BinarySyntax *binary_syntax = syntax->binary_expression;
 
         emit_insn(out, "sub     $4, %esp");
-        write_syntax(out, binary_syntax->left, stack_offset - WORD_SIZE);
+        write_syntax(out, binary_syntax->left, stack_offset);
         fprintf(out, "    mov     %%eax, %d(%%ebp)\n", stack_offset);
-        write_syntax(out, binary_syntax->right, stack_offset);
-        fprintf(out, "    add     %d(%%ebp), %%eax\n", stack_offset);
+        write_syntax(out, binary_syntax->right, stack_offset - WORD_SIZE);
+
+        if (binary_syntax->binary_type == MULTIPLICATION) {
+            fprintf(out, "    mull     %d(%%ebp)\n", stack_offset);
+        } else if (binary_syntax->binary_type == ADDITION) {
+            fprintf(out, "    add     %d(%%ebp), %%eax\n", stack_offset);
+        }
     }
 }
 
