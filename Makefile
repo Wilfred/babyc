@@ -29,7 +29,6 @@ clean:
 
 run_tests: run_tests.c babyc
 	$(CC) $(CFLAGS) $< -o $@
-	./test
 
 .PHONY: test
 test: run_tests
