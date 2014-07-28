@@ -31,33 +31,46 @@ int main(int argc, char *argv[])
 
     yyin = fopen(argv[0], "r");
 
+    int result;
+
     if (yyin == NULL) {
         // TODO: work out what the error was.
         // TODO: Unit test this.
         printf("Failed to open file.\n");
-        return 2;
+        result = 2;
+        goto cleanup_file;
     }
 
     syntax_stack = stack_new();
-    yyparse();
+
+    result = yyparse();
+    if (result != 0) {
+        printf("\n");
+        goto cleanup_syntax;
+    }
 
     Syntax *complete_syntax = stack_pop(syntax_stack);
     write_assembly(complete_syntax);
+    syntax_free(complete_syntax);
 
     if (syntax_stack->size > 0) {
         printf("WARNING: Did not consume the whole syntax stack during parsing!");
     }
-
-    stack_free(syntax_stack);
-    syntax_free(complete_syntax);
-    fclose(yyin);
 
     printf("Written out.s.\n");
     printf("Build it with:\n");
     printf("    $ as out.s -o out.o\n");
     printf("    $ ld -s -o out out.o\n");
 
-    return 0;
+cleanup_syntax:
+    /* TODO: if we exit early from syntactically invalid code, we will
+       need to free multiple Syntax structs on this stack.
+     */
+    stack_free(syntax_stack);
+cleanup_file:
+    fclose(yyin);
+
+    return result;
 }
 
 %}
