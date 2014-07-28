@@ -53,6 +53,21 @@ Syntax *addition_new(Syntax *left, Syntax *right) {
     return syntax;
 }
 
+Syntax *multiplication_new(Syntax *left, Syntax *right) {
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    BinarySyntax *binary_syntax = malloc(sizeof(BinarySyntax));
+
+    binary_syntax->binary_type = MULTIPLICATION;
+    binary_syntax->left = left;
+    binary_syntax->right = right;
+
+    syntax->type = BINARY_OPERATOR;
+    syntax->binary_expression = binary_syntax;
+
+    return syntax;
+}
+
 void syntax_free(Syntax *syntax) {
     if (syntax->type == UNARY_OPERATOR) {
         syntax_free(syntax->unary_expression->expression);

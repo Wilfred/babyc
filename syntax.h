@@ -3,7 +3,7 @@
 
 typedef enum { IMMEDIATE, UNARY_OPERATOR, BINARY_OPERATOR } SyntaxType;
 typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnarySyntaxType;
-typedef enum { ADDITION } BinarySyntaxType;
+typedef enum { ADDITION, MULTIPLICATION } BinarySyntaxType;
 
 struct Syntax;
 typedef struct Syntax Syntax;
@@ -38,6 +38,8 @@ Syntax *bitwise_negation_new(Syntax *expression);
 Syntax *logical_negation_new(Syntax *expression);
 
 Syntax *addition_new(Syntax *left, Syntax *right);
+
+Syntax *multiplication_new(Syntax *left, Syntax *right);
 
 void syntax_free(Syntax *syntax);
 
