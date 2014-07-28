@@ -1,5 +1,3 @@
-#include <stdlib.h>
-
 #ifndef BABYC_SYNTAX_HEADER
 #define BABYC_SYNTAX_HEADER
 
