@@ -18,7 +18,6 @@ void write_header(FILE *out) {
     emit_insn(out, ".global _start\n");
     emit_header(out, "_start:");
     emit_insn(out, "movl    %esp, %ebp");
-    emit_insn(out, "subl    $4, %esp");
     emit_header(out, "");
 }
 
@@ -45,6 +44,7 @@ void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
     } else if (syntax->type == BINARY_OPERATOR) {
         BinarySyntax *binary_syntax = syntax->binary_expression;
 
+        emit_insn(out, "sub     $4, %esp");
         write_syntax(out, binary_syntax->left, stack_offset - WORD_SIZE);
         fprintf(out, "    mov     %%eax, %d(%%ebp)\n", stack_offset);
         write_syntax(out, binary_syntax->right, stack_offset);
