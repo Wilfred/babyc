@@ -21,13 +21,6 @@ void write_header(FILE *out) {
     emit_header(out, "");
 }
 
-void write_footer(FILE *out) {
-    emit_header(out, "");
-    emit_insn(out, "mov     %eax, %ebx");
-    emit_insn(out, "mov     $1, %eax");
-    emit_insn(out, "int     $0x80");
-}
-
 void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
     if (syntax->type == UNARY_OPERATOR) {
         UnarySyntax *unary_syntax = syntax->unary_expression;
@@ -55,6 +48,12 @@ void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
         } else if (binary_syntax->binary_type == ADDITION) {
             fprintf(out, "    add     %d(%%ebp), %%eax\n", stack_offset);
         }
+    } else if (syntax->type == STATEMENT) {
+        write_syntax(out, syntax->statement->first, stack_offset);
+        emit_header(out, "");
+        emit_insn(out, "mov     %eax, %ebx");
+        emit_insn(out, "mov     $1, %eax");
+        emit_insn(out, "int     $0x80");
     }
 }
 
@@ -63,7 +62,6 @@ void write_assembly(Syntax *syntax) {
 
     write_header(out);
     write_syntax(out, syntax, -1 * WORD_SIZE);
-    write_footer(out);
     
     fclose(out);
 }

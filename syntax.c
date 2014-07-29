@@ -68,6 +68,21 @@ Syntax *multiplication_new(Syntax *left, Syntax *right) {
     return syntax;
 }
 
+Syntax *return_statement_new(Syntax *first) {
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    StatementSyntax *statement = malloc(sizeof(StatementSyntax));
+
+    statement->statement_type = RETURN_STATEMENT;
+    statement->first = first;
+    statement->second = NULL;
+
+    syntax->type = STATEMENT;
+    syntax->statement = statement;
+
+    return syntax;
+}
+
 void syntax_free(Syntax *syntax) {
     if (syntax->type == UNARY_OPERATOR) {
         syntax_free(syntax->unary_expression->expression);
@@ -76,6 +91,12 @@ void syntax_free(Syntax *syntax) {
         syntax_free(syntax->binary_expression->left);
         syntax_free(syntax->binary_expression->right);
         free(syntax->binary_expression);
+    } else if (syntax->type == STATEMENT){
+        syntax_free(syntax->statement->first);
+        if (syntax->statement->second != NULL) {
+            syntax_free(syntax->statement->second);
+        }
+        free(syntax->statement);
     }
     free(syntax);
 }

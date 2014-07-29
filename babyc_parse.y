@@ -94,6 +94,10 @@ function:
 
 statement:
         RETURN expression ';'
+        {
+            Syntax *current_syntax = stack_pop(syntax_stack);
+            stack_push(syntax_stack, return_statement_new(current_syntax));
+        }
         ;
 
 expression:
