@@ -45,12 +45,12 @@ int run_test(char* test_program_name) {
         return result;
     }
     
-    if ((result = system("as out.s -o out.o")) != 0) {
+    if ((result = system("as out.s -o out.o --32")) != 0) {
         printf("[%s] Assembling failed!\n", test_program_name);
         return result;
     }
     
-    if ((result = system("ld -s -o out out.o")) != 0) {
+    if ((result = system("ld -m elf_i386 -s -o out out.o")) != 0) {
         printf("[%s] Linking failed!\n", test_program_name);
         return result;
     }
