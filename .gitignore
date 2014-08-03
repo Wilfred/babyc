@@ -10,3 +10,5 @@ out.s
 
 *.tab.c
 *.tab.h
+
+.gdb_history
