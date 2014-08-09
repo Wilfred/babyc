@@ -1,35 +1,38 @@
 CC = gcc
 CFLAGS = -Wall -g
 
-all: babyc
+BUILD_DIR = build
 
-lex.yy.c: babyc_lex.l
-	lex $<
+all: $(BUILD_DIR) $(BUILD_DIR)/babyc
 
-y.tab.c: babyc_parse.y
-	yacc -d $<
+$(BUILD_DIR):
+	mkdir $(BUILD_DIR)
 
-stack.o: stack.c
-	$(CC) $(CFLAGS) -c $^
+$(BUILD_DIR)/lex.yy.c: babyc_lex.l
+	lex -t $< > $@
 
-assembly.o: assembly.c
-	$(CC) $(CFLAGS) -c $^
+$(BUILD_DIR)/y.tab.h: babyc_parse.y
+	yacc -d $< -o $@
 
-syntax.o: syntax.c
-	$(CC) $(CFLAGS) -c $^
+$(BUILD_DIR)/stack.o: stack.c
+	$(CC) $(CFLAGS) -c $^ -o $@
 
-.INTERMEDIATE: y.tab.c lex.yy.c stack.o assembly.o syntax.o
+$(BUILD_DIR)/assembly.o: assembly.c
+	$(CC) $(CFLAGS) -c $^ -o $@
 
-babyc: lex.yy.c y.tab.c syntax.o assembly.o stack.o
-	$(CC) $(CFLAGS) $^ -o babyc
+$(BUILD_DIR)/syntax.o: syntax.c
+	$(CC) $(CFLAGS) -c $^ -o $@
+
+$(BUILD_DIR)/babyc: $(BUILD_DIR)/lex.yy.c $(BUILD_DIR)/y.tab.h $(BUILD_DIR)/syntax.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o
+	$(CC) $(CFLAGS) $^ -o $@
 
 .PHONY: clean
 clean:
-	rm -f babyc y.tab.c y.tab.h lex.yy.c run_tests
+	rm -rf $(BUILD_DIR)
 
-run_tests: run_tests.c babyc
+$(BUILD_DIR)/run_tests: run_tests.c $(BUILD_DIR)/babyc
 	$(CC) $(CFLAGS) $< -o $@
 
 .PHONY: test
-test: run_tests
-	./run_tests
+test: $(BUILD_DIR)/run_tests
+	./$^

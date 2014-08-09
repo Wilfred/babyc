@@ -1,14 +1,11 @@
-babyc
-run_tests
-lex.yy.c
-one
 hello
 a.out
-*.o
 out
 out.s
 
-*.tab.c
-*.tab.h
+*.o
+test_programs/one
+
+build/
 
 .gdb_history

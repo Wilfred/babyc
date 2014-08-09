@@ -36,7 +36,7 @@ int run_test(char* test_program_name) {
         expected_return = atoi(return_position);
     }
 
-    snprintf(command, 1024, "./babyc test_programs/%s >/dev/null", test_program_name);
+    snprintf(command, 1024, "./build/babyc test_programs/%s >/dev/null", test_program_name);
     int result = system(command);
     free(command);
 
