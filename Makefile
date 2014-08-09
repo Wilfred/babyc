@@ -24,6 +24,8 @@ $(BUILD_DIR)/syntax.o: syntax.c
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 $(BUILD_DIR)/babyc: $(BUILD_DIR)/lex.yy.c $(BUILD_DIR)/y.tab.h $(BUILD_DIR)/syntax.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o
+	# FIXME: this is horrible hack
+	cp *.h $(BUILD_DIR)
 	$(CC) $(CFLAGS) $^ -o $@
 
 .PHONY: clean
