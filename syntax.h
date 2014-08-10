@@ -57,4 +57,6 @@ Syntax *return_statement_new(Syntax *first);
 
 void syntax_free(Syntax *syntax);
 
+void print_syntax(Syntax *syntax);
+
 #endif

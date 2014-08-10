@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "syntax.h"
 
 Syntax *immediate_new(int value) {
@@ -100,3 +101,36 @@ void syntax_free(Syntax *syntax) {
     }
     free(syntax);
 }
+
+void print_syntax_indented(Syntax *syntax, int indent) {
+    for (int i=0; i<indent; i++) {
+        printf(" ");
+    }
+
+    if (syntax->type == IMMEDIATE) {
+        printf("%d\n", syntax->value);
+    } else if (syntax->type == UNARY_OPERATOR) {
+        printf("UNARY\n");
+        print_syntax_indented(syntax->unary_expression->expression, indent + 4);
+    } else if (syntax->type == BINARY_OPERATOR){
+        printf("BINARY LEFT\n");
+        print_syntax_indented(syntax->binary_expression->left, indent + 4);
+
+        for (int i=0; i<indent; i++) {
+            printf(" ");
+        }
+        printf("BINARY RIGHT\n");
+        print_syntax_indented(syntax->binary_expression->right, indent + 4);
+    } else if (syntax->type == STATEMENT){
+        printf("STATEMENT\n");
+        print_syntax_indented(syntax->statement->first, indent + 4);
+        if (syntax->statement->second != NULL) {
+            print_syntax_indented(syntax->statement->second, indent + 4);
+        }
+    }
+}
+
+void print_syntax(Syntax *syntax) {
+    print_syntax_indented(syntax, 0);
+}
+

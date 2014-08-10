@@ -1,5 +1,6 @@
 %{
 #include <stdio.h>
+#include <stdbool.h>
 #include "syntax.h"
 #include "assembly.h"
 #include "stack.h"
@@ -24,13 +25,19 @@ Stack *syntax_stack;
 int main(int argc, char *argv[])
 {
     ++argv, --argc;  /* Skip over program name. */
-    if (argc != 1) {
-        printf("Please specify a file to compile.\n");
-        printf("    $ babyc <your file here>\n");
+
+    bool dump_ast = false;
+    if (argc == 1) {
+        yyin = fopen(argv[0], "r");
+    } else if (argc == 2 && strcmp(argv[0], "--dump-ast") == 0) {
+        dump_ast = true;
+        yyin = fopen(argv[1], "r");
+    } else {
+        printf("Usage:\n");
+        printf("    $ babyc foo.c\n");
+        printf("    $ babyc --dump-ast foo.c\n");
         return 1;
     }
-
-    yyin = fopen(argv[0], "r");
 
     int result;
 
@@ -51,17 +58,21 @@ int main(int argc, char *argv[])
     }
 
     Syntax *complete_syntax = stack_pop(syntax_stack);
-    write_assembly(complete_syntax);
-    syntax_free(complete_syntax);
-
     if (syntax_stack->size > 0) {
         printf("WARNING: Did not consume the whole syntax stack during parsing!");
     }
 
-    printf("Written out.s.\n");
-    printf("Build it with:\n");
-    printf("    $ as out.s -o out.o\n");
-    printf("    $ ld -s -o out out.o\n");
+    if (dump_ast) {
+        print_syntax(complete_syntax);
+    } else {
+        write_assembly(complete_syntax);
+        syntax_free(complete_syntax);
+
+        printf("Written out.s.\n");
+        printf("Build it with:\n");
+        printf("    $ as out.s -o out.o\n");
+        printf("    $ ld -s -o out out.o\n");
+    }
 
 cleanup_syntax:
     /* TODO: if we exit early from syntactically invalid code, we will
