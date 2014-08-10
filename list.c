@@ -17,6 +17,10 @@ void list_free(List *list) {
     free(list);
 }
 
+int list_length(List *list) {
+    return list->size;
+}
+
 void list_append(List *list, void *item) {
     list->size++;
     list->items = realloc(list->items, list->size * sizeof(*item));
