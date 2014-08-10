@@ -110,16 +110,32 @@ void print_syntax_indented(Syntax *syntax, int indent) {
     if (syntax->type == IMMEDIATE) {
         printf("%d\n", syntax->value);
     } else if (syntax->type == UNARY_OPERATOR) {
-        printf("UNARY\n");
+        // TODO: factor out a function: char *syntax_type_string(Syntax *s);
+        printf("UNARY ");
+        if (syntax->unary_expression->unary_type == BITWISE_NEGATION) {
+            printf("BITWISE_NEGATION");
+        } else if (syntax->unary_expression->unary_type == LOGICAL_NEGATION) {
+            printf("LOGICAL_NEGATION");
+        }
+        printf("\n");
+        
         print_syntax_indented(syntax->unary_expression->expression, indent + 4);
+        
     } else if (syntax->type == BINARY_OPERATOR){
-        printf("BINARY LEFT\n");
+        char *type_name = "";
+        if (syntax->binary_expression->binary_type == ADDITION) {
+            type_name = "ADDITION";
+        } else if (syntax->binary_expression->binary_type == MULTIPLICATION) {
+            type_name = "MULTIPLICATION";
+        }
+        
+        printf("BINARY %s LEFT\n", type_name);
         print_syntax_indented(syntax->binary_expression->left, indent + 4);
 
         for (int i=0; i<indent; i++) {
             printf(" ");
         }
-        printf("BINARY RIGHT\n");
+        printf("BINARY %s RIGHT\n", type_name);
         print_syntax_indented(syntax->binary_expression->right, indent + 4);
     } else if (syntax->type == STATEMENT){
         printf("STATEMENT\n");
