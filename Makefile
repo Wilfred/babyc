@@ -23,10 +23,13 @@ $(BUILD_DIR)/assembly.o: assembly.c
 $(BUILD_DIR)/syntax.o: syntax.c
 	$(CC) $(CFLAGS) -c $^ -o $@
 
-$(BUILD_DIR)/babyc: $(BUILD_DIR)/lex.yy.c $(BUILD_DIR)/y.tab.h $(BUILD_DIR)/syntax.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o
+$(BUILD_DIR)/list.o: list.c
+	$(CC) $(CFLAGS) -c $^ -o $@
+
+$(BUILD_DIR)/babyc: $(BUILD_DIR)/lex.yy.c $(BUILD_DIR)/y.tab.h $(BUILD_DIR)/syntax.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/list.o
 	# FIXME: this is horrible hack
 	cp *.h $(BUILD_DIR)
-	$(CC) $(CFLAGS) -Wno-unused-function $(BUILD_DIR)/lex.yy.c $(BUILD_DIR)/syntax.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o -o $@
+	$(CC) $(CFLAGS) -Wno-unused-function $(BUILD_DIR)/lex.yy.c $(BUILD_DIR)/syntax.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/list.o -o $@
 
 .PHONY: clean
 clean:
