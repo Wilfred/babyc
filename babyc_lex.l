@@ -3,6 +3,8 @@
 #include "y.tab.h"
 
 void comment();
+
+void error();
 %}
 
 

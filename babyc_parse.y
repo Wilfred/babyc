@@ -5,6 +5,7 @@
 #include "stack.h"
 
 int yyparse(void);
+int yylex();
 
 void yyerror(const char *str)
 {
