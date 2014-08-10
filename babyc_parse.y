@@ -132,15 +132,15 @@ expression:
         |
         expression '+' expression
         {
-            Syntax *left = stack_pop(syntax_stack);
             Syntax *right = stack_pop(syntax_stack);
+            Syntax *left = stack_pop(syntax_stack);
             stack_push(syntax_stack, addition_new(left, right));
         }
         |
         expression '*' expression
         {
-            Syntax *left = stack_pop(syntax_stack);
             Syntax *right = stack_pop(syntax_stack);
+            Syntax *left = stack_pop(syntax_stack);
             stack_push(syntax_stack, multiplication_new(left, right));
         }
         ;
