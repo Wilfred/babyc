@@ -18,6 +18,8 @@ Current feature set:
 * addition (`foo + bar`)
 * multiplication (`foo * bar`)
 * comments (`// foo` and `/* foo */`)
+* sequences of statements (`foo; bar`)
+* return statements
 
 ## License
 

@@ -43,7 +43,7 @@ void *stack_peek(Stack *stack) {
         printf("WARNING: Peeking on empty stack!\n");
     }
 
-    return stack->content[stack->size];
+    return stack->content[stack->size - 1];
 }
 
 bool stack_empty(Stack *stack) {

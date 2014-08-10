@@ -49,11 +49,16 @@ void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
             fprintf(out, "    add     %d(%%ebp), %%eax\n", stack_offset);
         }
     } else if (syntax->type == STATEMENT) {
-        write_syntax(out, syntax->statement->first, stack_offset);
+        write_syntax(out, syntax->statement->expression, stack_offset);
         emit_header(out, "");
         emit_insn(out, "mov     %eax, %ebx");
         emit_insn(out, "mov     $1, %eax");
         emit_insn(out, "int     $0x80");
+    } else if (syntax->type == FUNCTION) {
+        List *statements = syntax->function->statements;
+        for (int i=0; i<list_length(statements); i++) {
+            write_syntax(out, list_get(statements, i), stack_offset);
+        }
     }
 }
 

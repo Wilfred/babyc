@@ -4,6 +4,7 @@
 #include "syntax.h"
 #include "assembly.h"
 #include "stack.h"
+#include "list.h"
 
 int yyparse(void);
 int yylex();
@@ -101,7 +102,27 @@ program:
         ;
 
 function:
-	TYPE IDENTIFIER '(' ')' OPEN_BRACE statement CLOSE_BRACE
+	TYPE IDENTIFIER '(' ')' OPEN_BRACE statements CLOSE_BRACE
+        ;
+
+statements:
+        statement statements
+        {
+            /* Append to the current list of statements, or start a new list. */
+            /* TODO: creating the function belongs in the function block of grammar. */
+            Syntax *function_syntax;
+            if (stack_empty(syntax_stack)) {
+                function_syntax = function_new(list_new());
+            } else if (((Syntax *)stack_peek(syntax_stack))->type != FUNCTION) {
+                function_syntax = function_new(list_new());
+            } else {
+                function_syntax = stack_pop(syntax_stack);
+            }
+
+            list_push(function_syntax->function->statements, stack_pop(syntax_stack));
+            stack_push(syntax_stack, function_syntax);
+        }
+        |
         ;
 
 statement:

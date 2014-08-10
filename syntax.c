@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "syntax.h"
+#include "list.h"
 
 Syntax *immediate_new(int value) {
     Syntax *syntax = malloc(sizeof(Syntax));
@@ -69,17 +70,29 @@ Syntax *multiplication_new(Syntax *left, Syntax *right) {
     return syntax;
 }
 
-Syntax *return_statement_new(Syntax *first) {
+Syntax *return_statement_new(Syntax *expression) {
     Syntax *syntax = malloc(sizeof(Syntax));
 
     StatementSyntax *statement = malloc(sizeof(StatementSyntax));
 
     statement->statement_type = RETURN_STATEMENT;
-    statement->first = first;
-    statement->second = NULL;
+    statement->expression = expression;
 
     syntax->type = STATEMENT;
     syntax->statement = statement;
+
+    return syntax;
+}
+
+Syntax *function_new(List *statements) {
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    FunctionSyntax *function = malloc(sizeof(FunctionSyntax));
+
+    function->statements = statements;
+
+    syntax->type = FUNCTION;
+    syntax->function = function;
 
     return syntax;
 }
@@ -88,16 +101,19 @@ void syntax_free(Syntax *syntax) {
     if (syntax->type == UNARY_OPERATOR) {
         syntax_free(syntax->unary_expression->expression);
         free(syntax->unary_expression);
+        
     } else if (syntax->type == BINARY_OPERATOR){
         syntax_free(syntax->binary_expression->left);
         syntax_free(syntax->binary_expression->right);
         free(syntax->binary_expression);
-    } else if (syntax->type == STATEMENT){
-        syntax_free(syntax->statement->first);
-        if (syntax->statement->second != NULL) {
-            syntax_free(syntax->statement->second);
-        }
+        
+    } else if (syntax->type == STATEMENT) {
+        syntax_free(syntax->statement->expression);
         free(syntax->statement);
+        
+    } else if (syntax->type == FUNCTION) {
+        list_free(syntax->function->statements);
+        free(syntax->function);
     }
     free(syntax);
 }
@@ -137,11 +153,17 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         }
         printf("BINARY %s RIGHT\n", type_name);
         print_syntax_indented(syntax->binary_expression->right, indent + 4);
+        
     } else if (syntax->type == STATEMENT){
         printf("STATEMENT\n");
-        print_syntax_indented(syntax->statement->first, indent + 4);
-        if (syntax->statement->second != NULL) {
-            print_syntax_indented(syntax->statement->second, indent + 4);
+        print_syntax_indented(syntax->statement->expression, indent + 4);
+
+    } else if (syntax->type == FUNCTION) {
+        printf("FUNCTION\n");
+
+        List *statements = syntax->function->statements;
+        for (int i=0; i<list_length(statements); i++) {
+            print_syntax_indented(list_get(statements, i), indent + 4);
         }
     }
 }
