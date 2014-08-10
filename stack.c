@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "stack.h"
 
 Stack *stack_new() {
@@ -43,4 +44,8 @@ void *stack_peek(Stack *stack) {
     }
 
     return stack->content[stack->size];
+}
+
+bool stack_empty(Stack *stack) {
+    return stack->size == 0;
 }
