@@ -36,3 +36,11 @@ void *stack_pop(Stack *stack) {
     stack->content = realloc(stack->content, stack->size * sizeof *stack->content);
     return item;
 }
+
+void *stack_peek(Stack *stack) {
+    if (stack->size < 1) {
+        printf("WARNING: Peeking on empty stack!\n");
+    }
+
+    return stack->content[stack->size];
+}
