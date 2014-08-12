@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "list.h"
 
 List *list_new(void) {
@@ -23,9 +24,24 @@ int list_length(List *list) {
 
 void list_append(List *list, void *item) {
     list->size++;
-    list->items = realloc(list->items, list->size * sizeof(*item));
+    list->items = realloc(list->items, list->size * sizeof(item));
 
     list->items[list->size - 1] = item;
+}
+
+/* Insert item as the first element in list. */
+void list_push(List *list, void *item) {
+    list->size++;
+
+    void **new_items = malloc(list->size * sizeof(item));
+    memcpy(new_items + 1, list->items, (list->size - 1) * sizeof(item));
+
+    if (list->items != NULL) {
+        free(list->items);
+    }
+    list->items = new_items;
+    
+    list->items[0] = item;
 }
 
 /* Remove the last item from the list, and return it.
@@ -34,7 +50,7 @@ void *list_pop(List *list) {
     void* value = list_get(list, list->size - 1);
 
     list->size--;
-    list->items = realloc(list->items, list->size * sizeof(*value));
+    list->items = realloc(list->items, list->size * sizeof(value));
 
     return value;
 }
