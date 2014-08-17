@@ -92,7 +92,7 @@ cleanup_file:
 %token TYPE IDENTIFIER RETURN NUMBER
 %token OPEN_BRACE CLOSE_BRACE
 
-/* Left associate operators, least precedence first. */
+/* Left associative operators, least precedence first. */
 %left '+' '*'
 
 %%
