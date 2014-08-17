@@ -103,24 +103,28 @@ program:
 
 function:
 	TYPE IDENTIFIER '(' ')' OPEN_BRACE statements CLOSE_BRACE
+        {
+            Syntax *current_syntax = stack_pop(syntax_stack);
+            // TODO: assert current_syntax has type BLOCK.
+            stack_push(syntax_stack, function_new(current_syntax));
+        }
         ;
 
 statements:
         statement statements
         {
-            /* Append to the current list of statements, or start a new list. */
-            /* TODO: creating the function belongs in the function block of grammar. */
-            Syntax *function_syntax;
+            /* Append to the current block, or start a new block. */
+            Syntax *block_syntax;
             if (stack_empty(syntax_stack)) {
-                function_syntax = function_new(list_new());
-            } else if (((Syntax *)stack_peek(syntax_stack))->type != FUNCTION) {
-                function_syntax = function_new(list_new());
+                block_syntax = block_new(list_new());
+            } else if (((Syntax *)stack_peek(syntax_stack))->type != BLOCK) {
+                block_syntax = block_new(list_new());
             } else {
-                function_syntax = stack_pop(syntax_stack);
+                block_syntax = stack_pop(syntax_stack);
             }
 
-            list_push(function_syntax->function->statements, stack_pop(syntax_stack));
-            stack_push(syntax_stack, function_syntax);
+            list_push(block_syntax->block->statements, stack_pop(syntax_stack));
+            stack_push(syntax_stack, block_syntax);
         }
         |
         ;

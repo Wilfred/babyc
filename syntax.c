@@ -84,12 +84,25 @@ Syntax *return_statement_new(Syntax *expression) {
     return syntax;
 }
 
-Syntax *function_new(List *statements) {
+Syntax *block_new(List *statements) {
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    Block *block = malloc(sizeof(Block));
+
+    block->statements = statements;
+
+    syntax->type = BLOCK;
+    syntax->block = block;
+
+    return syntax;
+}
+
+Syntax *function_new(Syntax *root_block) {
     Syntax *syntax = malloc(sizeof(Syntax));
 
     FunctionSyntax *function = malloc(sizeof(FunctionSyntax));
 
-    function->statements = statements;
+    function->root_block = root_block;
 
     syntax->type = FUNCTION;
     syntax->function = function;
@@ -111,9 +124,11 @@ void syntax_free(Syntax *syntax) {
         syntax_free(syntax->statement->expression);
         free(syntax->statement);
         
+    } else if (syntax->type == BLOCK) {
+        list_free(syntax->block->statements);
+        
     } else if (syntax->type == FUNCTION) {
-        list_free(syntax->function->statements);
-        free(syntax->function);
+        free(syntax->block);
     }
     free(syntax);
 }
@@ -133,6 +148,8 @@ char *syntax_type_name(Syntax *syntax) {
         }
     } else if (syntax->type == STATEMENT){
         return "STATEMENT";
+    } else if (syntax->type == BLOCK) {
+        return "BLOCK";
     } else if (syntax->type == FUNCTION) {
         return "FUNCTION";
     }
@@ -166,17 +183,21 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         printf("%s RIGHT\n", syntax_type_string);
         print_syntax_indented(syntax->binary_expression->right, indent + 4);
         
-    } else if (syntax->type == STATEMENT){
+    } else if (syntax->type == STATEMENT) {
         printf("%s\n", syntax_type_string);
         print_syntax_indented(syntax->statement->expression, indent + 4);
 
-    } else if (syntax->type == FUNCTION) {
+    } else if (syntax->type == BLOCK) {
         printf("%s\n", syntax_type_string);
 
-        List *statements = syntax->function->statements;
+        List *statements = syntax->block->statements;
         for (int i=0; i<list_length(statements); i++) {
             print_syntax_indented(list_get(statements, i), indent + 4);
         }
+
+    } else if (syntax->type == FUNCTION) {
+        printf("%s\n", syntax_type_string);
+        print_syntax_indented(syntax->function->root_block, indent + 4);
     }
 }
 

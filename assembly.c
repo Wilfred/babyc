@@ -54,11 +54,13 @@ void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
         emit_insn(out, "mov     %eax, %ebx");
         emit_insn(out, "mov     $1, %eax");
         emit_insn(out, "int     $0x80");
-    } else if (syntax->type == FUNCTION) {
-        List *statements = syntax->function->statements;
+    } else if (syntax->type == BLOCK) {
+        List *statements = syntax->block->statements;
         for (int i=0; i<list_length(statements); i++) {
             write_syntax(out, list_get(statements, i), stack_offset);
         }
+    } else if (syntax->type == FUNCTION) {
+        write_syntax(out, syntax->function->root_block, stack_offset);
     }
 }
 

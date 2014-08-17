@@ -3,7 +3,7 @@
 #ifndef BABYC_SYNTAX_HEADER
 #define BABYC_SYNTAX_HEADER
 
-typedef enum { IMMEDIATE, UNARY_OPERATOR, BINARY_OPERATOR, STATEMENT, FUNCTION } SyntaxType;
+typedef enum { IMMEDIATE, UNARY_OPERATOR, BINARY_OPERATOR, STATEMENT, BLOCK, FUNCTION } SyntaxType;
 typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnarySyntaxType;
 typedef enum { ADDITION, MULTIPLICATION } BinarySyntaxType;
 // We already use 'RETURN' as a token name.
@@ -23,15 +23,18 @@ typedef struct BinarySyntax {
     Syntax *right;
 } BinarySyntax;
 
+// TODO: drop the 'Syntax' bit.
 typedef struct StatementSyntax {
     StatementSyntaxType statement_type;
-    // For consistency, we treat statements as a binary tree with
-    // 'second' being optional.
     Syntax *expression;
 } StatementSyntax;
 
-typedef struct FunctionSyntax {
+typedef struct Block {
     List *statements;
+} Block;
+
+typedef struct FunctionSyntax {
+    Syntax *root_block;
 } FunctionSyntax;
 
 struct Syntax {
@@ -47,6 +50,8 @@ struct Syntax {
         StatementSyntax *statement;
         
         FunctionSyntax *function;
+
+        Block *block;
     };
 };
 
@@ -62,7 +67,9 @@ Syntax *multiplication_new(Syntax *left, Syntax *right);
 
 Syntax *return_statement_new(Syntax *expression);
 
-Syntax *function_new(List *statements);
+Syntax *block_new(List *statements);
+
+Syntax *function_new(Syntax *root_block);
 
 void syntax_free(Syntax *syntax);
 
