@@ -15,16 +15,16 @@ $(BUILD_DIR)/y.tab.h: babyc_parse.y
 	yacc -d $< -o $@
 
 $(BUILD_DIR)/stack.o: stack.c
-	$(CC) $(CFLAGS) -c $^ -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/assembly.o: assembly.c
-	$(CC) $(CFLAGS) -c $^ -o $@
+$(BUILD_DIR)/assembly.o: assembly.c syntax.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/syntax.o: syntax.c
-	$(CC) $(CFLAGS) -c $^ -o $@
+$(BUILD_DIR)/syntax.o: syntax.c list.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/list.o: list.c
-	$(CC) $(CFLAGS) -c $^ -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/babyc: $(BUILD_DIR)/lex.yy.c $(BUILD_DIR)/y.tab.h $(BUILD_DIR)/syntax.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/list.o
 	# FIXME: this is a horrible hack
