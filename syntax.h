@@ -4,38 +4,37 @@
 #define BABYC_SYNTAX_HEADER
 
 typedef enum { IMMEDIATE, UNARY_OPERATOR, BINARY_OPERATOR, STATEMENT, BLOCK, FUNCTION } SyntaxType;
-typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnarySyntaxType;
-typedef enum { ADDITION, MULTIPLICATION } BinarySyntaxType;
+typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnaryExpressionType;
+typedef enum { ADDITION, MULTIPLICATION } BinaryExpressionType;
 // We already use 'RETURN' as a token name.
-typedef enum { RETURN_STATEMENT } StatementSyntaxType;
+typedef enum { RETURN_STATEMENT } StatementType;
 
 struct Syntax;
 typedef struct Syntax Syntax;
 
-typedef struct UnarySyntax {
-    UnarySyntaxType unary_type;
+typedef struct UnaryExpression {
+    UnaryExpressionType unary_type;
     Syntax *expression;
-} UnarySyntax;
+} UnaryExpression;
 
-typedef struct BinarySyntax {
-    BinarySyntaxType binary_type;
+typedef struct BinaryExpression {
+    BinaryExpressionType binary_type;
     Syntax *left;
     Syntax *right;
-} BinarySyntax;
+} BinaryExpression;
 
-// TODO: drop the 'Syntax' bit.
-typedef struct StatementSyntax {
-    StatementSyntaxType statement_type;
+typedef struct Statement {
+    StatementType statement_type;
     Syntax *expression;
-} StatementSyntax;
+} Statement;
 
 typedef struct Block {
     List *statements;
 } Block;
 
-typedef struct FunctionSyntax {
+typedef struct Function {
     Syntax *root_block;
-} FunctionSyntax;
+} Function;
 
 struct Syntax {
     SyntaxType type;
@@ -43,13 +42,13 @@ struct Syntax {
         // Immediate
         int value;
 
-        UnarySyntax *unary_expression;
+        UnaryExpression *unary_expression;
 
-        BinarySyntax *binary_expression;
+        BinaryExpression *binary_expression;
 
-        StatementSyntax *statement;
+        Statement *statement;
         
-        FunctionSyntax *function;
+        Function *function;
 
         Block *block;
     };

@@ -15,7 +15,7 @@ Syntax *immediate_new(int value) {
 Syntax *bitwise_negation_new(Syntax *expression) {
     Syntax *syntax = malloc(sizeof(Syntax));
 
-    UnarySyntax *unary_syntax = malloc(sizeof(UnarySyntax));
+    UnaryExpression *unary_syntax = malloc(sizeof(UnaryExpression));
 
     unary_syntax->unary_type = BITWISE_NEGATION;
     unary_syntax->expression = expression;
@@ -29,7 +29,7 @@ Syntax *bitwise_negation_new(Syntax *expression) {
 Syntax *logical_negation_new(Syntax *expression) {
     Syntax *syntax = malloc(sizeof(Syntax));
 
-    UnarySyntax *unary_syntax = malloc(sizeof(UnarySyntax));
+    UnaryExpression *unary_syntax = malloc(sizeof(UnaryExpression));
 
     unary_syntax->unary_type = LOGICAL_NEGATION;
     unary_syntax->expression = expression;
@@ -43,7 +43,7 @@ Syntax *logical_negation_new(Syntax *expression) {
 Syntax *addition_new(Syntax *left, Syntax *right) {
     Syntax *syntax = malloc(sizeof(Syntax));
 
-    BinarySyntax *binary_syntax = malloc(sizeof(BinarySyntax));
+    BinaryExpression *binary_syntax = malloc(sizeof(BinaryExpression));
 
     binary_syntax->binary_type = ADDITION;
     binary_syntax->left = left;
@@ -58,7 +58,7 @@ Syntax *addition_new(Syntax *left, Syntax *right) {
 Syntax *multiplication_new(Syntax *left, Syntax *right) {
     Syntax *syntax = malloc(sizeof(Syntax));
 
-    BinarySyntax *binary_syntax = malloc(sizeof(BinarySyntax));
+    BinaryExpression *binary_syntax = malloc(sizeof(BinaryExpression));
 
     binary_syntax->binary_type = MULTIPLICATION;
     binary_syntax->left = left;
@@ -73,7 +73,7 @@ Syntax *multiplication_new(Syntax *left, Syntax *right) {
 Syntax *return_statement_new(Syntax *expression) {
     Syntax *syntax = malloc(sizeof(Syntax));
 
-    StatementSyntax *statement = malloc(sizeof(StatementSyntax));
+    Statement *statement = malloc(sizeof(Statement));
 
     statement->statement_type = RETURN_STATEMENT;
     statement->expression = expression;
@@ -100,7 +100,7 @@ Syntax *block_new(List *statements) {
 Syntax *function_new(Syntax *root_block) {
     Syntax *syntax = malloc(sizeof(Syntax));
 
-    FunctionSyntax *function = malloc(sizeof(FunctionSyntax));
+    Function *function = malloc(sizeof(Function));
 
     function->root_block = root_block;
 

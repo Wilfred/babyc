@@ -23,7 +23,7 @@ void write_header(FILE *out) {
 
 void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
     if (syntax->type == UNARY_OPERATOR) {
-        UnarySyntax *unary_syntax = syntax->unary_expression;
+        UnaryExpression *unary_syntax = syntax->unary_expression;
 
         write_syntax(out, unary_syntax->expression, stack_offset);
 
@@ -36,7 +36,7 @@ void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
     } else if (syntax->type == IMMEDIATE) {
         fprintf(out, "    mov     $%d, %%eax\n", syntax->value);
     } else if (syntax->type == BINARY_OPERATOR) {
-        BinarySyntax *binary_syntax = syntax->binary_expression;
+        BinaryExpression *binary_syntax = syntax->binary_expression;
 
         emit_insn(out, "sub     $4, %esp");
         write_syntax(out, binary_syntax->left, stack_offset);
