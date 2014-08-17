@@ -3,11 +3,14 @@
 #ifndef BABYC_SYNTAX_HEADER
 #define BABYC_SYNTAX_HEADER
 
-typedef enum { IMMEDIATE, UNARY_OPERATOR, BINARY_OPERATOR, STATEMENT, BLOCK, FUNCTION } SyntaxType;
+typedef enum {
+    IMMEDIATE, UNARY_OPERATOR, BINARY_OPERATOR,
+    BLOCK, STATEMENT, IF_STATEMENT_SYNTAX, FUNCTION,
+} SyntaxType;
 typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnaryExpressionType;
 typedef enum { ADDITION, MULTIPLICATION } BinaryExpressionType;
-// We already use 'RETURN' as a token name.
-typedef enum { RETURN_STATEMENT } StatementType;
+// We already use 'RETURN' and 'IF' as token names. TODO: append TOKEN.
+typedef enum { RETURN_STATEMENT, IF_STATEMENT } StatementType;
 
 struct Syntax;
 typedef struct Syntax Syntax;
@@ -23,9 +26,20 @@ typedef struct BinaryExpression {
     Syntax *right;
 } BinaryExpression;
 
+typedef struct IfStatement {
+    Syntax *condition;
+    Syntax *then;
+} IfStatement;
+
 typedef struct Statement {
+    // TODO: just rename this to type.
     StatementType statement_type;
-    Syntax *expression;
+
+    union {
+        Syntax *return_expression;
+
+        Syntax *if_statement;
+    };
 } Statement;
 
 typedef struct Block {
@@ -39,18 +53,22 @@ typedef struct Function {
 struct Syntax {
     SyntaxType type;
     union {
-        // Immediate
+        // Immediate. TODO: Box this.
         int value;
 
         UnaryExpression *unary_expression;
 
         BinaryExpression *binary_expression;
 
+        // TODO: Add a boxed ReturnStatement, then Statement does not
+        // need to be a syntax type (it only occurs in Block lists).
         Statement *statement;
+
+        IfStatement *if_statement;
+        
+        Block *block;
         
         Function *function;
-
-        Block *block;
     };
 };
 
@@ -67,6 +85,8 @@ Syntax *multiplication_new(Syntax *left, Syntax *right);
 Syntax *return_statement_new(Syntax *expression);
 
 Syntax *block_new(List *statements);
+
+Syntax *if_new(Syntax *condition, Syntax *then);
 
 Syntax *function_new(Syntax *root_block);
 

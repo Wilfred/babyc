@@ -76,7 +76,7 @@ Syntax *return_statement_new(Syntax *expression) {
     Statement *statement = malloc(sizeof(Statement));
 
     statement->statement_type = RETURN_STATEMENT;
-    statement->expression = expression;
+    statement->return_expression = expression;
 
     syntax->type = STATEMENT;
     syntax->statement = statement;
@@ -93,6 +93,20 @@ Syntax *block_new(List *statements) {
 
     syntax->type = BLOCK;
     syntax->block = block;
+
+    return syntax;
+}
+
+Syntax *if_new(Syntax *condition, Syntax *then) {
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    IfStatement *if_statement = malloc(sizeof(IfStatement));
+
+    if_statement->condition = condition;
+    if_statement->then = then;
+
+    syntax->type = IF_STATEMENT_SYNTAX;
+    syntax->if_statement = if_statement;
 
     return syntax;
 }
@@ -121,8 +135,16 @@ void syntax_free(Syntax *syntax) {
         free(syntax->binary_expression);
         
     } else if (syntax->type == STATEMENT) {
-        syntax_free(syntax->statement->expression);
-        free(syntax->statement);
+        Statement *statement = syntax->statement;
+        if (statement->statement_type == RETURN_STATEMENT) {
+            syntax_free(statement->return_expression);
+        } else if (statement->statement_type == IF_STATEMENT) {
+            syntax_free(statement->if_statement);
+        }
+        
+    } else if (syntax->type == IF_STATEMENT_SYNTAX) {
+        syntax_free(syntax->if_statement->condition);
+        syntax_free(syntax->if_statement->then);
         
     } else if (syntax->type == BLOCK) {
         list_free(syntax->block->statements);
@@ -148,8 +170,14 @@ char *syntax_type_name(Syntax *syntax) {
         } else if (syntax->binary_expression->binary_type == MULTIPLICATION) {
             return "MULTIPLICATION";
         }
-    } else if (syntax->type == STATEMENT){
-        return "STATEMENT";
+    } else if (syntax->type == STATEMENT) {
+        if (syntax->statement->statement_type == RETURN_STATEMENT) {
+            return "STATEMENT RETURN";
+        } else if (syntax->statement->statement_type == IF_STATEMENT) {
+            return "STATEMENT IF";
+        }
+    } else if (syntax->type == IF_STATEMENT_SYNTAX) {
+        return "IF";
     } else if (syntax->type == BLOCK) {
         return "BLOCK";
     } else if (syntax->type == FUNCTION) {
@@ -186,7 +214,22 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         
     } else if (syntax->type == STATEMENT) {
         printf("%s\n", syntax_type_string);
-        print_syntax_indented(syntax->statement->expression, indent + 4);
+        if (syntax->statement->statement_type == RETURN_STATEMENT) {
+            print_syntax_indented(syntax->statement->return_expression, indent + 4);
+        } else if (syntax->statement->statement_type == IF_STATEMENT) {
+            print_syntax_indented(syntax->statement->if_statement, indent + 4);
+        }
+
+    } else if (syntax->type == IF_STATEMENT_SYNTAX) {
+        printf("%s CONDITION\n", syntax_type_string);
+        print_syntax_indented(syntax->if_statement->condition, indent + 4);
+
+        for (int i=0; i<indent; i++) {
+            printf(" ");
+        }
+
+        printf("%s THEN\n", syntax_type_string);
+        print_syntax_indented(syntax->if_statement->then, indent + 4);
 
     } else if (syntax->type == BLOCK) {
         printf("%s\n", syntax_type_string);

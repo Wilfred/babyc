@@ -91,6 +91,7 @@ cleanup_file:
 %token INCLUDE HEADER_NAME
 %token TYPE IDENTIFIER RETURN NUMBER
 %token OPEN_BRACE CLOSE_BRACE
+%token IF
 
 /* Left associative operators, least precedence first. */
 %left '+' '*'
@@ -102,7 +103,7 @@ program:
         ;
 
 function:
-	TYPE IDENTIFIER '(' ')' OPEN_BRACE statements CLOSE_BRACE
+	TYPE IDENTIFIER '(' ')' OPEN_BRACE block CLOSE_BRACE
         {
             Syntax *current_syntax = stack_pop(syntax_stack);
             // TODO: assert current_syntax has type BLOCK.
@@ -110,8 +111,8 @@ function:
         }
         ;
 
-statements:
-        statement statements
+block:
+        statement block
         {
             /* Append to the current block, or start a new block. */
             Syntax *block_syntax;
@@ -134,6 +135,14 @@ statement:
         {
             Syntax *current_syntax = stack_pop(syntax_stack);
             stack_push(syntax_stack, return_statement_new(current_syntax));
+        }
+        |
+        IF '(' expression ')' OPEN_BRACE block CLOSE_BRACE
+        {
+            // TODO: else statements.
+            Syntax *then = stack_pop(syntax_stack);
+            Syntax *condition = stack_pop(syntax_stack);
+            stack_push(syntax_stack, if_new(condition, then));
         }
         ;
 

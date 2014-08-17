@@ -1,4 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include <stdbool.h>
+#include <err.h>
 #include "syntax.h"
 
 #define WORD_SIZE 4
@@ -11,6 +16,23 @@ void emit_header(FILE *out, char *name) {
 void emit_insn(FILE *out, char *insn) {
     // The assembler requries at least 4 spaces for indentation.
     fprintf(out, "    %s\n", insn);
+}
+
+int label_count = 0;
+
+char *fresh_local_label(char *prefix) {
+    // We assume we never write more than 6 chars of digits, plus a '.' and '_'.
+    size_t buffer_size = strlen(prefix) + 8;
+    char *buffer = malloc(buffer_size);
+
+    snprintf(buffer, buffer_size, ".%s_%d", prefix, label_count);
+    label_count++;
+
+    return buffer;
+}
+
+void emit_label(FILE *out, char *label) {
+    fprintf(out, "%s:\n", label);
 }
 
 void write_header(FILE *out) {
@@ -49,11 +71,29 @@ void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
             fprintf(out, "    add     %d(%%ebp), %%eax\n", stack_offset);
         }
     } else if (syntax->type == STATEMENT) {
-        write_syntax(out, syntax->statement->expression, stack_offset);
-        emit_header(out, "");
-        emit_insn(out, "mov     %eax, %ebx");
-        emit_insn(out, "mov     $1, %eax");
-        emit_insn(out, "int     $0x80");
+        Statement *statement = syntax->statement;
+        
+        if (statement->statement_type == RETURN_STATEMENT) {
+            write_syntax(out, syntax->statement->return_expression, stack_offset);
+            emit_header(out, "");
+            emit_insn(out, "mov     %eax, %ebx");
+            emit_insn(out, "mov     $1, %eax");
+            emit_insn(out, "int     $0x80");
+        } else if (statement->statement_type == IF_STATEMENT) {
+            write_syntax(out, syntax->statement->if_statement, stack_offset);
+        }
+    } else if (syntax->type == IF_STATEMENT_SYNTAX) {
+        IfStatement *if_statement = syntax->if_statement;
+        write_syntax(out, if_statement->condition, stack_offset);
+
+        char *label = fresh_local_label("if_end");
+
+        emit_insn(out, "test    %eax, %eax");
+        fprintf(out, "    jz    %s\n", label);
+
+        write_syntax(out, if_statement->then, stack_offset);
+        emit_label(out, label);
+
     } else if (syntax->type == BLOCK) {
         List *statements = syntax->block->statements;
         for (int i=0; i<list_length(statements); i++) {
@@ -61,7 +101,11 @@ void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
         }
     } else if (syntax->type == FUNCTION) {
         write_syntax(out, syntax->function->root_block, stack_offset);
+    } else {
+        warnx("Unknown syntax %s", syntax_type_name(syntax));
+        assert(false);
     }
+    
 }
 
 void write_assembly(Syntax *syntax) {

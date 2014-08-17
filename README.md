@@ -21,6 +21,7 @@ Current feature set:
 * comments (`// foo` and `/* foo */`)
 * sequences of statements (`foo; bar`)
 * return statements
+* if statements (`if (foo) { bar }`, no else yet)
 
 ## License
 

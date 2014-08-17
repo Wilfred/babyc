@@ -26,6 +26,7 @@ void error();
                 /* TODO: check numbers are in the legal range, and don't start with 0. */
                 yylval=atoi(yytext); return NUMBER;
               }
+"if"          { return IF; }
 "return"      { return RETURN; }
 
 "int"         { return TYPE; }
