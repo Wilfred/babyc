@@ -72,6 +72,8 @@ Syntax *function_new(Syntax *root_block);
 
 void syntax_free(Syntax *syntax);
 
+char *syntax_type_name(Syntax *syntax);
+
 void print_syntax(Syntax *syntax);
 
 #endif
