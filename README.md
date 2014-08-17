@@ -5,8 +5,9 @@
 An educational foray into compiler writing. Written in C, compiling C
 to x86 assembly ([handy reference site](http://x86.renejeschke.de/)).
 
-Technically targetting C11, but we will implement such a small subset
-of C that it's academic.
+Technically targetting C11
+([standard PDF](http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf)),
+but we will implement such a small subset of C that it's academic.
 
 Current feature set:
 
