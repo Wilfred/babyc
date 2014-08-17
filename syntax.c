@@ -134,7 +134,9 @@ void syntax_free(Syntax *syntax) {
 }
 
 char *syntax_type_name(Syntax *syntax) {
-    if (syntax->type == UNARY_OPERATOR) {
+    if (syntax->type == IMMEDIATE) {
+        return "IMMEDIATE";
+    } else if (syntax->type == UNARY_OPERATOR) {
         if (syntax->unary_expression->unary_type == BITWISE_NEGATION) {
             return "UNARY BITWISE_NEGATION";
         } else if (syntax->unary_expression->unary_type == LOGICAL_NEGATION) {
@@ -154,8 +156,7 @@ char *syntax_type_name(Syntax *syntax) {
         return "FUNCTION";
     }
 
-    // Immediates or anything else we don't bother showing when
-    // printing the AST.
+    // Should never be reached.
     return "???";
 }
 
