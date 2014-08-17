@@ -118,48 +118,60 @@ void syntax_free(Syntax *syntax) {
     free(syntax);
 }
 
+char *syntax_type_name(Syntax *syntax) {
+    if (syntax->type == UNARY_OPERATOR) {
+        if (syntax->unary_expression->unary_type == BITWISE_NEGATION) {
+            return "UNARY BITWISE_NEGATION";
+        } else if (syntax->unary_expression->unary_type == LOGICAL_NEGATION) {
+            return "UNARY BITWISE_NEGATION";
+        }
+    } else if (syntax->type == BINARY_OPERATOR) {
+        if (syntax->binary_expression->binary_type == ADDITION) {
+            return "ADDITION";
+        } else if (syntax->binary_expression->binary_type == MULTIPLICATION) {
+            return "MULTIPLICATION";
+        }
+    } else if (syntax->type == STATEMENT){
+        return "STATEMENT";
+    } else if (syntax->type == FUNCTION) {
+        return "FUNCTION";
+    }
+
+    // Immediates or anything else we don't bother showing when
+    // printing the AST.
+    return "???";
+}
+
 void print_syntax_indented(Syntax *syntax, int indent) {
     for (int i=0; i<indent; i++) {
         printf(" ");
     }
 
+    char *syntax_type_string = syntax_type_name(syntax);
+
     if (syntax->type == IMMEDIATE) {
         printf("%d\n", syntax->value);
     } else if (syntax->type == UNARY_OPERATOR) {
-        // TODO: factor out a function: char *syntax_type_string(Syntax *s);
-        printf("UNARY ");
-        if (syntax->unary_expression->unary_type == BITWISE_NEGATION) {
-            printf("BITWISE_NEGATION");
-        } else if (syntax->unary_expression->unary_type == LOGICAL_NEGATION) {
-            printf("LOGICAL_NEGATION");
-        }
-        printf("\n");
-        
+        printf("%s\n", syntax_type_string);
         print_syntax_indented(syntax->unary_expression->expression, indent + 4);
         
     } else if (syntax->type == BINARY_OPERATOR){
-        char *type_name = "";
-        if (syntax->binary_expression->binary_type == ADDITION) {
-            type_name = "ADDITION";
-        } else if (syntax->binary_expression->binary_type == MULTIPLICATION) {
-            type_name = "MULTIPLICATION";
-        }
-        
-        printf("BINARY %s LEFT\n", type_name);
+        printf("%s LEFT\n", syntax_type_string);
         print_syntax_indented(syntax->binary_expression->left, indent + 4);
 
         for (int i=0; i<indent; i++) {
             printf(" ");
         }
-        printf("BINARY %s RIGHT\n", type_name);
+
+        printf("%s RIGHT\n", syntax_type_string);
         print_syntax_indented(syntax->binary_expression->right, indent + 4);
         
     } else if (syntax->type == STATEMENT){
-        printf("STATEMENT\n");
+        printf("%s\n", syntax_type_string);
         print_syntax_indented(syntax->statement->expression, indent + 4);
 
     } else if (syntax->type == FUNCTION) {
-        printf("FUNCTION\n");
+        printf("%s\n", syntax_type_string);
 
         List *statements = syntax->function->statements;
         for (int i=0; i<list_length(statements); i++) {
@@ -171,4 +183,3 @@ void print_syntax_indented(Syntax *syntax, int indent) {
 void print_syntax(Syntax *syntax) {
     print_syntax_indented(syntax, 0);
 }
-
