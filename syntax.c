@@ -168,7 +168,7 @@ void print_syntax_indented(Syntax *syntax, int indent) {
     char *syntax_type_string = syntax_type_name(syntax);
 
     if (syntax->type == IMMEDIATE) {
-        printf("%d\n", syntax->value);
+        printf("%s %d\n", syntax_type_string, syntax->value);
     } else if (syntax->type == UNARY_OPERATOR) {
         printf("%s\n", syntax_type_string);
         print_syntax_indented(syntax->unary_expression->expression, indent + 4);
