@@ -57,6 +57,8 @@ int run_test(char* test_program_name) {
     }
 
     result = WEXITSTATUS(system("./out"));
+
+    system("rm out.s out.o out");
     
     if (result != expected_return) {
         printf("[%s] Expected %d, but got %d!\n", test_program_name, expected_return, result);
