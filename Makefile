@@ -27,7 +27,7 @@ $(BUILD_DIR)/list.o: list.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/babyc: $(BUILD_DIR)/lex.yy.c $(BUILD_DIR)/y.tab.h $(BUILD_DIR)/syntax.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/list.o
-	# FIXME: this is a horrible hack
+	@# FIXME: this is a horrible hack
 	cp *.h $(BUILD_DIR)
 	$(CC) $(CFLAGS) -Wno-unused-function $(BUILD_DIR)/lex.yy.c $(BUILD_DIR)/syntax.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/list.o -o $@
 
@@ -40,4 +40,4 @@ $(BUILD_DIR)/run_tests: run_tests.c $(BUILD_DIR)/babyc
 
 .PHONY: test
 test: $(BUILD_DIR)/run_tests
-	./$^
+	@./$^
