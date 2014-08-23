@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <stdbool.h>
+#include <assert.h>
 #include "syntax.h"
 #include "assembly.h"
 #include "stack.h"
@@ -60,7 +61,7 @@ int main(int argc, char *argv[])
 
     Syntax *complete_syntax = stack_pop(syntax_stack);
     if (syntax_stack->size > 0) {
-        printf("WARNING: Did not consume the whole syntax stack during parsing!");
+        warnx("Did not consume the whole syntax stack during parsing!");
     }
 
     if (dump_ast) {
