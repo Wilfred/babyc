@@ -198,7 +198,7 @@ char *syntax_type_name(Syntax *syntax) {
     }
 
     // Should never be reached.
-    return "???";
+    return "??? UNKNOWN SYNTAX";
 }
 
 void print_syntax_indented(Syntax *syntax, int indent) {
@@ -258,7 +258,7 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         printf("%s\n", syntax_type_string);
         print_syntax_indented(syntax->function->root_block, indent + 4);
     } else {
-        printf("???\n");
+        printf("??? UNKNOWN SYNTAX TYPE\n");
     }
 }
 
