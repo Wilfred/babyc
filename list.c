@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <err.h>
 #include "list.h"
 
 List *list_new(void) {
@@ -61,7 +62,7 @@ void *list_get(List *list, int index) {
 
 void list_set(List *list, int index, void *value) {
     if (index < 0 || index > list->size) {
-        printf("WARNING: Index %d is out of bounds!", index);
+        warnx("Index %d is out of bounds!", index);
     }
 
     else if (index == list->size) {
