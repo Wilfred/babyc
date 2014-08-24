@@ -1,3 +1,7 @@
+
+D			[0-9]
+L			[a-zA-Z_]
+
 %{
 #include <stdio.h>
 #include "y.tab.h"
@@ -30,7 +34,7 @@ void error();
 "return"      { return RETURN; }
 
 "int"         { return TYPE; }
-"main"        { return IDENTIFIER; }
+{L}({L}|{D})* { return IDENTIFIER; }
 
 "#include"    { return INCLUDE; }
 "<"[a-z.]+">" { return HEADER_NAME; }
