@@ -95,7 +95,8 @@ cleanup_file:
 %token IF
 
 /* Left associative operators, least precedence first. */
-%left '+' '*'
+%left '+'
+%left '*'
 
 %%
 
