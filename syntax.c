@@ -170,7 +170,7 @@ char *syntax_type_name(Syntax *syntax) {
     if (syntax->type == IMMEDIATE) {
         return "IMMEDIATE";
     } else if (syntax->type == VARIABLE) {
-        return "variable";
+        return "VARIABLE";
     } else if (syntax->type == UNARY_OPERATOR) {
         if (syntax->unary_expression->unary_type == BITWISE_NEGATION) {
             return "UNARY BITWISE_NEGATION";
@@ -210,6 +210,8 @@ void print_syntax_indented(Syntax *syntax, int indent) {
 
     if (syntax->type == IMMEDIATE) {
         printf("%s %d\n", syntax_type_string, syntax->value);
+    } else if (syntax->type == VARIABLE) {
+        printf("%s '%s'\n", syntax_type_string, syntax->variable->var_name);
     } else if (syntax->type == UNARY_OPERATOR) {
         printf("%s\n", syntax_type_string);
         print_syntax_indented(syntax->unary_expression->expression, indent + 4);

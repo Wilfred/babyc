@@ -35,7 +35,7 @@ void error();
 "return"      { return RETURN; }
 
 "int"         { return TYPE; }
-{L}({L}|{D})* { return IDENTIFIER; }
+{L}({L}|{D})* { yylval = strdup(yytext); return IDENTIFIER; }
 
 "#include"    { return INCLUDE; }
 "<"[a-z.]+">" { return HEADER_NAME; }
