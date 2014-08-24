@@ -26,6 +26,9 @@ $(BUILD_DIR)/syntax.o: syntax.c list.c
 $(BUILD_DIR)/list.o: list.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/environment.o: environment.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
 $(BUILD_DIR)/babyc: $(BUILD_DIR)/lex.yy.c $(BUILD_DIR)/y.tab.h $(BUILD_DIR)/syntax.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/list.o
 	@# FIXME: this is a horrible hack
 	cp *.h $(BUILD_DIR)
