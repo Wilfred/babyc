@@ -153,6 +153,11 @@ expression:
             stack_push(syntax_stack, immediate_new($1));
         }
         |
+	IDENTIFIER
+        {
+            stack_push(syntax_stack, variable_new((char*)$1));
+        }
+        |
         '~' expression
         {
             Syntax *current_syntax = stack_pop(syntax_stack);
