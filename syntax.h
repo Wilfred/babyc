@@ -4,8 +4,10 @@
 #define BABYC_SYNTAX_HEADER
 
 typedef enum {
-    IMMEDIATE, UNARY_OPERATOR, BINARY_OPERATOR,
-    BLOCK, STATEMENT, IF_STATEMENT_SYNTAX, FUNCTION,
+    IMMEDIATE, VARIABLE,
+    UNARY_OPERATOR, BINARY_OPERATOR,
+    BLOCK, STATEMENT, IF_STATEMENT_SYNTAX,
+    FUNCTION,
 } SyntaxType;
 typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnaryExpressionType;
 typedef enum { ADDITION, MULTIPLICATION } BinaryExpressionType;
@@ -14,6 +16,10 @@ typedef enum { RETURN_STATEMENT, IF_STATEMENT } StatementType;
 
 struct Syntax;
 typedef struct Syntax Syntax;
+
+typedef struct Variable {
+    char *var_name;
+} Variable;
 
 typedef struct UnaryExpression {
     UnaryExpressionType unary_type;
@@ -56,6 +62,8 @@ struct Syntax {
         // Immediate. TODO: Box this.
         int value;
 
+        Variable *variable;
+
         UnaryExpression *unary_expression;
 
         BinaryExpression *binary_expression;
@@ -73,6 +81,8 @@ struct Syntax {
 };
 
 Syntax *immediate_new(int value);
+
+Syntax *variable_new(char *var_name);
 
 Syntax *bitwise_negation_new(Syntax *expression);
 

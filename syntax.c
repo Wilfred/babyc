@@ -12,6 +12,17 @@ Syntax *immediate_new(int value) {
     return syntax;
 }
 
+Syntax *variable_new(char *var_name) {
+    Variable *variable = malloc(sizeof(Variable));
+    variable->var_name = var_name;
+    
+    Syntax *syntax = malloc(sizeof(Syntax));
+    syntax->type = VARIABLE;
+    syntax->variable = variable;
+
+    return syntax;
+}
+
 Syntax *bitwise_negation_new(Syntax *expression) {
     Syntax *syntax = malloc(sizeof(Syntax));
 
@@ -158,6 +169,8 @@ void syntax_free(Syntax *syntax) {
 char *syntax_type_name(Syntax *syntax) {
     if (syntax->type == IMMEDIATE) {
         return "IMMEDIATE";
+    } else if (syntax->type == VARIABLE) {
+        return "variable";
     } else if (syntax->type == UNARY_OPERATOR) {
         if (syntax->unary_expression->unary_type == BITWISE_NEGATION) {
             return "UNARY BITWISE_NEGATION";
