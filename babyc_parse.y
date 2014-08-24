@@ -145,6 +145,12 @@ statement:
             Syntax *condition = stack_pop(syntax_stack);
             stack_push(syntax_stack, if_new(condition, then));
         }
+        |
+        TYPE IDENTIFIER '=' expression ';'
+        {
+            Syntax *init_value = stack_pop(syntax_stack);
+            stack_push(syntax_stack, define_var_new((char*)$2, init_value));
+        }
         ;
 
 expression:

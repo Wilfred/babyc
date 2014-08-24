@@ -7,12 +7,15 @@ typedef enum {
     IMMEDIATE, VARIABLE,
     UNARY_OPERATOR, BINARY_OPERATOR,
     BLOCK, STATEMENT, IF_STATEMENT_SYNTAX,
-    FUNCTION,
+    DEFINE_VAR_SYNTAX, FUNCTION,
 } SyntaxType;
 typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnaryExpressionType;
 typedef enum { ADDITION, MULTIPLICATION } BinaryExpressionType;
 // We already use 'RETURN' and 'IF' as token names. TODO: append TOKEN.
-typedef enum { RETURN_STATEMENT, IF_STATEMENT } StatementType;
+typedef enum {
+    RETURN_STATEMENT, IF_STATEMENT,
+    DEFINE_VAR_STATEMENT,
+} StatementType;
 
 struct Syntax;
 typedef struct Syntax Syntax;
@@ -37,6 +40,11 @@ typedef struct IfStatement {
     Syntax *then;
 } IfStatement;
 
+typedef struct DefineVarStatement {
+    char *var_name;
+    Syntax *init_value;
+} DefineVarStatement;
+
 typedef struct Statement {
     // TODO: just rename this to type.
     StatementType statement_type;
@@ -45,6 +53,8 @@ typedef struct Statement {
         Syntax *return_expression;
 
         Syntax *if_statement;
+
+        Syntax *define_var_statement;
     };
 } Statement;
 
@@ -73,6 +83,8 @@ struct Syntax {
         Statement *statement;
 
         IfStatement *if_statement;
+
+        DefineVarStatement *define_var_statement;
         
         Block *block;
         
@@ -97,6 +109,8 @@ Syntax *return_statement_new(Syntax *expression);
 Syntax *block_new(List *statements);
 
 Syntax *if_new(Syntax *condition, Syntax *then);
+
+Syntax *define_var_new(char *var_name, Syntax *init_value);
 
 Syntax *function_new(Syntax *root_block);
 

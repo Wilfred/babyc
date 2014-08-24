@@ -122,6 +122,19 @@ Syntax *if_new(Syntax *condition, Syntax *then) {
     return syntax;
 }
 
+Syntax *define_var_new(char *var_name, Syntax *init_value) {
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    DefineVarStatement *define_var_statement = malloc(sizeof(DefineVarStatement));
+    define_var_statement->var_name = var_name;
+    define_var_statement->init_value = init_value;
+
+    syntax->type = DEFINE_VAR_SYNTAX;
+    syntax->define_var_statement = define_var_statement;
+
+    return syntax;
+}
+
 Syntax *function_new(Syntax *root_block) {
     Syntax *syntax = malloc(sizeof(Syntax));
 
@@ -191,6 +204,8 @@ char *syntax_type_name(Syntax *syntax) {
         }
     } else if (syntax->type == IF_STATEMENT_SYNTAX) {
         return "IF";
+    } else if (syntax->type == DEFINE_VAR_SYNTAX) {
+        return "DEFINE VARIABLE";
     } else if (syntax->type == BLOCK) {
         return "BLOCK";
     } else if (syntax->type == FUNCTION) {
@@ -245,6 +260,16 @@ void print_syntax_indented(Syntax *syntax, int indent) {
 
         printf("%s THEN\n", syntax_type_string);
         print_syntax_indented(syntax->if_statement->then, indent + 4);
+
+    } else if (syntax->type == DEFINE_VAR_SYNTAX) {
+        printf("%s VARIABLE '%s'\n", syntax_type_string, syntax->define_var_statement->var_name);
+
+        for (int i=0; i<indent; i++) {
+            printf(" ");
+        }
+
+        printf("%s INITIAL VALUE\n", syntax_type_string);
+        print_syntax_indented(syntax->define_var_statement->init_value, indent + 4);
 
     } else if (syntax->type == BLOCK) {
         printf("%s\n", syntax_type_string);
