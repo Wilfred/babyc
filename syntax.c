@@ -255,6 +255,8 @@ void print_syntax_indented(Syntax *syntax, int indent) {
     } else if (syntax->type == FUNCTION) {
         printf("%s\n", syntax_type_string);
         print_syntax_indented(syntax->function->root_block, indent + 4);
+    } else {
+        printf("???\n");
     }
 }
 
