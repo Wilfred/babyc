@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <err.h>
 #include "syntax.h"
+#include "environment.h"
 
 #define WORD_SIZE 4
 
@@ -43,11 +44,13 @@ void write_header(FILE *out) {
     emit_header(out, "");
 }
 
-void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
+void write_syntax(FILE *out, Syntax *syntax, Environment *env, int stack_offset) {
+    // Note stack_offset is the next unused memory address in the
+    // stack, so we can use it directly but must adjust it for the next caller.
     if (syntax->type == UNARY_OPERATOR) {
         UnaryExpression *unary_syntax = syntax->unary_expression;
 
-        write_syntax(out, unary_syntax->expression, stack_offset);
+        write_syntax(out, unary_syntax->expression, env, stack_offset);
 
         if (unary_syntax->unary_type == BITWISE_NEGATION) {
             emit_insn(out, "not     %eax");
@@ -57,13 +60,18 @@ void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
         }
     } else if (syntax->type == IMMEDIATE) {
         fprintf(out, "    mov     $%d, %%eax\n", syntax->value);
+
+    } else if (syntax->type == VARIABLE) {
+        fprintf(out, "    mov     %d(%%ebp), %%eax\n",
+                environment_get_offset(env, syntax->variable->var_name));
+        
     } else if (syntax->type == BINARY_OPERATOR) {
         BinaryExpression *binary_syntax = syntax->binary_expression;
 
         emit_insn(out, "sub     $4, %esp");
-        write_syntax(out, binary_syntax->left, stack_offset);
+        write_syntax(out, binary_syntax->left, env, stack_offset);
         fprintf(out, "    mov     %%eax, %d(%%ebp)\n", stack_offset);
-        write_syntax(out, binary_syntax->right, stack_offset - WORD_SIZE);
+        write_syntax(out, binary_syntax->right, env, stack_offset - WORD_SIZE);
 
         if (binary_syntax->binary_type == MULTIPLICATION) {
             fprintf(out, "    mull     %d(%%ebp)\n", stack_offset);
@@ -74,33 +82,46 @@ void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
         Statement *statement = syntax->statement;
         
         if (statement->statement_type == RETURN_STATEMENT) {
-            write_syntax(out, syntax->statement->return_expression, stack_offset);
+            write_syntax(out, syntax->statement->return_expression, env, stack_offset);
             emit_header(out, "");
             emit_insn(out, "mov     %eax, %ebx");
             emit_insn(out, "mov     $1, %eax");
             emit_insn(out, "int     $0x80");
         } else if (statement->statement_type == IF_STATEMENT) {
-            write_syntax(out, syntax->statement->if_statement, stack_offset);
+            write_syntax(out, syntax->statement->if_statement, env, stack_offset);
         }
     } else if (syntax->type == IF_STATEMENT_SYNTAX) {
         IfStatement *if_statement = syntax->if_statement;
-        write_syntax(out, if_statement->condition, stack_offset);
+        write_syntax(out, if_statement->condition, env, stack_offset);
 
         char *label = fresh_local_label("if_end");
 
         emit_insn(out, "test    %eax, %eax");
         fprintf(out, "    jz    %s\n", label);
 
-        write_syntax(out, if_statement->then, stack_offset);
+        write_syntax(out, if_statement->then, env, stack_offset);
         emit_label(out, label);
+
+    } else if (syntax->type == DEFINE_VAR_SYNTAX) {
+        DefineVarStatement *define_var_statement = syntax->define_var_statement;
+
+        // TODO: this will break if we have a list of statements of compound expressions,
+        // as the compound expression will clobber the variable.
+        // We should have a single stack offset as an int pointer, so different trees
+        // cannot use the same offset.
+        environment_set_offset(env, define_var_statement->var_name, stack_offset);
+
+        emit_insn(out, "sub     $4, %esp");
+        write_syntax(out, define_var_statement->init_value, env, stack_offset - WORD_SIZE);
+        fprintf(out, "    mov     %%eax, %d(%%ebp)\n", stack_offset);
 
     } else if (syntax->type == BLOCK) {
         List *statements = syntax->block->statements;
         for (int i=0; i<list_length(statements); i++) {
-            write_syntax(out, list_get(statements, i), stack_offset);
+            write_syntax(out, list_get(statements, i), env, stack_offset);
         }
     } else if (syntax->type == FUNCTION) {
-        write_syntax(out, syntax->function->root_block, stack_offset);
+        write_syntax(out, syntax->function->root_block, env, stack_offset);
     } else {
         warnx("Unknown syntax %s", syntax_type_name(syntax));
         assert(false);
@@ -111,8 +132,10 @@ void write_syntax(FILE *out, Syntax *syntax, int stack_offset) {
 void write_assembly(Syntax *syntax) {
     FILE *out = fopen("out.s", "wb");
 
+    Environment *env = environment_new();
+
     write_header(out);
-    write_syntax(out, syntax, -1 * WORD_SIZE);
+    write_syntax(out, syntax, env, -1 * WORD_SIZE);
     
     fclose(out);
 }
