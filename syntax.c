@@ -262,13 +262,13 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         print_syntax_indented(syntax->if_statement->then, indent + 4);
 
     } else if (syntax->type == DEFINE_VAR_SYNTAX) {
-        printf("%s VARIABLE '%s'\n", syntax_type_string, syntax->define_var_statement->var_name);
+        printf("%s '%s'\n", syntax_type_string, syntax->define_var_statement->var_name);
 
         for (int i=0; i<indent; i++) {
             printf(" ");
         }
 
-        printf("%s INITIAL VALUE\n", syntax_type_string);
+        printf("'%s' INITIAL VALUE\n", syntax->define_var_statement->var_name);
         print_syntax_indented(syntax->define_var_statement->init_value, indent + 4);
 
     } else if (syntax->type == BLOCK) {
