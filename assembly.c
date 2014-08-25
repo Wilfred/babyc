@@ -85,6 +85,15 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
             fprintf(out, "    mull     %d(%%ebp)\n", stack_offset);
         } else if (binary_syntax->binary_type == ADDITION) {
             fprintf(out, "    add     %d(%%ebp), %%eax\n", stack_offset);
+        } else if (binary_syntax->binary_type == LESS_THAN) {
+            // To compare x < y in AT&T syntax, we write CMP y,x.
+            // http://stackoverflow.com/q/25493255/509706
+            fprintf(out, "    cmp     %%eax, %d(%%ebp)\n", stack_offset);
+            // Set the low byte of %eax to 0 or 1 depending on whether
+            // it was less than.
+            emit_insn(out, "setl    %al");
+            // Zero the rest of %eax.
+            emit_insn(out, "movzbl    %al, %eax");
         }
 
     } else if (syntax->type == ASSIGNMENT) {

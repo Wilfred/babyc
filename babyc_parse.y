@@ -95,6 +95,7 @@ cleanup_file:
 %token IF
 
 /* Left associative operators, least precedence first. */
+%left '<'
 %left '+'
 %left '*'
 
@@ -200,5 +201,12 @@ expression:
             Syntax *right = stack_pop(syntax_stack);
             Syntax *left = stack_pop(syntax_stack);
             stack_push(syntax_stack, multiplication_new(left, right));
+        }
+        |
+        expression '<' expression
+        {
+            Syntax *right = stack_pop(syntax_stack);
+            Syntax *left = stack_pop(syntax_stack);
+            stack_push(syntax_stack, less_than_new(left, right));
         }
         ;

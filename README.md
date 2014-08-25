@@ -18,6 +18,7 @@ Current feature set:
 * bitwise negation (`~FOO`)
 * addition (`foo + bar`)
 * multiplication (`foo * bar`)
+* less than comparison (`foo < bar`)
 * comments (`// foo` and `/* foo */`)
 * sequences of statements (`foo; bar`)
 * return statements

@@ -27,6 +27,7 @@ void error();
 "!"           { return '!'; }
 "+"           { return '+'; }
 "*"           { return '*'; }
+"<"           { return '<'; }
 "="           { return '='; }
 ";"           { return ';'; }
 [0-9]+        {

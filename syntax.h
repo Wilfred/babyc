@@ -11,7 +11,10 @@ typedef enum {
     ASSIGNMENT,
 } SyntaxType;
 typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnaryExpressionType;
-typedef enum { ADDITION, MULTIPLICATION } BinaryExpressionType;
+typedef enum {
+    ADDITION, MULTIPLICATION,
+    LESS_THAN,
+} BinaryExpressionType;
 // We already use 'RETURN' and 'IF' as token names. TODO: append TOKEN.
 typedef enum {
     RETURN_STATEMENT, IF_STATEMENT,
@@ -111,6 +114,8 @@ Syntax *logical_negation_new(Syntax *expression);
 Syntax *addition_new(Syntax *left, Syntax *right);
 
 Syntax *multiplication_new(Syntax *left, Syntax *right);
+
+Syntax *less_than_new(Syntax *left, Syntax *right);
 
 Syntax *assignment_new(char *var_name, Syntax *expression);
 

@@ -81,6 +81,19 @@ Syntax *multiplication_new(Syntax *left, Syntax *right) {
     return syntax;
 }
 
+Syntax *less_than_new(Syntax *left, Syntax *right) {
+    BinaryExpression *binary_syntax = malloc(sizeof(BinaryExpression));
+    binary_syntax->binary_type = LESS_THAN;
+    binary_syntax->left = left;
+    binary_syntax->right = right;
+
+    Syntax *syntax = malloc(sizeof(Syntax));
+    syntax->type = BINARY_OPERATOR;
+    syntax->binary_expression = binary_syntax;
+
+    return syntax;
+}
+
 Syntax *assignment_new(char *var_name, Syntax *expression) {
     Assignment *assignment = malloc(sizeof(Assignment));
     assignment->var_name = var_name;
@@ -207,6 +220,8 @@ char *syntax_type_name(Syntax *syntax) {
             return "ADDITION";
         } else if (syntax->binary_expression->binary_type == MULTIPLICATION) {
             return "MULTIPLICATION";
+        } else if (syntax->binary_expression->binary_type == LESS_THAN) {
+            return "LESS THAN";
         }
     } else if (syntax->type == STATEMENT) {
         if (syntax->statement->statement_type == RETURN_STATEMENT) {
