@@ -111,8 +111,6 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
             emit_insn(out, "mov     %eax, %ebx");
             emit_insn(out, "mov     $1, %eax");
             emit_insn(out, "int     $0x80");
-        } else if (statement->statement_type == IF_STATEMENT) {
-            write_syntax(out, syntax->statement->if_statement, ctx);
         }
     } else if (syntax->type == IF_STATEMENT_SYNTAX) {
         IfStatement *if_statement = syntax->if_statement;
