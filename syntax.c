@@ -24,15 +24,11 @@ Syntax *variable_new(char *var_name) {
 }
 
 Syntax *bitwise_negation_new(Syntax *expression) {
-    // TODO: reorder these functions so we don't call malloc until we
-    // need `syntax`.
-    Syntax *syntax = malloc(sizeof(Syntax));
-
     UnaryExpression *unary_syntax = malloc(sizeof(UnaryExpression));
-
     unary_syntax->unary_type = BITWISE_NEGATION;
     unary_syntax->expression = expression;
 
+    Syntax *syntax = malloc(sizeof(Syntax));
     syntax->type = UNARY_OPERATOR;
     syntax->unary_expression = unary_syntax;
 
@@ -40,13 +36,11 @@ Syntax *bitwise_negation_new(Syntax *expression) {
 }
 
 Syntax *logical_negation_new(Syntax *expression) {
-    Syntax *syntax = malloc(sizeof(Syntax));
-
     UnaryExpression *unary_syntax = malloc(sizeof(UnaryExpression));
-
     unary_syntax->unary_type = LOGICAL_NEGATION;
     unary_syntax->expression = expression;
 
+    Syntax *syntax = malloc(sizeof(Syntax));
     syntax->type = UNARY_OPERATOR;
     syntax->unary_expression = unary_syntax;
 
@@ -54,14 +48,12 @@ Syntax *logical_negation_new(Syntax *expression) {
 }
 
 Syntax *addition_new(Syntax *left, Syntax *right) {
-    Syntax *syntax = malloc(sizeof(Syntax));
-
     BinaryExpression *binary_syntax = malloc(sizeof(BinaryExpression));
-
     binary_syntax->binary_type = ADDITION;
     binary_syntax->left = left;
     binary_syntax->right = right;
 
+    Syntax *syntax = malloc(sizeof(Syntax));
     syntax->type = BINARY_OPERATOR;
     syntax->binary_expression = binary_syntax;
 
@@ -69,14 +61,12 @@ Syntax *addition_new(Syntax *left, Syntax *right) {
 }
 
 Syntax *multiplication_new(Syntax *left, Syntax *right) {
-    Syntax *syntax = malloc(sizeof(Syntax));
-
     BinaryExpression *binary_syntax = malloc(sizeof(BinaryExpression));
-
     binary_syntax->binary_type = MULTIPLICATION;
     binary_syntax->left = left;
     binary_syntax->right = right;
 
+    Syntax *syntax = malloc(sizeof(Syntax));
     syntax->type = BINARY_OPERATOR;
     syntax->binary_expression = binary_syntax;
 
@@ -109,13 +99,11 @@ Syntax *assignment_new(char *var_name, Syntax *expression) {
 }
 
 Syntax *return_statement_new(Syntax *expression) {
-    Syntax *syntax = malloc(sizeof(Syntax));
-
     Statement *statement = malloc(sizeof(Statement));
-
     statement->statement_type = RETURN_STATEMENT;
     statement->return_expression = expression;
 
+    Syntax *syntax = malloc(sizeof(Syntax));
     syntax->type = STATEMENT;
     syntax->statement = statement;
 
@@ -123,12 +111,10 @@ Syntax *return_statement_new(Syntax *expression) {
 }
 
 Syntax *block_new(List *statements) {
-    Syntax *syntax = malloc(sizeof(Syntax));
-
     Block *block = malloc(sizeof(Block));
-
     block->statements = statements;
 
+    Syntax *syntax = malloc(sizeof(Syntax));
     syntax->type = BLOCK;
     syntax->block = block;
 
@@ -136,13 +122,11 @@ Syntax *block_new(List *statements) {
 }
 
 Syntax *if_new(Syntax *condition, Syntax *then) {
-    Syntax *syntax = malloc(sizeof(Syntax));
-
     IfStatement *if_statement = malloc(sizeof(IfStatement));
-
     if_statement->condition = condition;
     if_statement->then = then;
 
+    Syntax *syntax = malloc(sizeof(Syntax));
     syntax->type = IF_STATEMENT_SYNTAX;
     syntax->if_statement = if_statement;
 
@@ -150,12 +134,11 @@ Syntax *if_new(Syntax *condition, Syntax *then) {
 }
 
 Syntax *define_var_new(char *var_name, Syntax *init_value) {
-    Syntax *syntax = malloc(sizeof(Syntax));
-
     DefineVarStatement *define_var_statement = malloc(sizeof(DefineVarStatement));
     define_var_statement->var_name = var_name;
     define_var_statement->init_value = init_value;
 
+    Syntax *syntax = malloc(sizeof(Syntax));
     syntax->type = DEFINE_VAR_SYNTAX;
     syntax->define_var_statement = define_var_statement;
 
@@ -175,12 +158,10 @@ Syntax *while_new(Syntax *condition, Syntax *body) {
 }
 
 Syntax *function_new(Syntax *root_block) {
-    Syntax *syntax = malloc(sizeof(Syntax));
-
     Function *function = malloc(sizeof(Function));
-
     function->root_block = root_block;
 
+    Syntax *syntax = malloc(sizeof(Syntax));
     syntax->type = FUNCTION;
     syntax->function = function;
 
