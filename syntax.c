@@ -81,6 +81,18 @@ Syntax *multiplication_new(Syntax *left, Syntax *right) {
     return syntax;
 }
 
+Syntax *assignment_new(char *var_name, Syntax *expression) {
+    Assignment *assignment = malloc(sizeof(Assignment));
+    assignment->var_name = var_name;
+    assignment->expression = expression;
+
+    Syntax *syntax = malloc(sizeof(Syntax));
+    syntax->type = ASSIGNMENT;
+    syntax->assignment = assignment;
+
+    return syntax;
+}
+
 Syntax *return_statement_new(Syntax *expression) {
     Syntax *syntax = malloc(sizeof(Syntax));
 
@@ -210,6 +222,8 @@ char *syntax_type_name(Syntax *syntax) {
         return "BLOCK";
     } else if (syntax->type == FUNCTION) {
         return "FUNCTION";
+    } else if (syntax->type == ASSIGNMENT) {
+        return "ASSIGNMENT";
     }
 
     // Should never be reached.
@@ -282,6 +296,11 @@ void print_syntax_indented(Syntax *syntax, int indent) {
     } else if (syntax->type == FUNCTION) {
         printf("%s\n", syntax_type_string);
         print_syntax_indented(syntax->function->root_block, indent + 4);
+        
+    } else if (syntax->type == ASSIGNMENT) {
+        printf("%s '%s'\n", syntax_type_string, syntax->assignment->var_name);
+        print_syntax_indented(syntax->assignment->expression, indent + 4);
+        
     } else {
         printf("??? UNKNOWN SYNTAX TYPE\n");
     }

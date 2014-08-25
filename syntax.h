@@ -8,6 +8,7 @@ typedef enum {
     UNARY_OPERATOR, BINARY_OPERATOR,
     BLOCK, STATEMENT, IF_STATEMENT_SYNTAX,
     DEFINE_VAR_SYNTAX, FUNCTION,
+    ASSIGNMENT,
 } SyntaxType;
 typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnaryExpressionType;
 typedef enum { ADDITION, MULTIPLICATION } BinaryExpressionType;
@@ -34,6 +35,11 @@ typedef struct BinaryExpression {
     Syntax *left;
     Syntax *right;
 } BinaryExpression;
+
+typedef struct Assignment {
+    char *var_name;
+    Syntax *expression;
+} Assignment;
 
 typedef struct IfStatement {
     Syntax *condition;
@@ -78,6 +84,8 @@ struct Syntax {
 
         BinaryExpression *binary_expression;
 
+        Assignment *assignment;
+
         // TODO: Add a boxed ReturnStatement, then Statement does not
         // need to be a syntax type (it only occurs in Block lists).
         Statement *statement;
@@ -103,6 +111,8 @@ Syntax *logical_negation_new(Syntax *expression);
 Syntax *addition_new(Syntax *left, Syntax *right);
 
 Syntax *multiplication_new(Syntax *left, Syntax *right);
+
+Syntax *assignment_new(char *var_name, Syntax *expression);
 
 Syntax *return_statement_new(Syntax *expression);
 

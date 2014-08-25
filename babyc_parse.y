@@ -152,6 +152,11 @@ statement:
             Syntax *init_value = stack_pop(syntax_stack);
             stack_push(syntax_stack, define_var_new((char*)$2, init_value));
         }
+        |
+        expression ';'
+        {
+            // Nothing to do, we have the AST node already.
+        }
         ;
 
 expression:
@@ -163,6 +168,12 @@ expression:
 	IDENTIFIER
         {
             stack_push(syntax_stack, variable_new((char*)$1));
+        }
+        |
+	IDENTIFIER '=' expression
+        {
+            Syntax *expression = stack_pop(syntax_stack);
+            stack_push(syntax_stack, assignment_new((char*)$1, expression));
         }
         |
         '~' expression

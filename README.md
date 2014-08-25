@@ -22,7 +22,9 @@ Current feature set:
 * sequences of statements (`foo; bar`)
 * return statements
 * if statements (`if (foo) { bar }`, no `else` yet)
-* local variables (`int` only, function scope only)
+* local variables (`int` only, function scope only, must be
+  initialised)
+* variable assignment (`int` only)
 
 ## License
 

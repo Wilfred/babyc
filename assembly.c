@@ -86,6 +86,13 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         } else if (binary_syntax->binary_type == ADDITION) {
             fprintf(out, "    add     %d(%%ebp), %%eax\n", stack_offset);
         }
+
+    } else if (syntax->type == ASSIGNMENT) {
+        write_syntax(out, syntax->assignment->expression, ctx);
+
+        fprintf(out, "    mov     %%eax, %d(%%ebp)\n",
+                environment_get_offset(ctx->env, syntax->variable->var_name));
+        
     } else if (syntax->type == STATEMENT) {
         Statement *statement = syntax->statement;
         
