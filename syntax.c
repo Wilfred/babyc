@@ -99,13 +99,12 @@ Syntax *assignment_new(char *var_name, Syntax *expression) {
 }
 
 Syntax *return_statement_new(Syntax *expression) {
-    Statement *statement = malloc(sizeof(Statement));
-    statement->statement_type = RETURN_STATEMENT;
-    statement->return_expression = expression;
+    ReturnStatement *return_statement = malloc(sizeof(ReturnStatement));
+    return_statement->expression = expression;
 
     Syntax *syntax = malloc(sizeof(Syntax));
-    syntax->type = STATEMENT;
-    syntax->statement = statement;
+    syntax->type = RETURN_STATEMENT;
+    syntax->return_statement = return_statement;
 
     return syntax;
 }
@@ -127,7 +126,7 @@ Syntax *if_new(Syntax *condition, Syntax *then) {
     if_statement->then = then;
 
     Syntax *syntax = malloc(sizeof(Syntax));
-    syntax->type = IF_STATEMENT_SYNTAX;
+    syntax->type = IF_STATEMENT;
     syntax->if_statement = if_statement;
 
     return syntax;
@@ -139,7 +138,7 @@ Syntax *define_var_new(char *var_name, Syntax *init_value) {
     define_var_statement->init_value = init_value;
 
     Syntax *syntax = malloc(sizeof(Syntax));
-    syntax->type = DEFINE_VAR_SYNTAX;
+    syntax->type = DEFINE_VAR;
     syntax->define_var_statement = define_var_statement;
 
     return syntax;
@@ -178,15 +177,7 @@ void syntax_free(Syntax *syntax) {
         syntax_free(syntax->binary_expression->right);
         free(syntax->binary_expression);
         
-    } else if (syntax->type == STATEMENT) {
-        Statement *statement = syntax->statement;
-        if (statement->statement_type == RETURN_STATEMENT) {
-            syntax_free(statement->return_expression);
-        } else if (statement->statement_type == IF_STATEMENT) {
-            syntax_free(statement->if_statement);
-        }
-        
-    } else if (syntax->type == IF_STATEMENT_SYNTAX) {
+    } else if (syntax->type == IF_STATEMENT) {
         syntax_free(syntax->if_statement->condition);
         syntax_free(syntax->if_statement->then);
         
@@ -218,15 +209,11 @@ char *syntax_type_name(Syntax *syntax) {
         } else if (syntax->binary_expression->binary_type == LESS_THAN) {
             return "LESS THAN";
         }
-    } else if (syntax->type == STATEMENT) {
-        if (syntax->statement->statement_type == RETURN_STATEMENT) {
-            return "STATEMENT RETURN";
-        } else if (syntax->statement->statement_type == IF_STATEMENT) {
-            return "STATEMENT IF";
-        }
-    } else if (syntax->type == IF_STATEMENT_SYNTAX) {
+    } else if (syntax->type == IF_STATEMENT) {
         return "IF";
-    } else if (syntax->type == DEFINE_VAR_SYNTAX) {
+    } else if (syntax->type == RETURN_STATEMENT) {
+        return "RETURN";
+    } else if (syntax->type == DEFINE_VAR) {
         return "DEFINE VARIABLE";
     } else if (syntax->type == BLOCK) {
         return "BLOCK";
@@ -268,15 +255,7 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         printf("%s RIGHT\n", syntax_type_string);
         print_syntax_indented(syntax->binary_expression->right, indent + 4);
         
-    } else if (syntax->type == STATEMENT) {
-        printf("%s\n", syntax_type_string);
-        if (syntax->statement->statement_type == RETURN_STATEMENT) {
-            print_syntax_indented(syntax->statement->return_expression, indent + 4);
-        } else if (syntax->statement->statement_type == IF_STATEMENT) {
-            print_syntax_indented(syntax->statement->if_statement, indent + 4);
-        }
-
-    } else if (syntax->type == IF_STATEMENT_SYNTAX) {
+    } else if (syntax->type == IF_STATEMENT) {
         printf("%s CONDITION\n", syntax_type_string);
         print_syntax_indented(syntax->if_statement->condition, indent + 4);
 
@@ -287,7 +266,11 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         printf("%s THEN\n", syntax_type_string);
         print_syntax_indented(syntax->if_statement->then, indent + 4);
 
-    } else if (syntax->type == DEFINE_VAR_SYNTAX) {
+    } else if (syntax->type == RETURN_STATEMENT) {
+        printf("%s\n", syntax_type_string);
+        print_syntax_indented(syntax->return_statement->expression, indent + 4);
+
+    } else if (syntax->type == DEFINE_VAR) {
         printf("%s '%s'\n", syntax_type_string, syntax->define_var_statement->var_name);
 
         for (int i=0; i<indent; i++) {

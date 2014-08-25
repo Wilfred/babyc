@@ -6,8 +6,10 @@
 typedef enum {
     IMMEDIATE, VARIABLE,
     UNARY_OPERATOR, BINARY_OPERATOR,
-    BLOCK, STATEMENT, IF_STATEMENT_SYNTAX,
-    DEFINE_VAR_SYNTAX, FUNCTION,
+    // We already use 'RETURN' and 'IF' as token names.
+    BLOCK, IF_STATEMENT,
+    RETURN_STATEMENT,
+    DEFINE_VAR, FUNCTION,
     ASSIGNMENT, WHILE_SYNTAX,
 } SyntaxType;
 typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnaryExpressionType;
@@ -15,11 +17,6 @@ typedef enum {
     ADDITION, MULTIPLICATION,
     LESS_THAN,
 } BinaryExpressionType;
-// We already use 'RETURN' and 'IF' as token names. TODO: append TOKEN.
-typedef enum {
-    RETURN_STATEMENT, IF_STATEMENT,
-    DEFINE_VAR_STATEMENT, WHILE_STATEMENT,
-} StatementType;
 
 struct Syntax;
 typedef struct Syntax Syntax;
@@ -59,21 +56,9 @@ typedef struct WhileStatement {
     Syntax *body;
 } WhileStatement;
 
-typedef struct Statement {
-    // TODO: just rename this to type.
-    // TODO: We don't need this at all, just use lists of Syntax in Block.
-    StatementType statement_type;
-
-    union {
-        Syntax *return_expression;
-
-        Syntax *if_statement;
-
-        Syntax *define_var_statement;
-
-        Syntax *while_statement;
-    };
-} Statement;
+typedef struct ReturnStatement {
+    Syntax *expression;
+} ReturnStatement;
 
 typedef struct Block {
     List *statements;
@@ -97,9 +82,7 @@ struct Syntax {
 
         Assignment *assignment;
 
-        // TODO: Add a boxed ReturnStatement, then Statement does not
-        // need to be a syntax type (it only occurs in Block lists).
-        Statement *statement;
+        ReturnStatement *return_statement;
 
         IfStatement *if_statement;
 

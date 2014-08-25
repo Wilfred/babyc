@@ -102,17 +102,18 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         fprintf(out, "    mov     %%eax, %d(%%ebp)\n",
                 environment_get_offset(ctx->env, syntax->variable->var_name));
         
-    } else if (syntax->type == STATEMENT) {
-        Statement *statement = syntax->statement;
-        
-        if (statement->statement_type == RETURN_STATEMENT) {
-            write_syntax(out, syntax->statement->return_expression, ctx);
-            emit_header(out, "");
-            emit_insn(out, "mov     %eax, %ebx");
-            emit_insn(out, "mov     $1, %eax");
-            emit_insn(out, "int     $0x80");
-        }
-    } else if (syntax->type == IF_STATEMENT_SYNTAX) {
+    } else if (syntax->type == RETURN_STATEMENT) {
+        ReturnStatement *return_statement = syntax->return_statement;
+        write_syntax(out, return_statement->expression, ctx);
+
+        // TODO: when we have function calls, we should factor this
+        // out, as we only call exit() in main.
+        emit_header(out, "");
+        emit_insn(out, "mov     %eax, %ebx");
+        emit_insn(out, "mov     $1, %eax");
+        emit_insn(out, "int     $0x80");
+
+    } else if (syntax->type == IF_STATEMENT) {
         IfStatement *if_statement = syntax->if_statement;
         write_syntax(out, if_statement->condition, ctx);
 
@@ -140,7 +141,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         fprintf(out, "    jmp    %s\n", start_label);
         emit_label(out, end_label);
 
-    } else if (syntax->type == DEFINE_VAR_SYNTAX) {
+    } else if (syntax->type == DEFINE_VAR) {
         DefineVarStatement *define_var_statement = syntax->define_var_statement;
         int stack_offset = *ctx->stack_offset;
             
