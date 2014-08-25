@@ -9,3 +9,4 @@ test_programs/one
 build/
 
 .gdb_history
+TAGS
