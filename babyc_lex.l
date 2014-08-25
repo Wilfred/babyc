@@ -4,6 +4,8 @@ L			[a-zA-Z_]
 
 %{
 #include <stdio.h>
+#include <err.h>
+#include <string.h>
 #include "y.tab.h"
 
 void comment();
