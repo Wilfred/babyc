@@ -24,6 +24,8 @@ Syntax *variable_new(char *var_name) {
 }
 
 Syntax *bitwise_negation_new(Syntax *expression) {
+    // TODO: reorder these functions so we don't call malloc until we
+    // need `syntax`.
     Syntax *syntax = malloc(sizeof(Syntax));
 
     UnaryExpression *unary_syntax = malloc(sizeof(UnaryExpression));
@@ -160,6 +162,18 @@ Syntax *define_var_new(char *var_name, Syntax *init_value) {
     return syntax;
 }
 
+Syntax *while_new(Syntax *condition, Syntax *body) {
+    WhileStatement *while_statement = malloc(sizeof(WhileStatement));
+    while_statement->condition = condition;
+    while_statement->body = body;
+
+    Syntax *syntax = malloc(sizeof(Syntax));
+    syntax->type = WHILE_SYNTAX;
+    syntax->while_statement = while_statement;
+
+    return syntax;
+}
+
 Syntax *function_new(Syntax *root_block) {
     Syntax *syntax = malloc(sizeof(Syntax));
 
@@ -239,6 +253,8 @@ char *syntax_type_name(Syntax *syntax) {
         return "FUNCTION";
     } else if (syntax->type == ASSIGNMENT) {
         return "ASSIGNMENT";
+    } else if (syntax->type == WHILE_SYNTAX) {
+        return "WHILE";
     }
 
     // Should never be reached.
@@ -314,6 +330,10 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         
     } else if (syntax->type == ASSIGNMENT) {
         printf("%s '%s'\n", syntax_type_string, syntax->assignment->var_name);
+        print_syntax_indented(syntax->assignment->expression, indent + 4);
+        
+    } else if (syntax->type == WHILE_SYNTAX) {
+        printf("%s\n", syntax_type_string);
         print_syntax_indented(syntax->assignment->expression, indent + 4);
         
     } else {

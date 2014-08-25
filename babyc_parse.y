@@ -92,7 +92,7 @@ cleanup_file:
 %token INCLUDE HEADER_NAME
 %token TYPE IDENTIFIER RETURN NUMBER
 %token OPEN_BRACE CLOSE_BRACE
-%token IF
+%token IF WHILE
 
 /* Left associative operators, least precedence first. */
 %left '<'
@@ -146,6 +146,13 @@ statement:
             Syntax *then = stack_pop(syntax_stack);
             Syntax *condition = stack_pop(syntax_stack);
             stack_push(syntax_stack, if_new(condition, then));
+        }
+        |
+        WHILE '(' expression ')' OPEN_BRACE block CLOSE_BRACE
+        {
+            Syntax *body = stack_pop(syntax_stack);
+            Syntax *condition = stack_pop(syntax_stack);
+            stack_push(syntax_stack, while_new(condition, body));
         }
         |
         TYPE IDENTIFIER '=' expression ';'

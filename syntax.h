@@ -8,7 +8,7 @@ typedef enum {
     UNARY_OPERATOR, BINARY_OPERATOR,
     BLOCK, STATEMENT, IF_STATEMENT_SYNTAX,
     DEFINE_VAR_SYNTAX, FUNCTION,
-    ASSIGNMENT,
+    ASSIGNMENT, WHILE_SYNTAX,
 } SyntaxType;
 typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnaryExpressionType;
 typedef enum {
@@ -18,7 +18,7 @@ typedef enum {
 // We already use 'RETURN' and 'IF' as token names. TODO: append TOKEN.
 typedef enum {
     RETURN_STATEMENT, IF_STATEMENT,
-    DEFINE_VAR_STATEMENT,
+    DEFINE_VAR_STATEMENT, WHILE_STATEMENT,
 } StatementType;
 
 struct Syntax;
@@ -54,8 +54,14 @@ typedef struct DefineVarStatement {
     Syntax *init_value;
 } DefineVarStatement;
 
+typedef struct WhileStatement {
+    Syntax *condition;
+    Syntax *body;
+} WhileStatement;
+
 typedef struct Statement {
     // TODO: just rename this to type.
+    // TODO: We don't need this at all, just use lists of Syntax in Block.
     StatementType statement_type;
 
     union {
@@ -64,6 +70,8 @@ typedef struct Statement {
         Syntax *if_statement;
 
         Syntax *define_var_statement;
+
+        Syntax *while_statement;
     };
 } Statement;
 
@@ -96,6 +104,8 @@ struct Syntax {
         IfStatement *if_statement;
 
         DefineVarStatement *define_var_statement;
+
+        WhileStatement *while_statement;
         
         Block *block;
         
@@ -126,6 +136,8 @@ Syntax *block_new(List *statements);
 Syntax *if_new(Syntax *condition, Syntax *then);
 
 Syntax *define_var_new(char *var_name, Syntax *init_value);
+
+Syntax *while_new(Syntax *condition, Syntax *body);
 
 Syntax *function_new(Syntax *root_block);
 

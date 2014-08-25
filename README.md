@@ -26,6 +26,7 @@ Current feature set:
 * local variables (`int` only, function scope only, must be
   initialised)
 * variable assignment (`int` only)
+* while loops (`while (foo) { bar }`)
 
 ## License
 

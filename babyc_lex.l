@@ -35,6 +35,7 @@ void error();
                 yylval=atoi(yytext); return NUMBER;
               }
 "if"          { return IF; }
+"while"       { return WHILE; }
 "return"      { return RETURN; }
 
 "int"         { return TYPE; }

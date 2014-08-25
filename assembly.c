@@ -124,6 +124,22 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         write_syntax(out, if_statement->then, ctx);
         emit_label(out, label);
 
+    } else if (syntax->type == WHILE_SYNTAX) {
+        WhileStatement *while_statement = syntax->while_statement;
+
+        char *start_label = fresh_local_label("while_start");
+        char *end_label = fresh_local_label("while_end");
+
+        emit_label(out, start_label);
+        write_syntax(out, while_statement->condition, ctx);
+        
+        emit_insn(out, "test    %eax, %eax");
+        fprintf(out, "    jz    %s\n", end_label);
+
+        write_syntax(out, while_statement->body, ctx);
+        fprintf(out, "    jmp    %s\n", start_label);
+        emit_label(out, end_label);
+
     } else if (syntax->type == DEFINE_VAR_SYNTAX) {
         DefineVarStatement *define_var_statement = syntax->define_var_statement;
         int stack_offset = *ctx->stack_offset;
