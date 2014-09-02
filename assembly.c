@@ -3,6 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <err.h>
 #include "syntax.h"
 #include "environment.h"
@@ -10,13 +11,34 @@
 #define WORD_SIZE 4
 
 void emit_header(FILE *out, char *name) {
-    // The assembler requries at least 4 spaces for indentation.
     fprintf(out, "%s\n", name);
 }
 
-void emit_insn(FILE *out, char *insn) {
-    // The assembler requries at least 4 spaces for indentation.
-    fprintf(out, "    %s\n", insn);
+/* Write instruction INSTR with OPERANDS to OUT.
+ *
+ * Example:
+ * emit_instr(out, "MOV", "%eax, 1");
+ */
+void emit_instr(FILE *out, char* instr, char* operands) {
+    // The assembler requires at least 4 spaces for indentation.
+    fprintf(out, "    %s    %s\n", instr, operands);
+}
+
+/* Write instruction INSTR with formatted operands OPERANDS_FORMAT to
+ * OUT.
+ *
+ * Example:
+ * emit_instr_format(out, "MOV", "%%eax, %s", 5);
+ */
+void emit_instr_format(FILE *out, char* instr, char* operands_format, ...) {
+    fprintf(out, "    %s    ", instr);
+    
+    va_list argptr;
+    va_start(argptr, operands_format);
+    vfprintf(out, operands_format, argptr);
+    va_end(argptr);
+
+    fputs("\n", out);
 }
 
 int label_count = 0;
@@ -38,9 +60,9 @@ void emit_label(FILE *out, char *label) {
 
 void write_header(FILE *out) {
     emit_header(out, ".text");
-    emit_insn(out, ".global _start\n");
+    fprintf(out, ".global _start\n\n");
     emit_header(out, "_start:");
-    emit_insn(out, "mov     %esp, %ebp");
+    emit_instr(out, "mov", "%esp, %ebp");
     emit_header(out, "");
 }
 
@@ -58,49 +80,53 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         write_syntax(out, unary_syntax->expression, ctx);
 
         if (unary_syntax->unary_type == BITWISE_NEGATION) {
-            emit_insn(out, "not     %eax");
+            emit_instr(out, "not", "%eax");
         } else {
-            emit_insn(out, "test    $0xFFFFFFFF, %eax");
-            emit_insn(out, "setz    %al");
+            emit_instr(out, "test", "$0xFFFFFFFF, %eax");
+            emit_instr(out, "setz", "%al");
         }
     } else if (syntax->type == IMMEDIATE) {
-        fprintf(out, "    mov     $%d, %%eax\n", syntax->immediate->value);
+        emit_instr_format(out, "mov", "$%d, %%eax", syntax->immediate->value);
 
     } else if (syntax->type == VARIABLE) {
-        fprintf(out, "    mov     %d(%%ebp), %%eax\n",
-                environment_get_offset(ctx->env, syntax->variable->var_name));
+        emit_instr_format(
+            out, "mov", "%d(%%ebp), %%eax",
+            environment_get_offset(ctx->env, syntax->variable->var_name));
         
     } else if (syntax->type == BINARY_OPERATOR) {
         BinaryExpression *binary_syntax = syntax->binary_expression;
         int stack_offset = *ctx->stack_offset;
         *ctx->stack_offset -= WORD_SIZE;
 
-        emit_insn(out, "sub     $4, %esp");
+        emit_instr(out, "sub", "$4, %esp");
         write_syntax(out, binary_syntax->left, ctx);
-        fprintf(out, "    mov     %%eax, %d(%%ebp)\n", stack_offset);
+        emit_instr_format(out, "mov", "%%eax, %d(%%ebp)", stack_offset);
 
         write_syntax(out, binary_syntax->right, ctx);
 
         if (binary_syntax->binary_type == MULTIPLICATION) {
-            fprintf(out, "    mull     %d(%%ebp)\n", stack_offset);
+            emit_instr_format(out, "mull", "%d(%%ebp)", stack_offset);
+            
         } else if (binary_syntax->binary_type == ADDITION) {
-            fprintf(out, "    add     %d(%%ebp), %%eax\n", stack_offset);
+            emit_instr_format(out, "add", "%d(%%ebp), %%eax\n", stack_offset);
+            
         } else if (binary_syntax->binary_type == LESS_THAN) {
             // To compare x < y in AT&T syntax, we write CMP y,x.
             // http://stackoverflow.com/q/25493255/509706
-            fprintf(out, "    cmp     %%eax, %d(%%ebp)\n", stack_offset);
+            emit_instr_format(out, "cmp", "%%eax, %d(%%ebp)", stack_offset);
             // Set the low byte of %eax to 0 or 1 depending on whether
             // it was less than.
-            emit_insn(out, "setl    %al");
+            emit_instr(out, "setl", "%al");
             // Zero the rest of %eax.
-            emit_insn(out, "movzbl    %al, %eax");
+            emit_instr(out, "movzbl", "%al, %eax");
         }
 
     } else if (syntax->type == ASSIGNMENT) {
         write_syntax(out, syntax->assignment->expression, ctx);
 
-        fprintf(out, "    mov     %%eax, %d(%%ebp)\n",
-                environment_get_offset(ctx->env, syntax->variable->var_name));
+        emit_instr_format(
+            out, "mov", "%%eax, %d(%%ebp)",
+            environment_get_offset(ctx->env, syntax->variable->var_name));
         
     } else if (syntax->type == RETURN_STATEMENT) {
         ReturnStatement *return_statement = syntax->return_statement;
@@ -109,9 +135,9 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         // TODO: when we have function calls, we should factor this
         // out, as we only call exit() in main.
         emit_header(out, "");
-        emit_insn(out, "mov     %eax, %ebx");
-        emit_insn(out, "mov     $1, %eax");
-        emit_insn(out, "int     $0x80");
+        emit_instr(out, "mov", "%eax, %ebx");
+        emit_instr(out, "mov", "$1, %eax");
+        emit_instr(out, "int", "$0x80");
 
     } else if (syntax->type == IF_STATEMENT) {
         IfStatement *if_statement = syntax->if_statement;
@@ -119,8 +145,8 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
 
         char *label = fresh_local_label("if_end");
 
-        emit_insn(out, "test    %eax, %eax");
-        fprintf(out, "    jz    %s\n", label);
+        emit_instr(out, "test", "%eax, %eax");
+        emit_instr_format(out, "jz", "%s", label);
 
         write_syntax(out, if_statement->then, ctx);
         emit_label(out, label);
@@ -134,11 +160,11 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         emit_label(out, start_label);
         write_syntax(out, while_statement->condition, ctx);
         
-        emit_insn(out, "test    %eax, %eax");
-        fprintf(out, "    jz    %s\n", end_label);
+        emit_instr(out, "test", "%eax, %eax");
+        emit_instr_format(out, "jz", "%s", end_label);
 
         write_syntax(out, while_statement->body, ctx);
-        fprintf(out, "    jmp    %s\n", start_label);
+        emit_instr_format(out, "jmp", "%s", start_label);
         emit_label(out, end_label);
 
     } else if (syntax->type == DEFINE_VAR) {
@@ -146,11 +172,11 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         int stack_offset = *ctx->stack_offset;
             
         environment_set_offset(ctx->env, define_var_statement->var_name, stack_offset);
-        emit_insn(out, "sub     $4, %esp");
+        emit_instr(out, "sub", "$4, %esp");
 
         *ctx->stack_offset -= WORD_SIZE;
         write_syntax(out, define_var_statement->init_value, ctx);
-        fprintf(out, "    mov     %%eax, %d(%%ebp)\n", stack_offset);
+        emit_instr_format(out, "mov", "%%eax, %d(%%ebp)\n", stack_offset);
 
     } else if (syntax->type == BLOCK) {
         List *statements = syntax->block->statements;
