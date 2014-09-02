@@ -21,6 +21,10 @@ typedef enum {
 struct Syntax;
 typedef struct Syntax Syntax;
 
+typedef struct Immediate {
+    int value;
+} Immediate;
+
 typedef struct Variable {
     char *var_name;
 } Variable;
@@ -71,8 +75,7 @@ typedef struct Function {
 struct Syntax {
     SyntaxType type;
     union {
-        // Immediate. TODO: Box this.
-        int value;
+        Immediate *immediate;
 
         Variable *variable;
 

@@ -64,7 +64,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
             emit_insn(out, "setz    %al");
         }
     } else if (syntax->type == IMMEDIATE) {
-        fprintf(out, "    mov     $%d, %%eax\n", syntax->value);
+        fprintf(out, "    mov     $%d, %%eax\n", syntax->immediate->value);
 
     } else if (syntax->type == VARIABLE) {
         fprintf(out, "    mov     %d(%%ebp), %%eax\n",

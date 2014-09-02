@@ -4,10 +4,12 @@
 #include "list.h"
 
 Syntax *immediate_new(int value) {
+    Immediate *immediate = malloc(sizeof(Immediate));
+    immediate->value = value;
+    
     Syntax *syntax = malloc(sizeof(Syntax));
-
     syntax->type = IMMEDIATE;
-    syntax->value = value;
+    syntax->immediate = immediate;
 
     return syntax;
 }
@@ -237,7 +239,7 @@ void print_syntax_indented(Syntax *syntax, int indent) {
     char *syntax_type_string = syntax_type_name(syntax);
 
     if (syntax->type == IMMEDIATE) {
-        printf("%s %d\n", syntax_type_string, syntax->value);
+        printf("%s %d\n", syntax_type_string, syntax->immediate->value);
     } else if (syntax->type == VARIABLE) {
         printf("%s '%s'\n", syntax_type_string, syntax->variable->var_name);
     } else if (syntax->type == UNARY_OPERATOR) {
