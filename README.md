@@ -34,13 +34,32 @@ GPL v2 license.
 
 ## Usage
 
+Compiling babyc:
+
 ```
 # Compile the compiler.
 $ make
+```
+
+Usage:
+
+```
 # Run it, producing an assembly file.
-$ babyc test_programs/just_a_number__return_1.c
+$ build/babyc test_programs/immediate__return_1.c
 # Use the GNU toolchain to assemble and link.
 $ ./link
+```
+
+Viewing the AST:
+
+```
+$ build/babyc --dump-ast test_programs/if_false__return_2.c
+```
+
+Running tests:
+
+```
+$ make test
 ```
 
 ### Debugging
