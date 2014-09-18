@@ -31,6 +31,10 @@ int main(int argc, char *argv[])
     bool dump_ast = false;
     if (argc == 1) {
         yyin = fopen(argv[0], "r");
+
+        fprintf(stderr, "Could not open file: '%s'\n", argv[0]);
+        return 2;
+
     } else if (argc == 2 && strcmp(argv[0], "--dump-ast") == 0) {
         dump_ast = true;
         yyin = fopen(argv[1], "r");
