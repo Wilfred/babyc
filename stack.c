@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -28,9 +29,7 @@ void stack_push(Stack *stack, void *item) {
 }
 
 void *stack_pop(Stack *stack) {
-    if (stack->size < 1) {
-        printf("WARNING: Popping off of empty stack!\n");
-    }
+    assert(stack->size >= 1);
     stack->size--;
 
     void *item = stack->content[stack->size];
@@ -39,9 +38,7 @@ void *stack_pop(Stack *stack) {
 }
 
 void *stack_peek(Stack *stack) {
-    if (stack->size < 1) {
-        printf("WARNING: Peeking on empty stack!\n");
-    }
+    assert(stack->size >= 1);
 
     return stack->content[stack->size - 1];
 }
