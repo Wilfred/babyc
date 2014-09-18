@@ -40,18 +40,16 @@ int main(int argc, char *argv[])
     ++argv, --argc;  /* Skip over program name. */
 
     bool dump_ast = false;
+    char *file_name;
     if (argc == 1 && strcmp(argv[0], "--help") == 0) {
         print_help();
         return 0;
     } else if (argc == 1) {
+        file_name = argv[0];
         yyin = fopen(argv[0], "r");
-
-        fprintf(stderr, "Could not open file: '%s'\n", argv[0]);
-        return 2;
-
     } else if (argc == 2 && strcmp(argv[0], "--dump-ast") == 0) {
         dump_ast = true;
-        yyin = fopen(argv[1], "r");
+        file_name = argv[1];
     } else {
         print_help();
         return 1;
@@ -59,10 +57,12 @@ int main(int argc, char *argv[])
 
     int result;
 
+    yyin = fopen(file_name, "r");
+
     if (yyin == NULL) {
         // TODO: work out what the error was.
         // TODO: Unit test this.
-        printf("Failed to open file.\n");
+        printf("Could not open file: '%s'\n", file_name);
         result = 2;
         goto cleanup_file;
     }
@@ -98,7 +98,9 @@ cleanup_syntax:
      */
     stack_free(syntax_stack);
 cleanup_file:
-    fclose(yyin);
+    if (yyin != NULL) {
+        fclose(yyin);
+    }
 
     return result;
 }
