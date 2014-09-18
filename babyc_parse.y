@@ -24,12 +24,26 @@ extern FILE *yyin;
 
 Stack *syntax_stack;
 
+void print_help() {
+    printf("Babyc is a very basic C compiler.\n\n");
+    printf("To compile a file:\n");
+    printf("    $ babyc foo.c\n");
+    printf("To output the AST without compiling:\n");
+    printf("    $ babyc --dump-ast foo.c\n");
+    printf("To print this message:\n");
+    printf("    $ babyc --help\n\n");
+    printf("For more information, see https://github.com/Wilfred/babyc\n");
+}
+
 int main(int argc, char *argv[])
 {
     ++argv, --argc;  /* Skip over program name. */
 
     bool dump_ast = false;
-    if (argc == 1) {
+    if (argc == 1 && strcmp(argv[0], "--help") == 0) {
+        print_help();
+        return 0;
+    } else if (argc == 1) {
         yyin = fopen(argv[0], "r");
 
         fprintf(stderr, "Could not open file: '%s'\n", argv[0]);
@@ -39,9 +53,7 @@ int main(int argc, char *argv[])
         dump_ast = true;
         yyin = fopen(argv[1], "r");
     } else {
-        printf("Usage:\n");
-        printf("    $ babyc foo.c\n");
-        printf("    $ babyc --dump-ast foo.c\n");
+        print_help();
         return 1;
     }
 
