@@ -185,6 +185,14 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         }
     } else if (syntax->type == FUNCTION) {
         write_syntax(out, syntax->function->root_block, ctx);
+
+    } else if (syntax->type == TOP_LEVEL) {
+        // TODO: treat the 'main' function specially.
+        List *declarations = syntax->top_level->declarations;
+        for (int i=0; i<list_length(declarations); i++) {
+            write_syntax(out, list_get(declarations, i), ctx);
+        }
+
     } else {
         warnx("Unknown syntax %s", syntax_type_name(syntax));
         assert(false);

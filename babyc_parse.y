@@ -120,7 +120,22 @@ cleanup_file:
 %%
 
 program:
-	function
+        function program
+        {
+            Syntax *top_level_syntax;
+            if (stack_empty(syntax_stack)) {
+                top_level_syntax = top_level_new();
+            } else if (((Syntax *)stack_peek(syntax_stack))->type != TOP_LEVEL) {
+                top_level_syntax = top_level_new();
+            } else {
+                top_level_syntax = stack_pop(syntax_stack);
+            }
+
+            list_push(top_level_syntax->top_level->declarations,
+                      stack_pop(syntax_stack));
+            stack_push(syntax_stack, top_level_syntax);
+        }
+        |
         ;
 
 function:

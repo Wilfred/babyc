@@ -169,6 +169,17 @@ Syntax *function_new(Syntax *root_block) {
     return syntax;
 }
 
+Syntax *top_level_new() {
+    TopLevel *top_level = malloc(sizeof(TopLevel));
+    top_level->declarations = list_new();
+    
+    Syntax *syntax = malloc(sizeof(Syntax));
+    syntax->type = TOP_LEVEL;
+    syntax->top_level = top_level;
+
+    return syntax;
+}
+
 void syntax_free(Syntax *syntax) {
     if (syntax->type == UNARY_OPERATOR) {
         syntax_free(syntax->unary_expression->expression);
@@ -225,6 +236,8 @@ char *syntax_type_name(Syntax *syntax) {
         return "ASSIGNMENT";
     } else if (syntax->type == WHILE_SYNTAX) {
         return "WHILE";
+    } else if (syntax->type == TOP_LEVEL) {
+        return "TOP LEVEL";
     }
 
     // Should never be reached.
@@ -302,6 +315,14 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         printf("%s\n", syntax_type_string);
         print_syntax_indented(syntax->assignment->expression, indent + 4);
         
+    } else if (syntax->type == TOP_LEVEL) {
+        printf("%s\n", syntax_type_string);
+
+        List *declarations = syntax->top_level->declarations;
+        for (int i=0; i<list_length(declarations); i++) {
+            print_syntax_indented(list_get(declarations, i), indent + 4);
+        }
+
     } else {
         printf("??? UNKNOWN SYNTAX TYPE\n");
     }

@@ -11,6 +11,7 @@ typedef enum {
     RETURN_STATEMENT,
     DEFINE_VAR, FUNCTION,
     ASSIGNMENT, WHILE_SYNTAX,
+    TOP_LEVEL
 } SyntaxType;
 typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnaryExpressionType;
 typedef enum {
@@ -72,6 +73,10 @@ typedef struct Function {
     Syntax *root_block;
 } Function;
 
+typedef struct TopLevel {
+    List *declarations;
+} TopLevel;
+
 struct Syntax {
     SyntaxType type;
     union {
@@ -96,6 +101,8 @@ struct Syntax {
         Block *block;
         
         Function *function;
+
+        TopLevel *top_level;
     };
 };
 
@@ -126,6 +133,8 @@ Syntax *define_var_new(char *var_name, Syntax *init_value);
 Syntax *while_new(Syntax *condition, Syntax *body);
 
 Syntax *function_new(Syntax *root_block);
+
+Syntax *top_level_new();
 
 void syntax_free(Syntax *syntax);
 
