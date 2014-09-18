@@ -70,6 +70,7 @@ typedef struct Block {
 } Block;
 
 typedef struct Function {
+    char *name;
     Syntax *root_block;
 } Function;
 
@@ -132,7 +133,7 @@ Syntax *define_var_new(char *var_name, Syntax *init_value);
 
 Syntax *while_new(Syntax *condition, Syntax *body);
 
-Syntax *function_new(Syntax *root_block);
+Syntax *function_new(char *name, Syntax *root_block);
 
 Syntax *top_level_new();
 

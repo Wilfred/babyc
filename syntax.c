@@ -158,8 +158,9 @@ Syntax *while_new(Syntax *condition, Syntax *body) {
     return syntax;
 }
 
-Syntax *function_new(Syntax *root_block) {
+Syntax *function_new(char *name, Syntax *root_block) {
     Function *function = malloc(sizeof(Function));
+    function->name = name;
     function->root_block = root_block;
 
     Syntax *syntax = malloc(sizeof(Syntax));
@@ -304,7 +305,7 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         }
 
     } else if (syntax->type == FUNCTION) {
-        printf("%s\n", syntax_type_string);
+        printf("%s '%s'\n", syntax_type_string, syntax->function->name);
         print_syntax_indented(syntax->function->root_block, indent + 4);
         
     } else if (syntax->type == ASSIGNMENT) {
