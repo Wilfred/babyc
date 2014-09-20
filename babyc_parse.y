@@ -251,4 +251,9 @@ expression:
             Syntax *left = stack_pop(syntax_stack);
             stack_push(syntax_stack, less_than_new(left, right));
         }
+        |
+        IDENTIFIER '(' ')'
+        {
+            stack_push(syntax_stack, function_call_new((char*)$1));
+        }
         ;

@@ -88,6 +88,17 @@ Syntax *less_than_new(Syntax *left, Syntax *right) {
     return syntax;
 }
 
+Syntax *function_call_new(char *function_name) {
+    FunctionCall *function_call = malloc(sizeof(FunctionCall));
+    function_call->function_name = function_name;
+
+    Syntax *syntax = malloc(sizeof(Syntax));
+    syntax->type = FUNCTION_CALL;
+    syntax->function_call = function_call;
+
+    return syntax;
+}
+
 Syntax *assignment_new(char *var_name, Syntax *expression) {
     Assignment *assignment = malloc(sizeof(Assignment));
     assignment->var_name = var_name;
@@ -223,6 +234,8 @@ char *syntax_type_name(Syntax *syntax) {
         } else if (syntax->binary_expression->binary_type == LESS_THAN) {
             return "LESS THAN";
         }
+    } else if (syntax->type == FUNCTION_CALL) {
+        return "FUNCTION CALL";
     } else if (syntax->type == IF_STATEMENT) {
         return "IF";
     } else if (syntax->type == RETURN_STATEMENT) {
@@ -271,6 +284,9 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         printf("%s RIGHT\n", syntax_type_string);
         print_syntax_indented(syntax->binary_expression->right, indent + 4);
         
+    } else if (syntax->type == FUNCTION_CALL) {
+        printf("%s '%s'\n", syntax_type_string, syntax->function_call->function_name);
+
     } else if (syntax->type == IF_STATEMENT) {
         printf("%s CONDITION\n", syntax_type_string);
         print_syntax_indented(syntax->if_statement->condition, indent + 4);
