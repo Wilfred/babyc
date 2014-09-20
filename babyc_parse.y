@@ -7,6 +7,8 @@
 #include "stack.h"
 #include "list.h"
 
+#define YYSTYPE char*
+
 int yyparse(void);
 int yylex();
 
@@ -143,7 +145,7 @@ function:
         {
             Syntax *current_syntax = stack_pop(syntax_stack);
             // TODO: assert current_syntax has type BLOCK.
-            stack_push(syntax_stack, function_new($2, current_syntax));
+            stack_push(syntax_stack, function_new((char*)$2, current_syntax));
         }
         ;
 
@@ -203,7 +205,7 @@ statement:
 expression:
 	NUMBER
         {
-            stack_push(syntax_stack, immediate_new($1));
+            stack_push(syntax_stack, immediate_new(atoi((char*)$1)));
         }
         |
 	IDENTIFIER

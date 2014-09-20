@@ -32,7 +32,7 @@ void error();
 ";"           { return ';'; }
 [0-9]+        {
                 /* TODO: check numbers are in the legal range, and don't start with 0. */
-                yylval=atoi(yytext); return NUMBER;
+                yylval = strdup(yytext); return NUMBER;
               }
 "if"          { return IF; }
 "while"       { return WHILE; }
