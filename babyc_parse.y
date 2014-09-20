@@ -142,12 +142,24 @@ program:
         ;
 
 function:
-	TYPE IDENTIFIER '(' ')' OPEN_BRACE block CLOSE_BRACE
+	TYPE IDENTIFIER '(' parameter_list ')' OPEN_BRACE block CLOSE_BRACE
         {
             Syntax *current_syntax = stack_pop(syntax_stack);
             // TODO: assert current_syntax has type BLOCK.
-            stack_push(syntax_stack, function_new((char*)$2, current_syntax));
+            stack_push(syntax_stack, function_new((char*)$2, list_new(),
+                       current_syntax));
         }
+        ;
+
+parameter_list:
+        nonempty_parameter_list
+        |
+        ;
+
+nonempty_parameter_list:
+        TYPE IDENTIFIER ',' parameter_list
+        |
+        TYPE IDENTIFIER
         ;
 
 block:
@@ -167,6 +179,17 @@ block:
             stack_push(syntax_stack, block_syntax);
         }
         |
+        ;
+
+argument_list:
+        nonempty_argument_list
+        |
+        ;
+
+nonempty_argument_list:
+        expression ',' nonempty_argument_list
+        |
+        expression
         ;
 
 statement:
@@ -253,7 +276,7 @@ expression:
             stack_push(syntax_stack, less_than_new(left, right));
         }
         |
-        IDENTIFIER '(' ')'
+        IDENTIFIER '(' argument_list ')'
         {
             stack_push(syntax_stack, function_call_new((char*)$1));
         }

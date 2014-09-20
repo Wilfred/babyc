@@ -30,6 +30,7 @@ void error();
 "<"           { return '<'; }
 "="           { return '='; }
 ";"           { return ';'; }
+","           { return ','; }
 [0-9]+        {
                 /* TODO: check numbers are in the legal range, and don't start with 0. */
                 yylval = strdup(yytext); return NUMBER;
