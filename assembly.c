@@ -42,7 +42,7 @@ void emit_instr_format(FILE *out, char* instr, char* operands_format, ...) {
 }
 
 typedef struct Context {
-    int *stack_offset;
+    int stack_offset;
     Environment *env;
     int label_count;
 } Context;
@@ -105,8 +105,8 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         
     } else if (syntax->type == BINARY_OPERATOR) {
         BinaryExpression *binary_syntax = syntax->binary_expression;
-        int stack_offset = *ctx->stack_offset;
-        *ctx->stack_offset -= WORD_SIZE;
+        int stack_offset = ctx->stack_offset;
+        ctx->stack_offset -= WORD_SIZE;
 
         emit_instr(out, "sub", "$4, %esp");
         write_syntax(out, binary_syntax->left, ctx);
@@ -179,12 +179,12 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
 
     } else if (syntax->type == DEFINE_VAR) {
         DefineVarStatement *define_var_statement = syntax->define_var_statement;
-        int stack_offset = *ctx->stack_offset;
+        int stack_offset = ctx->stack_offset;
             
         environment_set_offset(ctx->env, define_var_statement->var_name, stack_offset);
         emit_instr(out, "sub", "$4, %esp");
 
-        *ctx->stack_offset -= WORD_SIZE;
+        ctx->stack_offset -= WORD_SIZE;
         write_syntax(out, define_var_statement->init_value, ctx);
         emit_instr_format(out, "mov", "%%eax, %d(%%ebp)\n", stack_offset);
 
@@ -223,11 +223,8 @@ void write_assembly(Syntax *syntax) {
 
     write_header(out);
 
-    int *stack_offset = malloc(sizeof(int));
-    *stack_offset = -1 * WORD_SIZE;
-    
     Context *ctx = malloc(sizeof(Context));
-    ctx->stack_offset = stack_offset;
+    ctx->stack_offset = -1 * WORD_SIZE;
     ctx->env = environment_new();
     ctx->label_count = 0;
 
