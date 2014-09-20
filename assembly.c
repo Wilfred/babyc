@@ -41,15 +41,19 @@ void emit_instr_format(FILE *out, char* instr, char* operands_format, ...) {
     fputs("\n", out);
 }
 
-int label_count = 0;
+typedef struct Context {
+    int *stack_offset;
+    Environment *env;
+    int label_count;
+} Context;
 
-char *fresh_local_label(char *prefix) {
+char *fresh_local_label(char *prefix, Context *ctx) {
     // We assume we never write more than 6 chars of digits, plus a '.' and '_'.
     size_t buffer_size = strlen(prefix) + 8;
     char *buffer = malloc(buffer_size);
 
-    snprintf(buffer, buffer_size, ".%s_%d", prefix, label_count);
-    label_count++;
+    snprintf(buffer, buffer_size, ".%s_%d", prefix, ctx->label_count);
+    ctx->label_count++;
 
     return buffer;
 }
@@ -76,11 +80,6 @@ void emit_function_epilogue(FILE *out) {
 void write_header(FILE *out) {
     emit_header(out, "    .text");
 }
-
-typedef struct Context {
-    int *stack_offset;
-    Environment *env;
-} Context;
 
 void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
     // Note stack_offset is the next unused memory address in the
@@ -154,7 +153,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         IfStatement *if_statement = syntax->if_statement;
         write_syntax(out, if_statement->condition, ctx);
 
-        char *label = fresh_local_label("if_end");
+        char *label = fresh_local_label("if_end", ctx);
 
         emit_instr(out, "test", "%eax, %eax");
         emit_instr_format(out, "jz", "%s", label);
@@ -165,8 +164,8 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
     } else if (syntax->type == WHILE_SYNTAX) {
         WhileStatement *while_statement = syntax->while_statement;
 
-        char *start_label = fresh_local_label("while_start");
-        char *end_label = fresh_local_label("while_end");
+        char *start_label = fresh_local_label("while_start", ctx);
+        char *end_label = fresh_local_label("while_end", ctx);
 
         emit_label(out, start_label);
         write_syntax(out, while_statement->condition, ctx);
@@ -230,6 +229,7 @@ void write_assembly(Syntax *syntax) {
     Context *ctx = malloc(sizeof(Context));
     ctx->stack_offset = stack_offset;
     ctx->env = environment_new();
+    ctx->label_count = 0;
 
     write_syntax(out, syntax, ctx);
     
