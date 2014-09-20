@@ -28,6 +28,7 @@ typedef struct Immediate {
 } Immediate;
 
 typedef struct Variable {
+    // TODO: once we have other types, we will need to store type here.
     char *var_name;
 } Variable;
 
@@ -76,8 +77,14 @@ typedef struct Block {
 
 typedef struct Function {
     char *name;
+    List *parameters;
     Syntax *root_block;
 } Function;
+
+typedef struct Parameter {
+    // TODO: once we have other types, we will need to store type here.
+    char *name;
+} Parameter;
 
 typedef struct TopLevel {
     List *declarations;
@@ -128,7 +135,7 @@ Syntax *multiplication_new(Syntax *left, Syntax *right);
 
 Syntax *less_than_new(Syntax *left, Syntax *right);
 
-Syntax *function_call_new(char *function_name);
+Syntax *function_call_new(char *function_name, List *expressions);
 
 Syntax *assignment_new(char *var_name, Syntax *expression);
 
@@ -142,7 +149,7 @@ Syntax *define_var_new(char *var_name, Syntax *init_value);
 
 Syntax *while_new(Syntax *condition, Syntax *body);
 
-Syntax *function_new(char *name, Syntax *root_block);
+Syntax *function_new(char *name, List *parameters, Syntax *root_block);
 
 Syntax *top_level_new();
 

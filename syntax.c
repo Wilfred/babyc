@@ -88,7 +88,7 @@ Syntax *less_than_new(Syntax *left, Syntax *right) {
     return syntax;
 }
 
-Syntax *function_call_new(char *function_name) {
+Syntax *function_call_new(char *function_name, List *expressions) {
     FunctionCall *function_call = malloc(sizeof(FunctionCall));
     function_call->function_name = function_name;
 
@@ -169,7 +169,7 @@ Syntax *while_new(Syntax *condition, Syntax *body) {
     return syntax;
 }
 
-Syntax *function_new(char *name, Syntax *root_block) {
+Syntax *function_new(char *name, List *parameters, Syntax *root_block) {
     Function *function = malloc(sizeof(Function));
     function->name = name;
     function->root_block = root_block;

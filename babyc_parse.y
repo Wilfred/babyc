@@ -278,6 +278,6 @@ expression:
         |
         IDENTIFIER '(' argument_list ')'
         {
-            stack_push(syntax_stack, function_call_new((char*)$1));
+            stack_push(syntax_stack, function_call_new((char*)$1, list_new()));
         }
         ;
