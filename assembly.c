@@ -88,6 +88,16 @@ void write_header(FILE *out) {
     emit_header(out, "    .text");
 }
 
+void write_footer(FILE *out) {
+    // TODO: this will break if a user defines a function called '_start'.
+    emit_function_declaration(out, "_start");
+    emit_function_prologue(out);
+    emit_instr(out, "call", "main");
+    emit_instr(out, "mov", "%eax, %ebx");
+    emit_instr(out, "mov", "$1, %eax");
+    emit_instr(out, "int", "$0x80");
+}
+
 void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
     // Note stack_offset is the next unused memory address in the
     // stack, so we can use it directly but must adjust it for the next caller.
@@ -149,12 +159,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         ReturnStatement *return_statement = syntax->return_statement;
         write_syntax(out, return_statement->expression, ctx);
 
-        // TODO: when we have function calls, we should factor this
-        // out, as we only call exit() in main.
-        emit_header(out, "");
-        emit_instr(out, "mov", "%eax, %ebx");
-        emit_instr(out, "mov", "$1, %eax");
-        emit_instr(out, "int", "$0x80");
+        emit_return(out);
 
     } else if (syntax->type == IF_STATEMENT) {
         IfStatement *if_statement = syntax->if_statement;
@@ -201,12 +206,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
             write_syntax(out, list_get(statements, i), ctx);
         }
     } else if (syntax->type == FUNCTION) {
-        char *function_name = syntax->function->name;
-        if (strcmp(function_name, "main") == 0) {
-            function_name = "_start";
-        }
-
-        emit_function_declaration(out, function_name);
+        emit_function_declaration(out, syntax->function->name);
         emit_function_prologue(out);
         write_syntax(out, syntax->function->root_block, ctx);
         emit_function_epilogue(out);
@@ -236,6 +236,7 @@ void write_assembly(Syntax *syntax) {
     ctx->label_count = 0;
 
     write_syntax(out, syntax, ctx);
+    write_footer(out);
     
     fclose(out);
 }
