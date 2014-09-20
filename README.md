@@ -5,7 +5,8 @@
 An educational foray into compiler writing. Written in C, compiling C
 to x86 assembly
 ([handy x86 reference site](http://x86.renejeschke.de/),
-[assembly directives reference](https://www.sourceware.org/binutils/docs-2.12/as.info/Pseudo-Ops.html)).
+[assembly directives reference](https://www.sourceware.org/binutils/docs-2.12/as.info/Pseudo-Ops.html),
+[System V ABI reference](http://www.uclibc.org/docs/psABI-i386.pdf)).
 
 Technically targetting C11
 ([standard PDF](http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf)),
