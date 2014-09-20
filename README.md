@@ -3,7 +3,9 @@
 [![Build Status](https://travis-ci.org/Wilfred/babyc.svg?branch=master)](https://travis-ci.org/Wilfred/babyc)
 
 An educational foray into compiler writing. Written in C, compiling C
-to x86 assembly ([handy reference site](http://x86.renejeschke.de/)).
+to x86 assembly
+([handy x86 reference site](http://x86.renejeschke.de/),
+[assembly directives reference](https://www.sourceware.org/binutils/docs-2.12/as.info/Pseudo-Ops.html)).
 
 Technically targetting C11
 ([standard PDF](http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf)),
