@@ -14,11 +14,6 @@ void emit_header(FILE *out, char *name) {
     fprintf(out, "%s\n", name);
 }
 
-// TODO: make emit_instr take a variable number of arguments.
-void emit_instr1(FILE *out, char* instr) {
-    fprintf(out, "    %s\n", instr);
-}
-
 /* Write instruction INSTR with OPERANDS to OUT.
  *
  * Example:
@@ -78,9 +73,13 @@ void emit_function_prologue(FILE *out) {
     fprintf(out, "\n");
 }
 
+void emit_return(FILE *out) {
+    fprintf(out, "    leave\n");
+    fprintf(out, "    ret\n");
+}
+
 void emit_function_epilogue(FILE *out) {
-    emit_instr1(out, "leave");
-    emit_instr1(out, "ret");
+    emit_return(out);
     fprintf(out, "\n");
 }
 
