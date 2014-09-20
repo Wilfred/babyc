@@ -58,12 +58,23 @@ void emit_label(FILE *out, char *label) {
     fprintf(out, "%s:\n", label);
 }
 
+void emit_function_declaration(FILE *out, char *name) {
+    fprintf(out, "    .global %s\n", name);
+    fprintf(out, "%s:\n", name);
+}
+
+void emit_function_prologue(FILE *out) {
+    emit_instr(out, "mov", "%esp, %ebp");
+    fprintf(out, "\n");
+}
+
+void emit_function_epilogue(FILE *out) {
+    fprintf(out, "\n");
+}
+
+
 void write_header(FILE *out) {
     emit_header(out, "    .text");
-    fprintf(out, "    .global _start\n\n");
-    emit_header(out, "_start:");
-    emit_instr(out, "mov", "%esp, %ebp");
-    emit_header(out, "");
 }
 
 typedef struct Context {
@@ -184,7 +195,15 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
             write_syntax(out, list_get(statements, i), ctx);
         }
     } else if (syntax->type == FUNCTION) {
+        char *function_name = syntax->function->name;
+        if (strcmp(function_name, "main") == 0) {
+            function_name = "_start";
+        }
+
+        emit_function_declaration(out, function_name);
+        emit_function_prologue(out);
         write_syntax(out, syntax->function->root_block, ctx);
+        emit_function_epilogue(out);
 
     } else if (syntax->type == TOP_LEVEL) {
         // TODO: treat the 'main' function specially.
