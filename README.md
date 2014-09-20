@@ -30,6 +30,7 @@ Current feature set:
   initialised)
 * variable assignment (`int` only)
 * while loops (`while (foo) { bar }`)
+* function calls (only `int foo()` i.e. no arguments, returning int)
 
 ## License
 

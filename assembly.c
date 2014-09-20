@@ -161,6 +161,9 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
 
         emit_return(out);
 
+    } else if (syntax->type == FUNCTION_CALL) {
+        emit_instr_format(out, "call", syntax->function_call->function_name);
+
     } else if (syntax->type == IF_STATEMENT) {
         IfStatement *if_statement = syntax->if_statement;
         write_syntax(out, if_statement->condition, ctx);
