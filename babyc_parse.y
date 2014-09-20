@@ -79,7 +79,8 @@ int main(int argc, char *argv[])
 
     Syntax *complete_syntax = stack_pop(syntax_stack);
     if (syntax_stack->size > 0) {
-        warnx("Did not consume the whole syntax stack during parsing!");
+        warnx("Did not consume the whole syntax stack during parsing! %d left over.",
+              syntax_stack->size);
     }
 
     if (dump_ast) {
