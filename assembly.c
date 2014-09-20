@@ -59,8 +59,8 @@ void emit_label(FILE *out, char *label) {
 }
 
 void write_header(FILE *out) {
-    emit_header(out, ".text");
-    fprintf(out, ".global _start\n\n");
+    emit_header(out, "    .text");
+    fprintf(out, "    .global _start\n\n");
     emit_header(out, "_start:");
     emit_instr(out, "mov", "%esp, %ebp");
     emit_header(out, "");
