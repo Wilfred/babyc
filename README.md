@@ -14,7 +14,6 @@ but we will implement such a small subset of C that it's academic.
 
 Current feature set:
 
-* main function (no function definition yet)
 * positive integers (no other types yet)
 * integer constants
 * logical negation (`!FOO`)
