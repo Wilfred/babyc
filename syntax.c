@@ -193,6 +193,8 @@ Syntax *top_level_new() {
 }
 
 void syntax_free(Syntax *syntax) {
+    // FIXME: this should have an entry for everything in
+    // print_syntax_indented.
     if (syntax->type == UNARY_OPERATOR) {
         syntax_free(syntax->unary_expression->expression);
         free(syntax->unary_expression);
