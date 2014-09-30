@@ -88,13 +88,25 @@ Syntax *less_than_new(Syntax *left, Syntax *right) {
     return syntax;
 }
 
-Syntax *function_call_new(char *function_name, List *expressions) {
+Syntax *function_call_new(char *function_name, Syntax *func_args) {
     FunctionCall *function_call = malloc(sizeof(FunctionCall));
     function_call->function_name = function_name;
+    function_call->function_arguments = func_args;
 
     Syntax *syntax = malloc(sizeof(Syntax));
     syntax->type = FUNCTION_CALL;
     syntax->function_call = function_call;
+
+    return syntax;
+}
+
+Syntax *function_arguments_new() {
+    FunctionArguments *func_args = malloc(sizeof(FunctionArguments));
+    func_args->arguments = list_new();
+
+    Syntax *syntax = malloc(sizeof(Syntax));
+    syntax->type = FUNCTION_ARGUMENTS;
+    syntax->function_arguments = func_args;
 
     return syntax;
 }
@@ -238,6 +250,8 @@ char *syntax_type_name(Syntax *syntax) {
         }
     } else if (syntax->type == FUNCTION_CALL) {
         return "FUNCTION CALL";
+    } else if (syntax->type == FUNCTION_ARGUMENTS) {
+        return "FUNCTION ARGUMENTS";
     } else if (syntax->type == IF_STATEMENT) {
         return "IF";
     } else if (syntax->type == RETURN_STATEMENT) {
@@ -288,6 +302,17 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         
     } else if (syntax->type == FUNCTION_CALL) {
         printf("%s '%s'\n", syntax_type_string, syntax->function_call->function_name);
+        print_syntax_indented(syntax->function_call->function_arguments, indent);
+
+    } else if (syntax->type == FUNCTION_ARGUMENTS) {
+        printf("%s\n", syntax_type_string);
+
+        List *arguments = syntax->function_arguments->arguments;
+        Syntax *argument;
+        for (int i=0; i<list_length(arguments); i++) {
+            argument = list_get(arguments, i);
+            print_syntax_indented(argument, indent + 4);
+        }
 
     } else if (syntax->type == IF_STATEMENT) {
         printf("%s CONDITION\n", syntax_type_string);

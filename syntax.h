@@ -10,7 +10,7 @@ typedef enum {
     BLOCK, IF_STATEMENT,
     RETURN_STATEMENT,
     DEFINE_VAR, FUNCTION,
-    FUNCTION_CALL,
+    FUNCTION_CALL, FUNCTION_ARGUMENTS,
     ASSIGNMENT, WHILE_SYNTAX,
     TOP_LEVEL
 } SyntaxType;
@@ -43,8 +43,13 @@ typedef struct BinaryExpression {
     Syntax *right;
 } BinaryExpression;
 
+typedef struct FunctionArguments {
+    List *arguments;
+} FunctionArguments;
+
 typedef struct FunctionCall {
     char *function_name;
+    Syntax *function_arguments;
 } FunctionCall;
 
 typedef struct Assignment {
@@ -105,6 +110,8 @@ struct Syntax {
 
         ReturnStatement *return_statement;
 
+        FunctionArguments *function_arguments;
+
         FunctionCall *function_call;
 
         IfStatement *if_statement;
@@ -135,7 +142,7 @@ Syntax *multiplication_new(Syntax *left, Syntax *right);
 
 Syntax *less_than_new(Syntax *left, Syntax *right);
 
-Syntax *function_call_new(char *function_name, List *expressions);
+Syntax *function_call_new(char *function_name, Syntax *func_args);
 
 Syntax *assignment_new(char *var_name, Syntax *expression);
 

@@ -184,12 +184,46 @@ block:
 argument_list:
         nonempty_argument_list
         |
+        {
+            // Empty argument list.
+            stack_push(syntax_stack, function_arguments_new());
+        }
         ;
 
 nonempty_argument_list:
         expression ',' nonempty_argument_list
+        {
+            Syntax *arguments_syntax;
+            if (stack_empty(syntax_stack)) {
+                // This should be impossible, we shouldn't be able to
+                // parse this on its own.
+                assert(false);
+            } else if (((Syntax *)stack_peek(syntax_stack))->type != FUNCTION_ARGUMENTS) {
+                arguments_syntax = function_arguments_new();
+            } else {
+                arguments_syntax = stack_pop(syntax_stack);
+            }
+
+            list_push(arguments_syntax->function_arguments->arguments, stack_pop(syntax_stack));
+            stack_push(syntax_stack, arguments_syntax);
+        }
         |
         expression
+        {
+            // TODO: find a way to factor out the duplication with the above.
+            Syntax *arguments_syntax;
+            if (stack_empty(syntax_stack)) {
+                // This should be impossible, we shouldn't be able to
+                // parse this on its own.
+                assert(false);
+            } else if (((Syntax *)stack_peek(syntax_stack))->type != FUNCTION_ARGUMENTS) {
+                arguments_syntax = function_arguments_new();
+            } else {
+                arguments_syntax = stack_pop(syntax_stack);
+            }
+
+            stack_push(syntax_stack, arguments_syntax);
+        }
         ;
 
 statement:
@@ -278,6 +312,7 @@ expression:
         |
         IDENTIFIER '(' argument_list ')'
         {
-            stack_push(syntax_stack, function_call_new((char*)$1, list_new()));
+            Syntax *arguments = stack_pop(syntax_stack);
+            stack_push(syntax_stack, function_call_new((char*)$1, arguments));
         }
         ;
