@@ -12,6 +12,7 @@ void error();
 
 
 %%
+#[^\n]*       { /* Discard preprocessor comments. */ }
 "//"[^\n]*    { /* Discard c99 comments. */ }
 "/*"          { comment(); }
 [ \t\n]+      { /* Ignore whitespace */ }

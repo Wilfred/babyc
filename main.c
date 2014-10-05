@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -45,7 +46,16 @@ int main(int argc, char *argv[])
 
     int result;
 
-    yyin = fopen(file_name, "r");
+    // TODO: create a proper temporary file from the preprocessor.
+    char command[1024] = {0};
+    snprintf(command, 1024, "gcc -E %s > .expanded.c", file_name);
+    result = system(command);
+    if (result != 0) {
+        puts("Macro expansion failed!");
+        return result;
+    }
+
+    yyin = fopen(".expanded.c", "r");
 
     if (yyin == NULL) {
         // TODO: work out what the error was.
