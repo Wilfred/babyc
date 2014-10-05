@@ -144,6 +144,8 @@ Syntax *less_than_new(Syntax *left, Syntax *right);
 
 Syntax *function_call_new(char *function_name, Syntax *func_args);
 
+Syntax *function_arguments_new();
+
 Syntax *assignment_new(char *var_name, Syntax *expression);
 
 Syntax *return_statement_new(Syntax *expression);
