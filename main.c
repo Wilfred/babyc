@@ -25,11 +25,18 @@ extern Stack *syntax_stack;
 extern int yyparse(void);
 extern FILE *yyin;
 
+typedef enum {
+    MACRO_EXPAND,
+    PARSE,
+    EMIT_ASM,
+} stage_t;
+
 int main(int argc, char *argv[])
 {
     ++argv, --argc;  /* Skip over program name. */
 
-    bool dump_ast = false;
+    stage_t terminate_at = EMIT_ASM;
+    
     char *file_name;
     if (argc == 1 && strcmp(argv[0], "--help") == 0) {
         print_help();
@@ -38,7 +45,7 @@ int main(int argc, char *argv[])
         file_name = argv[0];
         yyin = fopen(argv[0], "r");
     } else if (argc == 2 && strcmp(argv[0], "--dump-ast") == 0) {
-        dump_ast = true;
+        terminate_at = PARSE;
         file_name = argv[1];
     } else {
         print_help();
@@ -80,7 +87,7 @@ int main(int argc, char *argv[])
               syntax_stack->size);
     }
 
-    if (dump_ast) {
+    if (terminate_at == PARSE) {
         print_syntax(complete_syntax);
     } else {
         write_assembly(complete_syntax);
