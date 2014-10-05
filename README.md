@@ -54,6 +54,13 @@ $ build/babyc test_programs/immediate__return_1.c
 $ ./link
 ```
 
+Viewing the code after preprocessing:
+
+```
+$ build/babyc --dump-expansion test_programs/if_false__return_2.c
+```
+
+
 Viewing the AST:
 
 ```

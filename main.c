@@ -15,6 +15,8 @@ void print_help() {
     printf("    $ babyc foo.c\n");
     printf("To output the AST without compiling:\n");
     printf("    $ babyc --dump-ast foo.c\n");
+    printf("To output the preprocessed code without parsing:\n");
+    printf("    $ babyc --dump-expansion foo.c\n");
     printf("To print this message:\n");
     printf("    $ babyc --help\n\n");
     printf("For more information, see https://github.com/Wilfred/babyc\n");
@@ -44,6 +46,9 @@ int main(int argc, char *argv[])
     } else if (argc == 1) {
         file_name = argv[0];
         yyin = fopen(argv[0], "r");
+    } else if (argc == 2 && strcmp(argv[0], "--dump-expansion") == 0) {
+        terminate_at = MACRO_EXPAND;
+        file_name = argv[1];
     } else if (argc == 2 && strcmp(argv[0], "--dump-ast") == 0) {
         terminate_at = PARSE;
         file_name = argv[1];
@@ -64,6 +69,14 @@ int main(int argc, char *argv[])
     }
 
     yyin = fopen(".expanded.c", "r");
+
+    if (terminate_at == MACRO_EXPAND) {
+        int c;
+        while ((c = getc(yyin)) != EOF) {
+            putchar(c);
+        }
+        goto cleanup_file;
+    }
 
     if (yyin == NULL) {
         // TODO: work out what the error was.
