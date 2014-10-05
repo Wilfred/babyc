@@ -1,11 +1,8 @@
 %{
 #include <stdio.h>
-#include <stdbool.h>
 #include <assert.h>
 #include "syntax.h"
-#include "assembly.h"
 #include "stack.h"
-#include "list.h"
 
 #define YYSTYPE char*
 
