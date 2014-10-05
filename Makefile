@@ -3,7 +3,7 @@ CFLAGS = -Wall -Wextra -g -O -std=c99 -fstack-protector-all -ftrapv
 
 BUILD_DIR = build
 
-all: $(BUILD_DIR) $(BUILD_DIR)/babyc
+all: $(BUILD_DIR)/babyc
 
 $(BUILD_DIR):
 	mkdir $(BUILD_DIR)
@@ -29,7 +29,7 @@ $(BUILD_DIR)/list.o: list.c
 $(BUILD_DIR)/environment.o: environment.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/babyc: $(BUILD_DIR)/lex.yy.c $(BUILD_DIR)/y.tab.h $(BUILD_DIR)/syntax.o $(BUILD_DIR)/environment.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/list.o main.c
+$(BUILD_DIR)/babyc: $(BUILD_DIR) $(BUILD_DIR)/lex.yy.c $(BUILD_DIR)/y.tab.h $(BUILD_DIR)/syntax.o $(BUILD_DIR)/environment.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/list.o main.c
 	@# FIXME: this is a horrible hack
 	cp *.h $(BUILD_DIR)
 	$(CC) $(CFLAGS) -Wno-unused-function $(BUILD_DIR)/lex.yy.c $(BUILD_DIR)/syntax.o $(BUILD_DIR)/environment.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/list.o main.c -o $@
