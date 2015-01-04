@@ -194,7 +194,7 @@ Syntax *while_new(Syntax *condition, Syntax *body) {
     return syntax;
 }
 
-Syntax *function_new(char *name, List *parameters, Syntax *root_block) {
+Syntax *function_new(char *name, Syntax *root_block) {
     Function *function = malloc(sizeof(Function));
     function->name = name;
     function->root_block = root_block;

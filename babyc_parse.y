@@ -62,8 +62,7 @@ function:
         {
             Syntax *current_syntax = stack_pop(syntax_stack);
             // TODO: assert current_syntax has type BLOCK.
-            stack_push(syntax_stack, function_new((char*)$2, list_new(),
-                       current_syntax));
+            stack_push(syntax_stack, function_new((char*)$2, current_syntax));
         }
         ;
 
