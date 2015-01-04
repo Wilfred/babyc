@@ -137,6 +137,10 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         } else if (binary_syntax->binary_type == ADDITION) {
             emit_instr_format(out, "add", "%d(%%ebp), %%eax\n", stack_offset);
             
+        } else if (binary_syntax->binary_type == SUBTRACTION) {
+            emit_instr_format(out, "sub", "%%eax, %d(%%ebp)\n", stack_offset);
+            emit_instr_format(out, "mov", "%d(%%ebp), %%eax\n", stack_offset);
+            
         } else if (binary_syntax->binary_type == LESS_THAN) {
             // To compare x < y in AT&T syntax, we write CMP y,x.
             // http://stackoverflow.com/q/25493255/509706

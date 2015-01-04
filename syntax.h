@@ -16,7 +16,9 @@ typedef enum {
 } SyntaxType;
 typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnaryExpressionType;
 typedef enum {
-    ADDITION, MULTIPLICATION,
+    ADDITION,
+    SUBTRACTION,
+    MULTIPLICATION,
     LESS_THAN,
 } BinaryExpressionType;
 
@@ -137,6 +139,8 @@ Syntax *bitwise_negation_new(Syntax *expression);
 Syntax *logical_negation_new(Syntax *expression);
 
 Syntax *addition_new(Syntax *left, Syntax *right);
+
+Syntax *subtraction_new(Syntax *left, Syntax *right);
 
 Syntax *multiplication_new(Syntax *left, Syntax *right);
 

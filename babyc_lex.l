@@ -24,6 +24,7 @@ void error();
 "~"           { return '~'; }
 "!"           { return '!'; }
 "+"           { return '+'; }
+"-"           { return '-'; }
 "*"           { return '*'; }
 "<"           { return '<'; }
 "="           { return '='; }

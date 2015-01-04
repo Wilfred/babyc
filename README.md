@@ -19,6 +19,7 @@ Current feature set:
 * logical negation (`!FOO`)
 * bitwise negation (`~FOO`)
 * addition (`foo + bar`)
+* subtraction (`foo - bar` binary only)
 * multiplication (`foo * bar`)
 * less than comparison (`foo < bar`)
 * comments (`// foo` and `/* foo */`)

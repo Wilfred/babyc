@@ -33,6 +33,7 @@ Stack *syntax_stack;
 /* Left associative operators, least precedence first. */
 %left '<'
 %left '+'
+%left '-'
 %left '*'
 
 %%
@@ -209,6 +210,13 @@ expression:
             Syntax *right = stack_pop(syntax_stack);
             Syntax *left = stack_pop(syntax_stack);
             stack_push(syntax_stack, addition_new(left, right));
+        }
+        |
+        expression '-' expression
+        {
+            Syntax *right = stack_pop(syntax_stack);
+            Syntax *left = stack_pop(syntax_stack);
+            stack_push(syntax_stack, subtraction_new(left, right));
         }
         |
         expression '*' expression

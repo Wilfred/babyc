@@ -62,6 +62,19 @@ Syntax *addition_new(Syntax *left, Syntax *right) {
     return syntax;
 }
 
+Syntax *subtraction_new(Syntax *left, Syntax *right) {
+    BinaryExpression *binary_syntax = malloc(sizeof(BinaryExpression));
+    binary_syntax->binary_type = SUBTRACTION;
+    binary_syntax->left = left;
+    binary_syntax->right = right;
+
+    Syntax *syntax = malloc(sizeof(Syntax));
+    syntax->type = BINARY_OPERATOR;
+    syntax->binary_expression = binary_syntax;
+
+    return syntax;
+}
+
 Syntax *multiplication_new(Syntax *left, Syntax *right) {
     BinaryExpression *binary_syntax = malloc(sizeof(BinaryExpression));
     binary_syntax->binary_type = MULTIPLICATION;
@@ -243,6 +256,8 @@ char *syntax_type_name(Syntax *syntax) {
     } else if (syntax->type == BINARY_OPERATOR) {
         if (syntax->binary_expression->binary_type == ADDITION) {
             return "ADDITION";
+        } else if (syntax->binary_expression->binary_type == SUBTRACTION) {
+            return "SUBTRACTION";
         } else if (syntax->binary_expression->binary_type == MULTIPLICATION) {
             return "MULTIPLICATION";
         } else if (syntax->binary_expression->binary_type == LESS_THAN) {
