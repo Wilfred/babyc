@@ -240,6 +240,7 @@ void write_assembly(Syntax *syntax) {
 
     write_syntax(out, syntax, ctx);
     write_footer(out);
-    
+
+    free(ctx);
     fclose(out);
 }
