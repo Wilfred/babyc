@@ -105,3 +105,12 @@ $ gdb out
 (gdb) break *0x80000000
 (gdb) run
 ```
+
+## Improving code quality
+
+The make command will generate warnings, fix them. You can also run
+with clang-analyzer to catch further issues:
+
+```
+$ scan-build make
+```
