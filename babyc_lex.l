@@ -12,6 +12,7 @@ void error();
 
 
 %%
+"#include"    { return INCLUDE; }
 #[^\n]*       { /* Discard preprocessor comments. */ }
 "//"[^\n]*    { /* Discard c99 comments. */ }
 "/*"          { comment(); }
@@ -41,7 +42,6 @@ void error();
 "int"         { return TYPE; }
 {L}({L}|{D})* { yylval = strdup(yytext); return IDENTIFIER; }
 
-"#include"    { return INCLUDE; }
 "<"[a-z.]+">" { return HEADER_NAME; }
 %%
 
