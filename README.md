@@ -1,6 +1,7 @@
 # Babyc
 
 [![Build Status](https://travis-ci.org/Wilfred/babyc.svg?branch=master)](https://travis-ci.org/Wilfred/babyc)
+[![coverity scan build status](https://scan.coverity.com/projects/3820/badge.svg)](https://scan.coverity.com/projects/3820)
 
 An educational foray into compiler writing. Written in C, compiling C
 to x86 assembly
