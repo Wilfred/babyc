@@ -9,6 +9,7 @@
 #include "environment.h"
 
 const int WORD_SIZE = 4;
+const int MAX_MNEMONIC_LENGTH = 7;
 
 void emit_header(FILE *out, char *name) {
     fprintf(out, "%s\n", name);
@@ -20,8 +21,19 @@ void emit_header(FILE *out, char *name) {
  * emit_instr(out, "MOV", "%eax, 1");
  */
 void emit_instr(FILE *out, char* instr, char* operands) {
+    // TODO: fix duplication with emit_instr_format.
     // The assembler requires at least 4 spaces for indentation.
-    fprintf(out, "    %s    %s\n", instr, operands);
+    fprintf(out, "    %s", instr);
+
+    // Ensure our argument are aligned, regardless of the assembly
+    // mnemonic length.
+    int argument_offset = MAX_MNEMONIC_LENGTH - strlen(instr) + 4;
+    while (argument_offset > 0) {
+        fprintf(out, " ");
+        argument_offset--;
+    }
+    
+    fprintf(out, "%s\n", operands);
 }
 
 /* Write instruction INSTR with formatted operands OPERANDS_FORMAT to
@@ -31,7 +43,16 @@ void emit_instr(FILE *out, char* instr, char* operands) {
  * emit_instr_format(out, "MOV", "%%eax, %s", 5);
  */
 void emit_instr_format(FILE *out, char* instr, char* operands_format, ...) {
-    fprintf(out, "    %s    ", instr);
+    // The assembler requires at least 4 spaces for indentation.
+    fprintf(out, "    %s", instr);
+
+    // Ensure our argument are aligned, regardless of the assembly
+    // mnemonic length.
+    int argument_offset = MAX_MNEMONIC_LENGTH - strlen(instr) + 4;
+    while (argument_offset > 0) {
+        fprintf(out, " ");
+        argument_offset--;
+    }
     
     va_list argptr;
     va_start(argptr, operands_format);
