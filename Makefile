@@ -8,14 +8,14 @@ all: $(BUILD_DIR)/babyc
 $(BUILD_DIR):
 	@mkdir $(BUILD_DIR)
 
-$(BUILD_DIR)/lex.yy.c: babyc_lex.l $(BUILD_DIR)/y.tab.c
+$(BUILD_DIR)/lex.yy.c: babyc_lex.l $(BUILD_DIR)/y.tab.h
 	lex -t $< > $@
 
 $(BUILD_DIR)/lex.yy.o: $(BUILD_DIR)/lex.yy.c
 	$(CC) $(CFLAGS) -Wno-unused-function -c $< -o $@
 
-$(BUILD_DIR)/y.tab.c: babyc_parse.y
-	yacc -d $< -o $@
+$(BUILD_DIR)/y.tab.c $(BUILD_DIR)/y.tab.h: babyc_parse.y
+	yacc -d $< -o $(BUILD_DIR)/y.tab.c
 
 $(BUILD_DIR)/y.tab.o: $(BUILD_DIR)/y.tab.c syntax.c stack.c
 	$(CC) $(CFLAGS) -c $< -o $@
