@@ -30,11 +30,16 @@ Stack *syntax_stack;
 %token OPEN_BRACE CLOSE_BRACE
 %token IF WHILE
 
-/* Left associative operators, least precedence first. */
+/* Operator associativity, least precedence first.
+ * See http://en.cppreference.com/w/c/language/operator_precedence
+ */
+%left '='
 %left '<'
 %left '+'
 %left '-'
 %left '*'
+%nonassoc '!'
+%nonassoc '~'
 
 %%
 
