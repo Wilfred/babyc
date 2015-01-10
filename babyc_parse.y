@@ -1,5 +1,6 @@
 %{
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 #include "../syntax.h"
 #include "../stack.h"
