@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS = -Wall -Wextra -g -O -std=gnu99 -fstack-protector-all -ftrapv
+CFLAGS = -Wall -Wextra -g -O0 -std=gnu99 -fstack-protector-all -ftrapv
 
 BUILD_DIR = build
 
