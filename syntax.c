@@ -101,6 +101,19 @@ Syntax *less_than_new(Syntax *left, Syntax *right) {
     return syntax;
 }
 
+Syntax *less_or_equal_new(Syntax *left, Syntax *right) {
+    BinaryExpression *binary_syntax = malloc(sizeof(BinaryExpression));
+    binary_syntax->binary_type = LESS_THAN_OR_EQUAL;
+    binary_syntax->left = left;
+    binary_syntax->right = right;
+
+    Syntax *syntax = malloc(sizeof(Syntax));
+    syntax->type = BINARY_OPERATOR;
+    syntax->binary_expression = binary_syntax;
+
+    return syntax;
+}
+
 Syntax *function_call_new(char *function_name, Syntax *func_args) {
     FunctionCall *function_call = malloc(sizeof(FunctionCall));
     function_call->function_name = function_name;
@@ -262,6 +275,8 @@ char *syntax_type_name(Syntax *syntax) {
             return "MULTIPLICATION";
         } else if (syntax->binary_expression->binary_type == LESS_THAN) {
             return "LESS THAN";
+        } else if (syntax->binary_expression->binary_type == LESS_THAN_OR_EQUAL) {
+            return "LESS THAN OR EQUAL";
         }
     } else if (syntax->type == FUNCTION_CALL) {
         return "FUNCTION CALL";

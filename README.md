@@ -21,7 +21,7 @@ Current feature set:
 * addition (`foo + bar`)
 * subtraction (`foo - bar` binary only)
 * multiplication (`foo * bar`)
-* less than comparison (`foo < bar`)
+* less than comparison (`foo < bar`, `foo <= bar`)
 * comments (`// foo` and `/* foo */`)
 * sequences of statements (`foo; bar`)
 * return statements

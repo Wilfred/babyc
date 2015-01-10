@@ -20,6 +20,7 @@ typedef enum {
     SUBTRACTION,
     MULTIPLICATION,
     LESS_THAN,
+    LESS_THAN_OR_EQUAL,
 } BinaryExpressionType;
 
 struct Syntax;
@@ -145,6 +146,8 @@ Syntax *subtraction_new(Syntax *left, Syntax *right);
 Syntax *multiplication_new(Syntax *left, Syntax *right);
 
 Syntax *less_than_new(Syntax *left, Syntax *right);
+
+Syntax *less_or_equal_new(Syntax *left, Syntax *right);
 
 Syntax *function_call_new(char *function_name, Syntax *func_args);
 

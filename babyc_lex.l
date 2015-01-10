@@ -29,6 +29,7 @@ void error();
 "-"           { return '-'; }
 "*"           { return '*'; }
 "<"           { return '<'; }
+"<="          { return LESS_OR_EQUAL; }
 "="           { return '='; }
 ";"           { return ';'; }
 ","           { return ','; }

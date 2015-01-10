@@ -30,6 +30,7 @@ Stack *syntax_stack;
 %token TYPE IDENTIFIER RETURN NUMBER
 %token OPEN_BRACE CLOSE_BRACE
 %token IF WHILE
+%token LESS_OR_EQUAL
 
 /* Operator associativity, least precedence first.
  * See http://en.cppreference.com/w/c/language/operator_precedence
@@ -236,6 +237,13 @@ expression:
             Syntax *right = stack_pop(syntax_stack);
             Syntax *left = stack_pop(syntax_stack);
             stack_push(syntax_stack, less_than_new(left, right));
+        }
+        |
+        expression LESS_OR_EQUAL expression
+        {
+            Syntax *right = stack_pop(syntax_stack);
+            Syntax *left = stack_pop(syntax_stack);
+            stack_push(syntax_stack, less_or_equal_new(left, right));
         }
         |
         IDENTIFIER '(' argument_list ')'

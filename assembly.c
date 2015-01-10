@@ -171,6 +171,16 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
             emit_instr(out, "setl", "%al");
             // Zero the rest of %eax.
             emit_instr(out, "movzbl", "%al, %eax");
+
+        } else if (binary_syntax->binary_type == LESS_THAN_OR_EQUAL) {
+            // To compare x < y in AT&T syntax, we write CMP y,x.
+            // http://stackoverflow.com/q/25493255/509706
+            emit_instr_format(out, "cmp", "%%eax, %d(%%ebp)", stack_offset);
+            // Set the low byte of %eax to 0 or 1 depending on whether
+            // it was less than or equal.
+            emit_instr(out, "setle", "%al");
+            // Zero the rest of %eax.
+            emit_instr(out, "movzbl", "%al, %eax");
         }
 
     } else if (syntax->type == ASSIGNMENT) {
