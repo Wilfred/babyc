@@ -8,7 +8,7 @@
 #include "syntax.h"
 #include "environment.h"
 
-#define WORD_SIZE 4
+const int WORD_SIZE = 4;
 
 void emit_header(FILE *out, char *name) {
     fprintf(out, "%s\n", name);
