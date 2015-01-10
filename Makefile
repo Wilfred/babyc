@@ -1,4 +1,4 @@
-CC = gcc
+CC = clang
 CFLAGS = -Wall -Wextra -g -O -std=gnu99 -fstack-protector-all -ftrapv
 
 BUILD_DIR = build
