@@ -6,7 +6,7 @@ BUILD_DIR = build
 all: $(BUILD_DIR)/babyc
 
 $(BUILD_DIR):
-	mkdir $(BUILD_DIR)
+	@mkdir $(BUILD_DIR)
 
 $(BUILD_DIR)/lex.yy.c: babyc_lex.l
 	lex -t $< > $@
