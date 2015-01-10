@@ -3,6 +3,7 @@ D			[0-9]
 L			[a-zA-Z_]
 
 %{
+#define YYSTYPE char*
 #include "y.tab.h"
 
 void comment();
