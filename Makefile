@@ -48,3 +48,7 @@ $(BUILD_DIR)/run_tests: run_tests.c $(BUILD_DIR)/babyc
 .PHONY: test
 test: $(BUILD_DIR)/run_tests
 	@./$^
+
+.PHONY: format
+format:
+	clang-format -i *.c *.h

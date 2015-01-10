@@ -19,9 +19,7 @@ void list_free(List *list) {
     free(list);
 }
 
-int list_length(List *list) {
-    return list->size;
-}
+int list_length(List *list) { return list->size; }
 
 void list_append(List *list, void *item) {
     list->size++;
@@ -41,14 +39,14 @@ void list_push(List *list, void *item) {
         free(list->items);
     }
     list->items = new_items;
-    
+
     list->items[0] = item;
 }
 
 /* Remove the last item from the list, and return it.
  */
 void *list_pop(List *list) {
-    void* value = list_get(list, list->size - 1);
+    void *value = list_get(list, list->size - 1);
 
     list->size--;
     list->items = realloc(list->items, list->size * sizeof(value));
@@ -56,9 +54,7 @@ void *list_pop(List *list) {
     return value;
 }
 
-void *list_get(List *list, int index) {
-    return list->items[index];
-}
+void *list_get(List *list, int index) { return list->items[index]; }
 
 void list_set(List *list, int index, void *value) {
     if (index < 0 || index > list->size) {

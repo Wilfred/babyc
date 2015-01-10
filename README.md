@@ -114,3 +114,9 @@ with clang-analyzer to catch further issues:
 ```
 $ scan-build make
 ```
+
+For code formatting, run:
+
+```
+$ make format
+```

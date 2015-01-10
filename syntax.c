@@ -6,7 +6,7 @@
 Syntax *immediate_new(int value) {
     Immediate *immediate = malloc(sizeof(Immediate));
     immediate->value = value;
-    
+
     Syntax *syntax = malloc(sizeof(Syntax));
     syntax->type = IMMEDIATE;
     syntax->immediate = immediate;
@@ -17,7 +17,7 @@ Syntax *immediate_new(int value) {
 Syntax *variable_new(char *var_name) {
     Variable *variable = malloc(sizeof(Variable));
     variable->var_name = var_name;
-    
+
     Syntax *syntax = malloc(sizeof(Syntax));
     syntax->type = VARIABLE;
     syntax->variable = variable;
@@ -184,7 +184,8 @@ Syntax *if_new(Syntax *condition, Syntax *then) {
 }
 
 Syntax *define_var_new(char *var_name, Syntax *init_value) {
-    DefineVarStatement *define_var_statement = malloc(sizeof(DefineVarStatement));
+    DefineVarStatement *define_var_statement =
+        malloc(sizeof(DefineVarStatement));
     define_var_statement->var_name = var_name;
     define_var_statement->init_value = init_value;
 
@@ -222,7 +223,7 @@ Syntax *function_new(char *name, Syntax *root_block) {
 Syntax *top_level_new() {
     TopLevel *top_level = malloc(sizeof(TopLevel));
     top_level->declarations = list_new();
-    
+
     Syntax *syntax = malloc(sizeof(Syntax));
     syntax->type = TOP_LEVEL;
     syntax->top_level = top_level;
@@ -236,19 +237,19 @@ void syntax_free(Syntax *syntax) {
     if (syntax->type == UNARY_OPERATOR) {
         syntax_free(syntax->unary_expression->expression);
         free(syntax->unary_expression);
-        
-    } else if (syntax->type == BINARY_OPERATOR){
+
+    } else if (syntax->type == BINARY_OPERATOR) {
         syntax_free(syntax->binary_expression->left);
         syntax_free(syntax->binary_expression->right);
         free(syntax->binary_expression);
-        
+
     } else if (syntax->type == IF_STATEMENT) {
         syntax_free(syntax->if_statement->condition);
         syntax_free(syntax->if_statement->then);
-        
+
     } else if (syntax->type == BLOCK) {
         list_free(syntax->block->statements);
-        
+
     } else if (syntax->type == FUNCTION) {
         free(syntax->block);
     }
@@ -275,7 +276,8 @@ char *syntax_type_name(Syntax *syntax) {
             return "MULTIPLICATION";
         } else if (syntax->binary_expression->binary_type == LESS_THAN) {
             return "LESS THAN";
-        } else if (syntax->binary_expression->binary_type == LESS_THAN_OR_EQUAL) {
+        } else if (syntax->binary_expression->binary_type ==
+                   LESS_THAN_OR_EQUAL) {
             return "LESS THAN OR EQUAL";
         }
     } else if (syntax->type == FUNCTION_CALL) {
@@ -305,7 +307,7 @@ char *syntax_type_name(Syntax *syntax) {
 }
 
 void print_syntax_indented(Syntax *syntax, int indent) {
-    for (int i=0; i<indent; i++) {
+    for (int i = 0; i < indent; i++) {
         printf(" ");
     }
 
@@ -318,28 +320,30 @@ void print_syntax_indented(Syntax *syntax, int indent) {
     } else if (syntax->type == UNARY_OPERATOR) {
         printf("%s\n", syntax_type_string);
         print_syntax_indented(syntax->unary_expression->expression, indent + 4);
-        
-    } else if (syntax->type == BINARY_OPERATOR){
+
+    } else if (syntax->type == BINARY_OPERATOR) {
         printf("%s LEFT\n", syntax_type_string);
         print_syntax_indented(syntax->binary_expression->left, indent + 4);
 
-        for (int i=0; i<indent; i++) {
+        for (int i = 0; i < indent; i++) {
             printf(" ");
         }
 
         printf("%s RIGHT\n", syntax_type_string);
         print_syntax_indented(syntax->binary_expression->right, indent + 4);
-        
+
     } else if (syntax->type == FUNCTION_CALL) {
-        printf("%s '%s'\n", syntax_type_string, syntax->function_call->function_name);
-        print_syntax_indented(syntax->function_call->function_arguments, indent);
+        printf("%s '%s'\n", syntax_type_string,
+               syntax->function_call->function_name);
+        print_syntax_indented(syntax->function_call->function_arguments,
+                              indent);
 
     } else if (syntax->type == FUNCTION_ARGUMENTS) {
         printf("%s\n", syntax_type_string);
 
         List *arguments = syntax->function_arguments->arguments;
         Syntax *argument;
-        for (int i=0; i<list_length(arguments); i++) {
+        for (int i = 0; i < list_length(arguments); i++) {
             argument = list_get(arguments, i);
             print_syntax_indented(argument, indent + 4);
         }
@@ -348,7 +352,7 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         printf("%s CONDITION\n", syntax_type_string);
         print_syntax_indented(syntax->if_statement->condition, indent + 4);
 
-        for (int i=0; i<indent; i++) {
+        for (int i = 0; i < indent; i++) {
             printf(" ");
         }
 
@@ -360,40 +364,42 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         print_syntax_indented(syntax->return_statement->expression, indent + 4);
 
     } else if (syntax->type == DEFINE_VAR) {
-        printf("%s '%s'\n", syntax_type_string, syntax->define_var_statement->var_name);
+        printf("%s '%s'\n", syntax_type_string,
+               syntax->define_var_statement->var_name);
 
-        for (int i=0; i<indent; i++) {
+        for (int i = 0; i < indent; i++) {
             printf(" ");
         }
 
         printf("'%s' INITIAL VALUE\n", syntax->define_var_statement->var_name);
-        print_syntax_indented(syntax->define_var_statement->init_value, indent + 4);
+        print_syntax_indented(syntax->define_var_statement->init_value,
+                              indent + 4);
 
     } else if (syntax->type == BLOCK) {
         printf("%s\n", syntax_type_string);
 
         List *statements = syntax->block->statements;
-        for (int i=0; i<list_length(statements); i++) {
+        for (int i = 0; i < list_length(statements); i++) {
             print_syntax_indented(list_get(statements, i), indent + 4);
         }
 
     } else if (syntax->type == FUNCTION) {
         printf("%s '%s'\n", syntax_type_string, syntax->function->name);
         print_syntax_indented(syntax->function->root_block, indent + 4);
-        
+
     } else if (syntax->type == ASSIGNMENT) {
         printf("%s '%s'\n", syntax_type_string, syntax->assignment->var_name);
         print_syntax_indented(syntax->assignment->expression, indent + 4);
-        
+
     } else if (syntax->type == WHILE_SYNTAX) {
         printf("%s\n", syntax_type_string);
         print_syntax_indented(syntax->assignment->expression, indent + 4);
-        
+
     } else if (syntax->type == TOP_LEVEL) {
         printf("%s\n", syntax_type_string);
 
         List *declarations = syntax->top_level->declarations;
-        for (int i=0; i<list_length(declarations); i++) {
+        for (int i = 0; i < list_length(declarations); i++) {
             print_syntax_indented(list_get(declarations, i), indent + 4);
         }
 
@@ -402,6 +408,4 @@ void print_syntax_indented(Syntax *syntax, int indent) {
     }
 }
 
-void print_syntax(Syntax *syntax) {
-    print_syntax_indented(syntax, 0);
-}
+void print_syntax(Syntax *syntax) { print_syntax_indented(syntax, 0); }

@@ -1,7 +1,6 @@
 #ifndef BABYC_LIST_HEADER
 #define BABYC_LIST_HEADER
 
-
 typedef struct List {
     int size;
     void **items;

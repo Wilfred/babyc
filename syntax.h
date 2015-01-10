@@ -4,14 +4,20 @@
 #define BABYC_SYNTAX_HEADER
 
 typedef enum {
-    IMMEDIATE, VARIABLE,
-    UNARY_OPERATOR, BINARY_OPERATOR,
+    IMMEDIATE,
+    VARIABLE,
+    UNARY_OPERATOR,
+    BINARY_OPERATOR,
     // We already use 'RETURN' and 'IF' as token names.
-    BLOCK, IF_STATEMENT,
+    BLOCK,
+    IF_STATEMENT,
     RETURN_STATEMENT,
-    DEFINE_VAR, FUNCTION,
-    FUNCTION_CALL, FUNCTION_ARGUMENTS,
-    ASSIGNMENT, WHILE_SYNTAX,
+    DEFINE_VAR,
+    FUNCTION,
+    FUNCTION_CALL,
+    FUNCTION_ARGUMENTS,
+    ASSIGNMENT,
+    WHILE_SYNTAX,
     TOP_LEVEL
 } SyntaxType;
 typedef enum { BITWISE_NEGATION, LOGICAL_NEGATION } UnaryExpressionType;
@@ -26,9 +32,7 @@ typedef enum {
 struct Syntax;
 typedef struct Syntax Syntax;
 
-typedef struct Immediate {
-    int value;
-} Immediate;
+typedef struct Immediate { int value; } Immediate;
 
 typedef struct Variable {
     // TODO: once we have other types, we will need to store type here.
@@ -46,9 +50,7 @@ typedef struct BinaryExpression {
     Syntax *right;
 } BinaryExpression;
 
-typedef struct FunctionArguments {
-    List *arguments;
-} FunctionArguments;
+typedef struct FunctionArguments { List *arguments; } FunctionArguments;
 
 typedef struct FunctionCall {
     char *function_name;
@@ -75,13 +77,9 @@ typedef struct WhileStatement {
     Syntax *body;
 } WhileStatement;
 
-typedef struct ReturnStatement {
-    Syntax *expression;
-} ReturnStatement;
+typedef struct ReturnStatement { Syntax *expression; } ReturnStatement;
 
-typedef struct Block {
-    List *statements;
-} Block;
+typedef struct Block { List *statements; } Block;
 
 typedef struct Function {
     char *name;
@@ -94,9 +92,7 @@ typedef struct Parameter {
     char *name;
 } Parameter;
 
-typedef struct TopLevel {
-    List *declarations;
-} TopLevel;
+typedef struct TopLevel { List *declarations; } TopLevel;
 
 struct Syntax {
     SyntaxType type;
@@ -122,9 +118,9 @@ struct Syntax {
         DefineVarStatement *define_var_statement;
 
         WhileStatement *while_statement;
-        
+
         Block *block;
-        
+
         Function *function;
 
         TopLevel *top_level;

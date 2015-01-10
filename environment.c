@@ -5,7 +5,7 @@
 #include "environment.h"
 
 /* A data structure that maps variable names (i.e. strings) to offsets
- * (integers) in the current stack frame. 
+ * (integers) in the current stack frame.
  */
 
 Environment *environment_new() {
@@ -28,7 +28,7 @@ void environment_set_offset(Environment *env, char *var_name, int offset) {
 
 int environment_get_offset(Environment *env, char *var_name) {
     VarWithOffset vwo;
-    for (size_t i=0; i<env->size; i++) {
+    for (size_t i = 0; i < env->size; i++) {
         vwo = env->items[i];
 
         if (strcmp(vwo.var_name, var_name) == 0) {

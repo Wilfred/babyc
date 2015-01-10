@@ -34,12 +34,11 @@ typedef enum {
     EMIT_ASM,
 } stage_t;
 
-int main(int argc, char *argv[])
-{
-    ++argv, --argc;  /* Skip over program name. */
+int main(int argc, char *argv[]) {
+    ++argv, --argc; /* Skip over program name. */
 
     stage_t terminate_at = EMIT_ASM;
-    
+
     char *file_name;
     if (argc == 1 && strcmp(argv[0], "--help") == 0) {
         print_help();
@@ -97,7 +96,8 @@ int main(int argc, char *argv[])
 
     Syntax *complete_syntax = stack_pop(syntax_stack);
     if (syntax_stack->size > 0) {
-        warnx("Did not consume the whole syntax stack during parsing! %d left over.",
+        warnx("Did not consume the whole syntax stack during parsing! %d left "
+              "over.",
               syntax_stack->size);
     }
 
