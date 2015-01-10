@@ -6,6 +6,7 @@
 #include <err.h>
 
 #include "stack.h"
+#include "build/y.tab.h"
 #include "syntax.h"
 #include "assembly.h"
 
