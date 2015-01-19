@@ -12,7 +12,19 @@ Technically targetting C11
 ([standard PDF](http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf)),
 but we will implement such a small subset of C that it's academic.
 
-Current feature set:
+<!-- markdown-toc start - Don't edit this section. Run M-x markdown-toc/generate-toc again -->
+**Table of Contents**
+
+- [Babyc](#babyc)
+    - [Current feature set](#current-feature-set)
+    - [License](#license)
+    - [Usage](#usage)
+        - [Debugging](#debugging)
+    - [Improving code quality](#improving-code-quality)
+
+<!-- markdown-toc end -->
+
+## Current feature set
 
 * positive integers (no other types yet)
 * integer constants
@@ -41,38 +53,27 @@ GPL v2 license.
 
 Compiling babyc:
 
-```
-# Compile the compiler.
-$ make
-```
+    # Compile the compiler.
+    $ make
 
 Usage:
 
-```
-# Run it, producing an assembly file.
-$ build/babyc test_programs/immediate__return_1.c
-# Use the GNU toolchain to assemble and link.
-$ ./link
-```
+    # Run it, producing an assembly file.
+    $ build/babyc test_programs/immediate__return_1.c
+    # Use the GNU toolchain to assemble and link.
+    $ ./link
 
 Viewing the code after preprocessing:
 
-```
-$ build/babyc --dump-expansion test_programs/if_false__return_2.c
-```
-
+    $ build/babyc --dump-expansion test_programs/if_false__return_2.c
 
 Viewing the AST:
 
-```
-$ build/babyc --dump-ast test_programs/if_false__return_2.c
-```
+    $ build/babyc --dump-ast test_programs/if_false__return_2.c
 
 Running tests:
 
-```
-$ make test
-```
+    $ make test
 
 ### Debugging
 
@@ -82,41 +83,33 @@ simply read the out.s file.
 To use gdb (given we have no signal table, function prologues or other
 conveniences), do the following:
 
-```
-$ gdb out
-(gdb) run
-... it segfaults
-(gdb) layout asm
-... shows which line the segfault occurred on
-(gdb) info registers
-... shows the current state of the registers (`layout reg' also
-... provides this data)
-```
+    $ gdb out
+    (gdb) run
+    ... it segfaults
+    (gdb) layout asm
+    ... shows which line the segfault occurred on
+    (gdb) info registers
+    ... shows the current state of the registers (`layout reg' also
+    ... provides this data)
 
 If you want to debug a program that doesn't segfault, you can set a
 breakpoint to the entrypoint:
 
-```
-$ gdb out
-(gdb) info files
-    ...
-    Entry point: 0x80000000
-    ...
-(gdb) break *0x80000000
-(gdb) run
-```
+    $ gdb out
+    (gdb) info files
+        ...
+        Entry point: 0x80000000
+        ...
+    (gdb) break *0x80000000
+    (gdb) run
 
 ## Improving code quality
 
 The make command will generate warnings, fix them. You can also run
 with clang-analyzer to catch further issues:
 
-```
-$ scan-build make
-```
+    $ scan-build make
 
 For code formatting, run:
 
-```
-$ make format
-```
+    $ make format
