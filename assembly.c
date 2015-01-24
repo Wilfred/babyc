@@ -112,6 +112,15 @@ void write_footer(FILE *out) {
     emit_instr(out, "int", "$0x80");
 }
 
+void new_scope(Context *ctx) {
+    // Each function needs a fresh set of local variables (we
+    // don't support globals yet).
+    environment_free(ctx->env);
+    ctx->env = environment_new();
+
+    ctx->stack_offset = -1 * WORD_SIZE;
+}
+
 void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
     // Note stack_offset is the next unused memory address in the
     // stack, so we can use it directly but must adjust it for the next caller.
@@ -238,6 +247,8 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
             write_syntax(out, list_get(statements, i), ctx);
         }
     } else if (syntax->type == FUNCTION) {
+        new_scope(ctx);
+
         emit_function_declaration(out, syntax->function->name);
         emit_function_prologue(out);
         write_syntax(out, syntax->function->root_block, ctx);
@@ -262,8 +273,8 @@ void write_assembly(Syntax *syntax) {
     write_header(out);
 
     Context *ctx = malloc(sizeof(Context));
-    ctx->stack_offset = -1 * WORD_SIZE;
-    ctx->env = environment_new();
+    ctx->stack_offset = 0;
+    ctx->env = NULL;
     ctx->label_count = 0;
 
     write_syntax(out, syntax, ctx);

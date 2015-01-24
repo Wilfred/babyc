@@ -41,6 +41,8 @@ int environment_get_offset(Environment *env, char *var_name) {
 }
 
 void environment_free(Environment *env) {
-    free(env->items);
-    free(env);
+    if (env != NULL) {
+        free(env->items);
+        free(env);
+    }
 }
