@@ -32,11 +32,14 @@ $(BUILD_DIR)/syntax.o: syntax.c list.c
 $(BUILD_DIR)/list.o: list.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(BUILD_DIR)/context.o: context.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
 $(BUILD_DIR)/environment.o: environment.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/babyc: $(BUILD_DIR) $(BUILD_DIR)/lex.yy.o $(BUILD_DIR)/y.tab.o $(BUILD_DIR)/syntax.o $(BUILD_DIR)/environment.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/list.o main.c
-	$(CC) $(CFLAGS) -o $@ main.c $(BUILD_DIR)/lex.yy.o $(BUILD_DIR)/y.tab.o $(BUILD_DIR)/syntax.o $(BUILD_DIR)/environment.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/list.o
+$(BUILD_DIR)/babyc: $(BUILD_DIR) $(BUILD_DIR)/lex.yy.o $(BUILD_DIR)/y.tab.o $(BUILD_DIR)/syntax.o $(BUILD_DIR)/environment.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/context.o $(BUILD_DIR)/list.o main.c
+	$(CC) $(CFLAGS) -o $@ main.c $(BUILD_DIR)/lex.yy.o $(BUILD_DIR)/y.tab.o $(BUILD_DIR)/syntax.o $(BUILD_DIR)/environment.o $(BUILD_DIR)/assembly.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/context.o $(BUILD_DIR)/list.o
 
 .PHONY: clean
 clean:

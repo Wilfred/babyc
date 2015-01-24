@@ -7,8 +7,9 @@
 #include <err.h>
 #include "syntax.h"
 #include "environment.h"
+#include "context.h"
 
-const int WORD_SIZE = 4;
+static const int WORD_SIZE = 4;
 const int MAX_MNEMONIC_LENGTH = 7;
 
 void emit_header(FILE *out, char *name) { fprintf(out, "%s\n", name); }
@@ -60,12 +61,6 @@ void emit_instr_format(FILE *out, char *instr, char *operands_format, ...) {
     fputs("\n", out);
 }
 
-typedef struct Context {
-    int stack_offset;
-    Environment *env;
-    int label_count;
-} Context;
-
 char *fresh_local_label(char *prefix, Context *ctx) {
     // We assume we never write more than 6 chars of digits, plus a '.' and '_'.
     size_t buffer_size = strlen(prefix) + 8;
@@ -110,15 +105,6 @@ void write_footer(FILE *out) {
     emit_instr(out, "mov", "%eax, %ebx");
     emit_instr(out, "mov", "$1, %eax");
     emit_instr(out, "int", "$0x80");
-}
-
-void new_scope(Context *ctx) {
-    // Each function needs a fresh set of local variables (we
-    // don't support globals yet).
-    environment_free(ctx->env);
-    ctx->env = environment_new();
-
-    ctx->stack_offset = -1 * WORD_SIZE;
 }
 
 void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
@@ -272,14 +258,11 @@ void write_assembly(Syntax *syntax) {
 
     write_header(out);
 
-    Context *ctx = malloc(sizeof(Context));
-    ctx->stack_offset = 0;
-    ctx->env = NULL;
-    ctx->label_count = 0;
+    Context *ctx = new_context();
 
     write_syntax(out, syntax, ctx);
     write_footer(out);
 
-    free(ctx);
+    context_free(ctx);
     fclose(out);
 }
