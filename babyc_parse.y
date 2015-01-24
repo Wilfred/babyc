@@ -186,6 +186,7 @@ expression:
 	NUMBER
         {
             stack_push(syntax_stack, immediate_new(atoi((char*)$1)));
+            free($1);
         }
         |
 	IDENTIFIER
