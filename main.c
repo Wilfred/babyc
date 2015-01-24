@@ -45,7 +45,6 @@ int main(int argc, char *argv[]) {
         return 0;
     } else if (argc == 1) {
         file_name = argv[0];
-        yyin = fopen(argv[0], "r");
     } else if (argc == 2 && strcmp(argv[0], "--dump-expansion") == 0) {
         terminate_at = MACRO_EXPAND;
         file_name = argv[1];
