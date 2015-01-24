@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <err.h>
 #include "syntax.h"
 #include "list.h"
 
@@ -211,6 +212,7 @@ Syntax *while_new(Syntax *condition, Syntax *body) {
 Syntax *function_new(char *name, Syntax *root_block) {
     Function *function = malloc(sizeof(Function));
     function->name = name;
+    function->parameters = NULL;
     function->root_block = root_block;
 
     Syntax *syntax = malloc(sizeof(Syntax));
@@ -231,10 +233,27 @@ Syntax *top_level_new() {
     return syntax;
 }
 
+void syntax_list_free(List *syntaxes) {
+    if (syntaxes == NULL) {
+        return;
+    }
+
+    for (int i = 0; i < list_length(syntaxes); i++) {
+        syntax_free(list_get(syntaxes, i));
+    }
+
+    list_free(syntaxes);
+}
+
 void syntax_free(Syntax *syntax) {
-    // FIXME: this should have an entry for everything in
-    // print_syntax_indented.
-    if (syntax->type == UNARY_OPERATOR) {
+    if (syntax->type == IMMEDIATE) {
+        free(syntax->immediate);
+
+    } else if (syntax->type == VARIABLE) {
+        free(syntax->variable->var_name);
+        free(syntax->variable);
+
+    } else if (syntax->type == UNARY_OPERATOR) {
         syntax_free(syntax->unary_expression->expression);
         free(syntax->unary_expression);
 
@@ -243,16 +262,55 @@ void syntax_free(Syntax *syntax) {
         syntax_free(syntax->binary_expression->right);
         free(syntax->binary_expression);
 
+    } else if (syntax->type == FUNCTION_CALL) {
+        syntax_free(syntax->function_call->function_arguments);
+        free(syntax->function_call->function_name);
+
+    } else if (syntax->type == FUNCTION_ARGUMENTS) {
+        syntax_list_free(syntax->function_arguments->arguments);
+        free(syntax->function_arguments);
+
     } else if (syntax->type == IF_STATEMENT) {
         syntax_free(syntax->if_statement->condition);
         syntax_free(syntax->if_statement->then);
 
+    } else if (syntax->type == RETURN_STATEMENT) {
+        syntax_free(syntax->return_statement->expression);
+        free(syntax->return_statement);
+
+    } else if (syntax->type == DEFINE_VAR) {
+        free(syntax->define_var_statement->var_name);
+        syntax_free(syntax->define_var_statement->init_value);
+        free(syntax->define_var_statement);
+
     } else if (syntax->type == BLOCK) {
-        list_free(syntax->block->statements);
+        syntax_list_free(syntax->block->statements);
+        free(syntax->block);
 
     } else if (syntax->type == FUNCTION) {
-        free(syntax->block);
+        free(syntax->function->name);
+        syntax_free(syntax->function->root_block);
+
+        free(syntax->function);
+
+    } else if (syntax->type == ASSIGNMENT) {
+        free(syntax->assignment->var_name);
+        syntax_free(syntax->assignment->expression);
+
+        free(syntax->assignment);
+
+    } else if (syntax->type == WHILE_SYNTAX) {
+        syntax_free(syntax->while_statement->condition);
+        syntax_free(syntax->while_statement->body);
+
+    } else if (syntax->type == TOP_LEVEL) {
+        syntax_list_free(syntax->top_level->declarations);
+        free(syntax->top_level);
+    } else {
+        warnx("Could not free syntax tree with type: %s",
+              syntax_type_name(syntax));
     }
+
     free(syntax);
 }
 
