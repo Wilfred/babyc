@@ -51,4 +51,4 @@ test: $(BUILD_DIR)/run_tests
 
 .PHONY: format
 format:
-	clang-format -i *.c *.h
+	find -name "*.[ch]" -type f | xargs clang-format -i
