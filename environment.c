@@ -26,6 +26,8 @@ void environment_set_offset(Environment *env, char *var_name, int offset) {
     vwo->offset = offset;
 }
 
+/* Return the offset from %ebp of variable VAR_NAME.
+ */
 int environment_get_offset(Environment *env, char *var_name) {
     VarWithOffset vwo;
     for (size_t i = 0; i < env->size; i++) {
