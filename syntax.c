@@ -265,6 +265,7 @@ void syntax_free(Syntax *syntax) {
     } else if (syntax->type == FUNCTION_CALL) {
         syntax_free(syntax->function_call->function_arguments);
         free(syntax->function_call->function_name);
+        free(syntax->function_call);
 
     } else if (syntax->type == FUNCTION_ARGUMENTS) {
         syntax_list_free(syntax->function_arguments->arguments);
