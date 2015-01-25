@@ -140,6 +140,8 @@ nonempty_argument_list:
             }
 
             Syntax *arguments_syntax = function_arguments_new();
+            list_push(arguments_syntax->function_arguments->arguments, stack_pop(syntax_stack));
+
             stack_push(syntax_stack, arguments_syntax);
         }
         ;
