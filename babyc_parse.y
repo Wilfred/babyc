@@ -133,17 +133,13 @@ nonempty_argument_list:
         expression
         {
             // TODO: find a way to factor out the duplication with the above.
-            Syntax *arguments_syntax;
             if (stack_empty(syntax_stack)) {
                 // This should be impossible, we shouldn't be able to
                 // parse this on its own.
                 assert(false);
-            } else if (((Syntax *)stack_peek(syntax_stack))->type != FUNCTION_ARGUMENTS) {
-                arguments_syntax = function_arguments_new();
-            } else {
-                arguments_syntax = stack_pop(syntax_stack);
             }
 
+            Syntax *arguments_syntax = function_arguments_new();
             stack_push(syntax_stack, arguments_syntax);
         }
         ;
