@@ -95,9 +95,11 @@ int main(int argc, char *argv[]) {
 
     Syntax *complete_syntax = stack_pop(syntax_stack);
     if (syntax_stack->size > 0) {
-        warnx("Did not consume the whole syntax stack during parsing! %d left "
-              "over.",
-              syntax_stack->size);
+        warnx("Did not consume the whole syntax stack during parsing! Remaining:");
+
+        while(syntax_stack->size > 0) {
+            fprintf(stderr, "%s", syntax_type_name(stack_pop(syntax_stack)));
+        }
     }
 
     if (terminate_at == PARSE) {
