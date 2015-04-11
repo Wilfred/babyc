@@ -51,6 +51,8 @@ GPL v2 license.
 
 ## Usage
 
+You will need `clang`, `lex` and `yacc` installed.
+
 Compiling babyc:
 
     # Compile the compiler.
