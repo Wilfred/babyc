@@ -8,7 +8,7 @@ L			[a-zA-Z_]
 
 void comment();
 
-void error();
+void yyerror();
 %}
 
 
@@ -58,5 +58,5 @@ void comment(void) {
             return;
         prev = c;
     }
-    error("unterminated comment");
+    yyerror("unterminated comment");
 }
