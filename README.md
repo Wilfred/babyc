@@ -51,7 +51,8 @@ GPL v2 license.
 
 ## Usage
 
-You will need `clang`, `lex` and `yacc` installed.
+You will need `clang`, `lex` and `yacc` installed. GNU Bison is known
+to work, other yacc implementations may not.
 
 Compiling babyc:
 
