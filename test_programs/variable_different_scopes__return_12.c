@@ -1,6 +1,5 @@
 int foo() {
     int x = 1;
-
     x = x + 1;
     return x;
 }
@@ -11,4 +10,10 @@ int bar() {
     return x;
 }
 
-int main() { return foo() + bar(); }
+int one() {
+    int x = 4;
+    x = x - 3;
+    return x;
+}
+
+int main() { return (foo() + bar()) * one(); }

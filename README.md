@@ -6,7 +6,9 @@ An educational foray into compiler writing. Written in C, compiling C
 to x86 assembly
 ([handy x86 reference site](http://x86.renejeschke.de/),
 [assembly directives reference](https://www.sourceware.org/binutils/docs-2.12/as.info/Pseudo-Ops.html),
+[X86 calling conventions](https://en.wikipedia.org/wiki/X86_calling_conventions#cdecl),
 [System V ABI reference](http://www.uclibc.org/docs/psABI-i386.pdf)).
+
 
 Technically targetting C11
 ([standard PDF](http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf)),
@@ -26,24 +28,36 @@ but we will implement such a small subset of C that it's academic.
 
 ## Current feature set
 
-* positive integers (no other types yet)
-* integer constants
-* logical negation (`!FOO`)
+* signed 32-bit integers (no other types yet)
+* integer constants (decimal, hexadecimal, octal)
+* logical negation (`!FOO` is 0 or 1)
 * bitwise negation (`~FOO`)
-* addition (`foo + bar`)
-* subtraction (`foo - bar` binary only)
-* multiplication (`foo * bar`)
-* less than comparison (`foo < bar`, `foo <= bar`)
-* comments (`// foo` and `/* foo */`)
-* sequences of statements (`foo; bar`)
-* return statements
+* arithmetic negation (`-FOO` (unary subtraction))
+* arithmetic subtraction (`foo - bar` (binary subtraction))
+* arithmetic operators (`foo + bar`, `foo * bar`, `foo / bar`, `foo % bar`)
+* bitwise operators ('foo & bar', 'foo | bar', 'foo ^ bar')
+* right shift (`foo >> bar`)
+* left shift (`foo << bar`)
+* signed comparison (`foo < bar`, `foo <= bar`... '==', '!=', '>', '>=')
+* comments (`// foo \n` and `/* foo */`)
+* sequences of statements (`foo; bar;`)
+* return statements ('return foo;')
+* nested blocks and local scopes for variables ('{ int i; { int j = i + 1; } }')
 * if statements (`if (foo) { bar }`, no `else` yet)
-* local variables (`int` only, function scope only, must be
-  initialised)
+* local variables (`int` only)
+* global variables (`int` only)
+* static variables (`int` only)
 * variable assignment (`int` only)
-* while loops (`while (foo) { bar }`)
-* function calls (only `int foo()` i.e. no arguments, returning int)
-* preprocessor usage (we shell out to gcc)
+* sizeof (`variable` only)
+* while loops (`while (foo) { bar; }`)
+* function declaration (with multiple int arguments, returning int)
+* function calls (with multiple int arguments, returning int)
+* cdecl-type calling convention
+* nested function calls
+* return value from main used as exit code
+* microscopic stdlib support (write to stdout, read from stdin, assert, exit)
+* simple preprocessor support (for now, we shell out to gcc -E)
+* few usual options from GCC/Clang command line ('-g' '-o' '-O0' '-E' '-S' '-m32')
 
 ## License
 
@@ -51,7 +65,7 @@ GPL v2 license.
 
 ## Usage
 
-You will need `clang`, `lex` and `yacc` installed. GNU Bison is known
+You might need `clang`, `lex` and `yacc` installed. 'Flex' and GNU 'Gcc' and 'Bison' are known
 to work, other yacc implementations may not.
 
 Compiling babyc:
@@ -61,10 +75,8 @@ Compiling babyc:
 
 Usage:
 
-    # Run it, producing an assembly file.
-    $ build/babyc test_programs/immediate__return_1.c
-    # Use the GNU toolchain to assemble and link.
-    $ ./link
+    # Run it, producing a binary file.
+    $ build/babyc -o a.out test_programs/immediate__return_1.c
 
 Viewing the code after preprocessing:
 
@@ -74,19 +86,36 @@ Viewing the AST:
 
     $ build/babyc --dump-ast test_programs/if_false__return_2.c
 
+Generating and viewing the assembly:
+
+    $ build/babyc -S test_programs/if_false__return_2.c
+    $ cat out.s
+
 Running tests:
 
     $ make test
 
 ### Debugging
 
+If you want to debug a program that doesn't segfault, you can compile the program
+with debugger support and set a breakpoint to any function:
+
+    $ build/babyc -g test_programs/if_false__return_2.c
+    $ gdb a.out
+    (gdb) list main 
+    (gdb) break main 
+    (gdb) run
+    
 If you're debugging a compiled program that segfaults, you may want to
-simply read the out.s file.
+simply read/modify the out.s file, re-compile it, and then run it step by step
+using GNU gdb, or more interactively, ddd (X11 wrapper over gdb)
 
-To use gdb (given we have no signal table, function prologues or other
-conveniences), do the following:
-
-    $ gdb out
+    $ build/babyc -S test_programs/if_false__return_2.c
+    $ vi out.s
+      ... modify it
+    $ as --32 -g -o out.o out.s
+    $ ld -m elf_i386 -g -o a.out out.o
+    $ gdb a.out
     (gdb) run
     ... it segfaults
     (gdb) layout asm
@@ -94,17 +123,6 @@ conveniences), do the following:
     (gdb) info registers
     ... shows the current state of the registers (`layout reg' also
     ... provides this data)
-
-If you want to debug a program that doesn't segfault, you can set a
-breakpoint to the entrypoint:
-
-    $ gdb out
-    (gdb) info files
-        ...
-        Entry point: 0x80000000
-        ...
-    (gdb) break *0x80000000
-    (gdb) run
 
 ## Improving code quality
 
@@ -116,3 +134,67 @@ with clang-analyzer to catch further issues:
 For code formatting, run:
 
     $ make format
+
+## Known problems
+
+* A few known memory leaks in compiler (symbol table in lexer, temp lists in AST build, ....).
+* No syntax/semantic check, and no parsing recovery (use gcc to validate your test programs before using this compiler). Should use 'error' statement in .y file, and should pass line numbers from lex to yacc to alleviate that serious usability problem.
+* Cannot parse standard C headers from '/usr/include' .... (see restrictions below)
+* Mixtures of nested comments is not standard ('//' and '/**/').
+* Operator precedence not fully tested, might not be fully compliant to C99 yet.
+* Hardcoded temp filenames possibly left in current directory ('.extended.c', 'out.s' , 'out.o')
+
+## Not implemented
+
+* No support for main parameters (argc, argv)
+* No support for pointers (data pointers, function pointers ....)
+* No support for '*' operator (address dereference)
+* No support for '++', '--' pre/post-fix operators
+* No support for '&&', '||' boolean operators
+* No support for 'void' keyword
+* No support for 'unsigned' type (only signed int)
+* No support for 'signed' keyword (implicit signed int)
+* No support for casts (only one type : signed int)
+* No support for char, byte, bool, word, short, dword, long, longlong, qwords, intptr_t, uintxx_t types
+* No support for nibble, tetrade, nybble, half-byte, semi-octet, quadbit types
+* No support for float, double, long double types and IEEE 754  (only signed int)
+* No support for arrays
+* No support for enums, struct, typedefs ....
+* No support for const keyword
+* No support for restrict keyword
+* No support for volatile keyword
+* No support for inline keyword
+* No support for register keyword
+* No support for loop variants ('for', 'do-while', 'foreach', ....)
+* No support for else/break/continue/goto statements
+* No support for switch statements ('switch', 'case', 'default', 'duffs device'....)
+* No support for labels
+* No support for strings and string operators ('strcpy', 'strcat', 'strcmp', ...)
+* No support for printf(), gets()
+* No support for memory allocation 
+* No support for threads and parallelization 
+* No support for vectorization
+* No support for signals and exceptions
+* No support for self-modifiable code
+* No support for asm statement
+* No support for GCC intrinsics
+* No support for assembly file frontend
+* No support for C++ file frontend
+* No support for BASIC file frontend (why not ?)
+* No support for BF file frontend (why not ?)
+* No support for 64-bits architecture and processors other than i386
+* No support for alien OSes (other than linux-like)
+* No support for assembly annotation with source code references for debugger purposes
+* optimizer: no AST coalescing
+* optimizer: no optimizations specific to leaf functions
+* optimizer: no register allocation/spill
+* optimizer: no constant propagation
+* optimizer: no loop unrolling
+* optimizer: no function inlining
+* optimizer: no peephole simplifications
+* optimizer: no dead code elimination
+* optimizer: no red zone shortcuts
+* optimizer: no optimizer at all .....
+
+
+

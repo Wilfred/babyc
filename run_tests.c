@@ -1,26 +1,14 @@
+#include <dirent.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <dirent.h>
-#include <stdbool.h>
-#include <stdlib.h>
 
 bool is_test_program(char *file_name) {
     // A test program is simply one that contains two consecutive underscores.
-
-    char char1 = '\0', char2 = '\0';
-    while (*file_name != '\0') {
-        char2 = char1;
-        char1 = *file_name;
-        file_name++;
-
-        if (char1 == '_' && char2 == '_') {
-            return true;
-        }
-    }
-
-    return false;
+    return (strstr(file_name, "__") != NULL);
 }
 
 int run_test(char *test_program_name) {
@@ -30,16 +18,17 @@ int run_test(char *test_program_name) {
 
     // If it contains a 'return_NUMBER' file name, extract it.
     int expected_return = -1;
-    char *return_position = strstr(test_program_name, "return_");
-    if (return_position != NULL) {
-        return_position += strlen("return_");
+    char *return_position = strstr(test_program_name, "__return_");
 
+    if (return_position != NULL) {
+        return_position += strlen("__return_");
         expected_return = atoi(return_position);
     }
 
     snprintf(command, 1024, "./build/babyc test_programs/%s >/dev/null",
              test_program_name);
     int result = system(command);
+
     free(command);
 
     if (result != 0) {
@@ -47,19 +36,9 @@ int run_test(char *test_program_name) {
         return result;
     }
 
-    if ((result = system("as out.s -o out.o --32")) != 0) {
-        printf("[%s] Assembling failed!\n", test_program_name);
-        return result;
-    }
+    result = WEXITSTATUS(system("./a.out"));
 
-    if ((result = system("ld -m elf_i386 -s -o out out.o")) != 0) {
-        printf("[%s] Linking failed!\n", test_program_name);
-        return result;
-    }
-
-    result = WEXITSTATUS(system("./out"));
-
-    system("rm out.s out.o out");
+    system("rm -f out.s out.o a.out");
 
     if (result != expected_return) {
         printf("[%s] Expected %d, but got %d!\n", test_program_name,
@@ -83,6 +62,7 @@ int main() {
     struct dirent *file;
     char *file_name;
     int test_result;
+
     while ((file = readdir(test_dir)) != NULL) {
         file_name = file->d_name;
 
@@ -96,6 +76,7 @@ int main() {
             } else {
                 printf("F");
             }
+            fflush(stdout);
         }
     }
     printf("\n\n%d tests run, %d passed, %d failed.\n", tests_run, tests_passed,

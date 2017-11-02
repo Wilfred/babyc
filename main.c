@@ -1,130 +1,246 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
+
+/* ----------------------------------------------------------------
+ *
+ * Brave Algorithms Build Your Code
+ *
+ * ---------------------------------------------------------------- */
+
 #include <assert.h>
 #include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-#include "stack.h"
-#include "build/y.tab.h"
-#include "syntax.h"
 #include "assembly.h"
+#include "syntax.h"
 
 void print_help() {
     printf("Babyc is a very basic C compiler.\n\n");
-    printf("To compile a file:\n");
+    printf("To compile a file into a.out:\n");
     printf("    $ babyc foo.c\n");
+    printf("To compile a file into foo.exe:\n");
+    printf("    $ babyc -o foo.exe foo.c\n");
+    printf("To output the preprocessed code without parsing:\n");
+    printf("    $ babyc -E foo.c\n");
     printf("To output the AST without compiling:\n");
     printf("    $ babyc --dump-ast foo.c\n");
-    printf("To output the preprocessed code without parsing:\n");
-    printf("    $ babyc --dump-expansion foo.c\n");
+    printf("To generate the assembly file out.s:\n");
+    printf("    $ babyc -S foo.c\n");
     printf("To print this message:\n");
     printf("    $ babyc --help\n\n");
     printf("For more information, see https://github.com/Wilfred/babyc\n");
 }
 
-extern Stack *syntax_stack;
-
 extern int yyparse(void);
-extern FILE *yyin;
 
 typedef enum {
     MACRO_EXPAND,
     PARSE,
     EMIT_ASM,
+    BUILD_EXE,
 } stage_t;
 
 int main(int argc, char *argv[]) {
-    ++argv, --argc; /* Skip over program name. */
+    stage_t terminate_at = BUILD_EXE;
+    char *input_file_name = NULL;
+    char *output_file_name = NULL;
+    int ret = 1;
+    int debug = 0;
 
-    stage_t terminate_at = EMIT_ASM;
+    for (int i = 1; i < argc; i++) {
 
-    char *file_name;
-    if (argc == 1 && strcmp(argv[0], "--help") == 0) {
-        print_help();
-        return 0;
-    } else if (argc == 1) {
-        file_name = argv[0];
-    } else if (argc == 2 && strcmp(argv[0], "--dump-expansion") == 0) {
-        terminate_at = MACRO_EXPAND;
-        file_name = argv[1];
-    } else if (argc == 2 && strcmp(argv[0], "--dump-ast") == 0) {
-        terminate_at = PARSE;
-        file_name = argv[1];
-    } else {
+        /* GCC-like  options */
+        if (!strcmp(argv[i], "--help")) {
+            print_help();
+            return 0;
+        }
+        if (!strcmp(argv[i], "--version")) {
+            printf("Babyc 1.0.0\n");
+            return 0;
+        }
+        if (!strcmp(argv[i], "-E")) {
+            terminate_at = MACRO_EXPAND;
+            continue;
+        }
+        if (!strcmp(argv[i], "-S")) {
+            terminate_at = EMIT_ASM;
+            continue;
+        }
+        if (!strcmp(argv[i], "-g")) {
+            debug = 1;
+            continue;
+        }
+
+        /* GCC-like implicit options (what is really implemented) */
+        if (!strcmp(argv[i], "-m32")) {
+            continue;
+        }
+        if (!strcmp(argv[i], "-O0")) {
+            continue;
+        }
+        if (!strcmp(argv[i], "-fomit-frame-pointer")) {
+            continue;
+        }
+        if (!strcmp(argv[i], "-fno-stack-protector")) {
+            continue;
+        }
+        if (!strcmp(argv[i], "-Wl,--stack,4096")) {
+            continue;
+        }
+
+        /* historical options */
+        if (!strcmp(argv[i], "--dump-ast")) {
+            terminate_at = PARSE;
+            continue;
+        }
+        if (!strcmp(argv[i], "--dump-expansion")) {
+            terminate_at = MACRO_EXPAND;
+            continue;
+        }
+
+        /* one output file name */
+        if (!strcmp(argv[i], "-o")) {
+            if (output_file_name) {
+                printf("Too many output files\n");
+                print_help();
+                return 1;
+            }
+            output_file_name = argv[++i];
+            continue;
+        }
+
+        /* one input file name */
+        if (input_file_name) {
+            printf("Too many input files\n");
+            print_help();
+            return 1;
+        }
+        input_file_name = argv[i];
+    }
+
+    if (!input_file_name) {
+        printf("Input file missing\n");
         print_help();
         return 1;
+    }
+    if (!output_file_name) {
+        output_file_name = "a.out";
     }
 
     int result;
 
+    /* -------------------------------------------------------------------
+     *  Preprocessor stage
+     * ------------------------------------------------------------------- */
     // TODO: create a proper temporary file from the preprocessor.
     char command[1024] = {0};
-    snprintf(command, 1024, "gcc -E %s > .expanded.c", file_name);
+    snprintf(command, 1024, "gcc -E %s > .expanded.c", input_file_name);
     result = system(command);
     if (result != 0) {
         puts("Macro expansion failed!");
-        return result;
+        goto cleanup_cpp_file;
     }
-
-    yyin = fopen(".expanded.c", "r");
 
     if (terminate_at == MACRO_EXPAND) {
         int c;
-        while ((c = getc(yyin)) != EOF) {
+
+        FILE *f = fopen(".expanded.c", "r");
+
+        while ((c = getc(f)) != EOF) {
             putchar(c);
         }
-        goto cleanup_file;
+        fclose(f);
+        ret = 0;
+        goto cleanup_cpp_file;
     }
 
-    if (yyin == NULL) {
-        // TODO: work out what the error was.
-        // TODO: Unit test this.
-        printf("Could not open file: '%s'\n", file_name);
-        result = 2;
-        goto cleanup_file;
-    }
+    /* -------------------------------------------------------------------
+     *  Parsing stage (Build AST)
+     * ------------------------------------------------------------------- */
 
-    syntax_stack = stack_new();
+    parser_setup(".expanded.c");
 
     result = yyparse();
+
+    Syntax *complete_syntax = parser_complete();
+
     if (result != 0) {
-        printf("\n");
-        goto cleanup_syntax;
-    }
-
-    Syntax *complete_syntax = stack_pop(syntax_stack);
-    if (syntax_stack->size > 0) {
-        warnx("Did not consume the whole syntax stack during parsing! Remaining:");
-
-        while(syntax_stack->size > 0) {
-            fprintf(stderr, "%s", syntax_type_name(stack_pop(syntax_stack)));
-        }
+        printf("Parser error occurred\n");
+        goto cleanup_cpp_file;
     }
 
     if (terminate_at == PARSE) {
-        print_syntax(complete_syntax);
-    } else {
-        write_assembly(complete_syntax);
+
+        /* -------------------------------------------------------------------
+         *  Debug (dump AST)
+         * -------------------------------------------------------------------
+         */
+
+        print_syntax_item(complete_syntax);
         syntax_free(complete_syntax);
+        goto cleanup_cpp_file;
+    }
 
-        printf("Written out.s.\n");
+    /* -------------------------------------------------------------------
+     *  Assembly generation (write AST)
+     * ------------------------------------------------------------------- */
+
+    write_assembly("out.s", complete_syntax);
+    syntax_free(complete_syntax);
+
+    if (terminate_at == EMIT_ASM) {
+        printf("Written out.s\n");
         printf("Build it with:\n");
-        printf("    $ as out.s -o out.o\n");
-        printf("    $ ld -s -o out out.o\n");
+        printf("    $ as --32 -g -o out.o out.s\n");
+        printf("    $ ld -m elf_i386 -g -o a.out out.o\n");
+        printf("Debug it with:\n");
+        printf("    $ objdump -d a.out\n");
+        printf("    $ gdb a.out\n");
+        goto cleanup_cpp_file;
     }
 
-cleanup_syntax:
-    /* TODO: if we exit early from syntactically invalid code, we will
-       need to free multiple Syntax structs on this stack.
-     */
-    stack_free(syntax_stack);
-cleanup_file:
-    if (yyin != NULL) {
-        fclose(yyin);
+    /* -------------------------------------------------------------------
+     *  Assembler stage
+     * ------------------------------------------------------------------- */
+
+    snprintf(command, 1024, "as --32 %s -o out.o out.s", debug ? "-g" : "");
+    result = system(command);
+    if (result != 0) {
+        printf("Assembler error occurred\n");
+        goto cleanup_s_file;
     }
+
+    /* -------------------------------------------------------------------
+     *  Linker stage
+     * ------------------------------------------------------------------- */
+
+    // TODO : verify if the ELF stack setup comes from
+    // - ulimit (this is now the trend)
+    // - setrlimit
+    // - ld command line
+    snprintf(command, 1024,
+             "ld -m elf_i386 -e _start -z stack-size=4096 %s -o %s out.o",
+             debug ? "-g" : "-s", output_file_name);
+    result = system(command);
+    if (result != 0) {
+        printf("Linker error occurred\n");
+        goto cleanup_o_file;
+    }
+
+    ret = 0;
+
+cleanup_o_file:
+
+    unlink("out.o");
+
+cleanup_s_file:
+
+    unlink("out.s");
+
+cleanup_cpp_file:
 
     unlink(".expanded.c");
 
-    return result;
+    return ret;
 }
