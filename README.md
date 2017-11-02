@@ -144,6 +144,12 @@ For code formatting, run:
 * Operator precedence not fully tested, might not be fully compliant to C99 yet.
 * Hardcoded temp filenames possibly left in current directory ('.extended.c', 'out.s' , 'out.o')
 
+## Soon
+
+* Working on a bit of code cleanup and code commenting
+* Adding a test_stdlib directory with more complex testcases
+* Support for unsigned ints
+
 ## Not implemented
 
 * No support for main parameters (argc, argv)
