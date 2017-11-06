@@ -292,23 +292,31 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         emit_instr_format(out, "movl", "%%eax, %s",
                           get_var_name(syntax->assignment->variable));
     } else if (syntax->type == ASSIGNMENT_STATIC) {
+    } else if (syntax->type == NOP_STATEMENT) {
     } else if (syntax->type == RETURN_STATEMENT) {
         ReturnStatement *return_statement = syntax->return_statement;
 
         write_syntax(out, return_statement->expression, ctx);
         emit_instr_format(out, "jmp", "%s", ctx->function_end_label);
+    } else if (syntax->type == GOTO_STATEMENT) {
+        emit_instr_format(out, "jmp", "%s", syntax->label->assembler_name);
+    } else if (syntax->type == LABEL_STATEMENT) {
+        fprintf(out, "%s:\n", syntax->label->assembler_name);
     } else if (syntax->type == IF_STATEMENT) {
         IfStatement *if_statement = syntax->if_statement;
+        char *end_label = fresh_local_label("if_end", ctx);
+        char *else_label = fresh_local_label("if_else", ctx);
 
         write_syntax(out, if_statement->condition, ctx);
 
-        char *label = fresh_local_label("if_end", ctx);
-
+        /* TODO : check for empty blocks in if_else and if_then statements */
         emit_instr(out, "testl", "%eax, %eax");
-        emit_instr_format(out, "jz", "%s", label);
-
-        write_syntax(out, if_statement->then, ctx);
-        emit_label(out, label);
+        emit_instr_format(out, "jz", "%s", else_label);
+        write_syntax(out, if_statement->if_then, ctx);
+        emit_instr_format(out, "jmp", "%s", end_label);
+        emit_label(out, else_label);
+        write_syntax(out, if_statement->if_else, ctx);
+        emit_label(out, end_label);
 
     } else if (syntax->type == WHILE_STATEMENT) {
         WhileStatement *while_statement = syntax->while_statement;
@@ -400,9 +408,17 @@ int update_dynamic_syntax(Syntax *syntax) {
         return (c > b) ? c : b;
     } else if (syntax->type == IF_STATEMENT) {
         int c = update_dynamic_syntax(syntax->if_statement->condition);
-        int t = update_dynamic_syntax(syntax->if_statement->then);
+        int t = update_dynamic_syntax(syntax->if_statement->if_then);
+        int u = update_dynamic_syntax(syntax->if_statement->if_else);
 
+        c = (c > u) ? c : u;
         return (c > t) ? c : t;
+    } else if (syntax->type == GOTO_STATEMENT) {
+        return 0;
+    } else if (syntax->type == LABEL_STATEMENT) {
+        return 0;
+    } else if (syntax->type == NOP_STATEMENT) {
+        return 0;
     } else if (syntax->type == ASSIGNMENT_STATEMENT) {
         return update_dynamic_syntax(syntax->assignment->expression);
     } else if (syntax->type == RETURN_STATEMENT) {
@@ -448,6 +464,7 @@ typedef struct UpdateOffset {
     bool function_write_seen;
     bool function_assert_seen;
     bool function_exit_seen;
+    bool function_rdtsc_seen;
 } UpdateOffset;
 
 void update_offset_size(Variable *v, UpdateOffset *ctx) {
@@ -490,6 +507,14 @@ void update_offset_size(Variable *v, UpdateOffset *ctx) {
     v->assembler_name = strdup(temp);
 }
 
+void update_label(Label *l, UpdateOffset *ctx) {
+    if (l->assembler_name)
+        return;
+    char temp[20];
+    sprintf(temp, ".%s_%d", l->name, ctx->label_count++);
+    l->assembler_name = strdup(temp);
+}
+
 void update_offset_syntax(Syntax *syntax, UpdateOffset *ctx);
 void update_offset_list(List *list, UpdateOffset *ctx);
 
@@ -508,6 +533,9 @@ void update_offset_syntax(Syntax *syntax, UpdateOffset *ctx) {
     } else if (syntax->type == FUNCTION_CALL) {
         if (!strcmp(syntax->function_call->name, "_exit")) {
             ctx->function_exit_seen = true;
+        }
+        if (!strcmp(syntax->function_call->name, "_rdtsc")) {
+            ctx->function_rdtsc_seen = true;
         }
         if (!strcmp(syntax->function_call->name, "_read")) {
             ctx->function_read_seen = true;
@@ -534,7 +562,12 @@ void update_offset_syntax(Syntax *syntax, UpdateOffset *ctx) {
         update_offset_syntax(syntax->while_statement->condition, ctx);
     } else if (syntax->type == IF_STATEMENT) {
         update_offset_syntax(syntax->if_statement->condition, ctx);
-        update_offset_syntax(syntax->if_statement->then, ctx);
+        update_offset_syntax(syntax->if_statement->if_then, ctx);
+        update_offset_syntax(syntax->if_statement->if_else, ctx);
+    } else if (syntax->type == GOTO_STATEMENT) {
+    } else if (syntax->type == LABEL_STATEMENT) {
+        update_label(syntax->label, ctx);
+    } else if (syntax->type == NOP_STATEMENT) {
     } else if (syntax->type == RETURN_STATEMENT) {
         return update_offset_syntax(syntax->return_statement->expression, ctx);
     } else if (syntax->type == ASSIGNMENT_STATEMENT) {
@@ -595,7 +628,8 @@ void write_global_syntax(FILE *out, Syntax *syntax) {
         write_global_syntax(out, syntax->while_statement->condition);
     } else if (syntax->type == IF_STATEMENT) {
         write_global_syntax(out, syntax->if_statement->condition);
-        write_global_syntax(out, syntax->if_statement->then);
+        write_global_syntax(out, syntax->if_statement->if_then);
+        write_global_syntax(out, syntax->if_statement->if_else);
     } else if (syntax->type == ASSIGNMENT_STATIC) {
         write_global_setup(out, syntax->assignment->variable,
                            syntax->assignment->expression);
@@ -623,8 +657,9 @@ void write_global(FILE *out, Syntax *syntax) {
  *
  * ---------------------------------------------------------------------- */
 void write_stdlib(FILE *out, UpdateOffset *ctx) {
-    if (ctx->function_read_seen || ctx->function_write_seen ||
-        ctx->function_assert_seen || ctx->function_exit_seen) {
+    if (ctx->function_read_seen || ctx->function_rdtsc_seen ||
+        ctx->function_write_seen || ctx->function_assert_seen ||
+        ctx->function_exit_seen) {
         write_header(out, "Stdlib");
     }
     if (ctx->function_exit_seen) {
@@ -633,6 +668,12 @@ void write_stdlib(FILE *out, UpdateOffset *ctx) {
         emit_instr(out, "enter", "$0, $0");
         emit_instr(out, "movl", "8(%ebp), %ebx");
         emit_instr(out, "jmp", ".terminate");
+    }
+    if (ctx->function_rdtsc_seen) {
+        fprintf(out, "    .global %s\n", "_rdtsc");
+        fprintf(out, "%s:\n", "_rdtsc");
+        emit_instr(out, "rdtsc", "");
+        emit_instr(out, "ret", "");
     }
     if (ctx->function_assert_seen) {
         fprintf(out, "    .global %s\n", "_assert");

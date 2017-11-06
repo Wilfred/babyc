@@ -17,6 +17,9 @@ typedef enum {
     UNARY_OPERATOR,
     BINARY_OPERATOR,
     BLOCK,
+    LABEL_STATEMENT,
+    GOTO_STATEMENT,
+    NOP_STATEMENT,
     IF_STATEMENT,
     RETURN_STATEMENT,
     ASSIGNMENT_STATEMENT,
@@ -84,6 +87,11 @@ typedef struct Syntax Syntax;
 
 typedef struct Immediate { int value; } Immediate;
 
+typedef struct Label {
+    char *name;
+    char *assembler_name;
+} Label;
+
 typedef struct UnaryExpression {
     UnaryExpressionType unary_type;
     Syntax *expression;
@@ -107,6 +115,7 @@ typedef struct FunctionParameter { Variable *variable; } FunctionParameter;
 typedef struct FunctionDefinition {
     char *name;
     List *parameters;
+    List *labels;
     Syntax *block;
     int max_automatic_offset;
     int max_dynamic_offset;
@@ -119,7 +128,8 @@ typedef struct Assignment {
 
 typedef struct IfStatement {
     Syntax *condition;
-    Syntax *then;
+    Syntax *if_then;
+    Syntax *if_else;
 } IfStatement;
 
 typedef struct DefineVarStatement { char *var_name; } DefineVarStatement;
@@ -141,6 +151,8 @@ struct Syntax {
         Immediate *immediate;
 
         Variable *variable;
+
+        Label *label;
 
         UnaryExpression *unary_expression;
 
@@ -167,6 +179,12 @@ struct Syntax {
         FunctionDefinition *function_definition;
     };
 };
+
+Syntax *nop_new(void);
+
+Syntax *label_statement_new(Label *l);
+
+Syntax *goto_statement_new(Label *l);
 
 Syntax *immediate_new(char *value);
 
@@ -212,7 +230,8 @@ Syntax *function_call_new(char *function_name, List *args);
 
 Syntax *function_argument_new(Syntax *s);
 
-Syntax *function_definition_new(char *name, List *parms, Syntax *block);
+Syntax *function_definition_new(char *name, List *parms, List *labels,
+                                Syntax *block);
 
 Syntax *function_parameter_new(Variable *v);
 
@@ -224,7 +243,7 @@ Syntax *return_statement_new(Syntax *expression);
 
 Syntax *block_new(List *statements);
 
-Syntax *if_new(Syntax *condition, Syntax *then);
+Syntax *if_new(Syntax *condition, Syntax *if_then, Syntax *if_else);
 
 Syntax *while_new(Syntax *condition, Syntax *body);
 

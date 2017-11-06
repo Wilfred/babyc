@@ -35,11 +35,13 @@ extern FILE *yyin;
 
 static Scope *pscope;
 static List *parameters_stack;
+static List *labels_stack;
 
 void parser_setup(char *file_name)
 {
     pscope = scope_new(0);
     parameters_stack = list_new();
+    labels_stack = list_new();
     yyin = fopen(file_name, "rt");
 }
 
@@ -47,8 +49,26 @@ Syntax *parser_complete(void)
 {
     Syntax *ret = block_new(pscope->parser_stack);
     list_free(parameters_stack);
+    list_free(labels_stack);
     fclose(yyin);
     return ret; 
+}
+
+Label *search_existing_label(char *name)
+{
+   for (int i = 0; i < list_length(labels_stack); i++)
+   {
+       Label *l = list_get(labels_stack, i);
+       if (!strcmp(name, l->name))
+       {
+           return l;
+       }
+   }
+   Label *label = malloc(sizeof(Label));
+   label->name = name;
+   label->assembler_name = 0;
+   list_push(labels_stack, label);
+   return label;
 }
  
 %}
@@ -56,22 +76,26 @@ Syntax *parser_complete(void)
 %define parse.trace
 
 %token T_INCLUDE T_HEADER_NAME
-%token T_STATIC T_TYPE T_IDENTIFIER T_RETURN T_NUMBER
+%token T_STATIC T_TYPE T_STRING T_IDENTIFIER T_RETURN T_NUMBER
 %token T_OPEN_BRACE T_CLOSE_BRACE
-%token T_IF T_WHILE T_LSHIFT T_RSHIFT
+%token T_IF T_WHILE T_ELSE T_GOTO T_LABEL
+%token T_LSHIFT T_RSHIFT
 %token T_LESS_OR_EQUAL T_EQUAL T_NEQUAL T_LARGER_OR_EQUAL
 
 /* Operator associativity, least precedence first.
  * See http://en.cppreference.com/w/c/language/operator_precedence
  */
 %left '='
-%left '<' '>' T_LARGER_OR_EQUAL T_LESS_OR_EQUAL T_EQUAL T_NEQUAL
-%left '+' '-' '|' '^'
+%left '&' '|' '^'
+%left T_EQUAL T_NEQUAL
+%left '<' '>' T_LARGER_OR_EQUAL T_LESS_OR_EQUAL
+%left T_LSHIFT T_RSHIFT
+%left '+' '-' 
 %left '*' '/' '%'
-%precedence T_MINUS
+%precedence T_MINUS T_PLUS
 %nonassoc '!'
 %nonassoc '~'
-%precedence '&'
+%precedence T_ADDRESS
 
 %%
 
@@ -87,9 +111,10 @@ top_element:
         parameter_list ')' T_OPEN_BRACE full_block T_CLOSE_BRACE
         {
             Syntax *block = block_new(pscope->parser_stack);
-            Syntax *syntax = function_definition_new((char*)$2, parameters_stack, block);
+            Syntax *syntax = function_definition_new((char*)$2, parameters_stack, labels_stack, block);
             pscope->parser_stack = list_new();
             parameters_stack = list_new();
+            labels_stack = list_new();
             pscope = scope_del(pscope);   
             list_push(pscope->parser_stack, syntax);
         }
@@ -169,6 +194,18 @@ nonempty_statement_list:
         ;
 
 statement:
+        T_GOTO T_IDENTIFIER ';'
+        {
+            Label *label = search_existing_label((char *)$2);
+            list_push(pscope->parser_stack, goto_statement_new(label));
+        }
+        |
+        T_LABEL ':'
+        {
+            Label *label = search_existing_label((char *)$1);
+            list_push(pscope->parser_stack, label_statement_new(label));
+        }
+        |
         T_RETURN expression ';'
         {
             Syntax *current_syntax = list_pop(pscope->parser_stack);
@@ -178,9 +215,18 @@ statement:
         T_IF '(' expression ')' block
         {
             // TODO: else statements.
-            Syntax *then = list_pop(pscope->parser_stack);
+            Syntax *if_then = list_pop(pscope->parser_stack);
             Syntax *condition = list_pop(pscope->parser_stack);
-            list_push(pscope->parser_stack, if_new(condition, then));
+            list_push(pscope->parser_stack, if_new(condition, if_then, nop_new()));
+        }
+        |
+        T_IF '(' expression ')' block T_ELSE block
+        {
+            // TODO: else statements.
+            Syntax *if_else = list_pop(pscope->parser_stack);
+            Syntax *if_then = list_pop(pscope->parser_stack);
+            Syntax *condition = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, if_new(condition, if_then, if_else));
         }
         |
         T_WHILE '(' expression ')' block
@@ -262,6 +308,11 @@ expression:
         {
             Syntax *current_syntax = list_pop(pscope->parser_stack);
             list_push(pscope->parser_stack, arithmetic_negation_new(current_syntax));
+        }
+        |
+        '+' expression %prec T_PLUS
+        {
+            /* already in AST */
         }
         |
         expression '+' expression

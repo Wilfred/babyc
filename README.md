@@ -36,14 +36,16 @@ but we will implement such a small subset of C that it's academic.
 * arithmetic subtraction (`foo - bar` (binary subtraction))
 * arithmetic operators (`foo + bar`, `foo * bar`, `foo / bar`, `foo % bar`)
 * bitwise operators ('foo & bar', 'foo | bar', 'foo ^ bar')
-* right shift (`foo >> bar`)
-* left shift (`foo << bar`)
+* arithmetic right shift (`foo >> bar`)
+* arithmetic left shift (`foo << bar`)
 * signed comparison (`foo < bar`, `foo <= bar`... '==', '!=', '>', '>=')
 * comments (`// foo \n` and `/* foo */`)
 * sequences of statements (`foo; bar;`)
 * return statements ('return foo;')
 * nested blocks and local scopes for variables ('{ int i; { int j = i + 1; } }')
-* if statements (`if (foo) { bar }`, no `else` yet)
+* if statements (`if (foo) { bar }`)
+* if-else statements (`if (foo) { bar } else { foobar; }`)
+* labels and gotos (' goto err; ...... err: .... )
 * local variables (`int` only)
 * global variables (`int` only)
 * static variables (`int` only)
@@ -55,7 +57,7 @@ but we will implement such a small subset of C that it's academic.
 * cdecl-type calling convention
 * nested function calls
 * return value from main used as exit code
-* microscopic stdlib support (write to stdout, read from stdin, assert, exit)
+* microscopic stdlib support (write to stdout, read from stdin, assert, exit, rdtsc)
 * simple preprocessor support (for now, we shell out to gcc -E)
 * few usual options from GCC/Clang command line ('-g' '-o' '-O0' '-E' '-S' '-m32')
 
@@ -147,7 +149,7 @@ For code formatting, run:
 ## Soon
 
 * Working on a bit of code cleanup and code commenting
-* Adding a test_stdlib directory with more complex testcases
+* Adding a test_stdlib directory with more complex testcases, updating run_tests
 * Support for unsigned ints
 
 ## Not implemented
@@ -172,9 +174,8 @@ For code formatting, run:
 * No support for inline keyword
 * No support for register keyword
 * No support for loop variants ('for', 'do-while', 'foreach', ....)
-* No support for else/break/continue/goto statements
+* No support for break/continue statements
 * No support for switch statements ('switch', 'case', 'default', 'duffs device'....)
-* No support for labels
 * No support for strings and string operators ('strcpy', 'strcat', 'strcmp', ...)
 * No support for printf(), gets()
 * No support for memory allocation 

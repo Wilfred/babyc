@@ -64,6 +64,29 @@ Variable *scope_add_var(Scope *ctx, char *name, Storage storage) {
     return v;
 }
 
+Syntax *nop_new(void) {
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    syntax->type = NOP_STATEMENT;
+    return syntax;
+}
+
+Syntax *label_statement_new(Label *label) {
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    syntax->type = LABEL_STATEMENT;
+    syntax->label = label;
+    return syntax;
+}
+
+Syntax *goto_statement_new(Label *label) {
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    syntax->type = GOTO_STATEMENT;
+    syntax->label = label;
+    return syntax;
+}
+
 Syntax *immediate_new(char *value) {
     Immediate *immediate = malloc(sizeof(Immediate));
 
@@ -234,11 +257,13 @@ Syntax *function_parameter_new(Variable *v) {
     return syntax;
 }
 
-Syntax *function_definition_new(char *name, List *parameters, Syntax *block) {
+Syntax *function_definition_new(char *name, List *parameters, List *labels,
+                                Syntax *block) {
     FunctionDefinition *function = malloc(sizeof(FunctionDefinition));
 
     function->name = name;
     function->parameters = parameters;
+    function->labels = labels;
     function->block = block;
     function->max_dynamic_offset = 0;
     function->max_automatic_offset = 0;
@@ -301,11 +326,12 @@ Syntax *block_new(List *statements) {
     return syntax;
 }
 
-Syntax *if_new(Syntax *condition, Syntax *then) {
+Syntax *if_new(Syntax *condition, Syntax *if_then, Syntax *if_else) {
     IfStatement *if_statement = malloc(sizeof(IfStatement));
 
     if_statement->condition = condition;
-    if_statement->then = then;
+    if_statement->if_then = if_then;
+    if_statement->if_else = if_else;
 
     Syntax *syntax = malloc(sizeof(Syntax));
 
@@ -365,9 +391,12 @@ void syntax_free(Syntax *syntax) {
         free(syntax->function_argument);
     } else if (syntax->type == FUNCTION_PARAMETER) {
         free(syntax->function_parameter);
+    } else if (syntax->type == GOTO_STATEMENT) {
+    } else if (syntax->type == LABEL_STATEMENT) {
     } else if (syntax->type == IF_STATEMENT) {
         syntax_free(syntax->if_statement->condition);
-        syntax_free(syntax->if_statement->then);
+        syntax_free(syntax->if_statement->if_then);
+        syntax_free(syntax->if_statement->if_else);
     } else if (syntax->type == RETURN_STATEMENT) {
         syntax_free(syntax->return_statement->expression);
         free(syntax->return_statement);
@@ -438,6 +467,10 @@ char *syntax_type_name(Syntax *syntax) {
         return "FUNCTION PARAMETER";
     } else if (syntax->type == IF_STATEMENT) {
         return "IF";
+    } else if (syntax->type == GOTO_STATEMENT) {
+        return "GOTO";
+    } else if (syntax->type == LABEL_STATEMENT) {
+        return "LABEL";
     } else if (syntax->type == RETURN_STATEMENT) {
         return "RETURN";
     } else if (syntax->type == BLOCK) {
@@ -508,6 +541,10 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         print_syntax_indented(syntax->function_argument->expression,
                               indent + 4);
 
+    } else if (syntax->type == GOTO_STATEMENT) {
+        printf("%s '%s'\n", str, syntax->label->name);
+    } else if (syntax->type == LABEL_STATEMENT) {
+        printf("%s '%s'\n", str, syntax->label->name);
     } else if (syntax->type == IF_STATEMENT) {
         printf("%s\n", str);
         print_syntax_indented(syntax->if_statement->condition, indent + 4);
@@ -517,7 +554,10 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         }
 
         printf("%s THEN\n", str);
-        print_syntax_indented(syntax->if_statement->then, indent + 4);
+        print_syntax_indented(syntax->if_statement->if_then, indent + 4);
+
+        printf("%s ELSE\n", str);
+        print_syntax_indented(syntax->if_statement->if_else, indent + 4);
 
     } else if (syntax->type == RETURN_STATEMENT) {
         printf("%s\n", str);
