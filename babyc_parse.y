@@ -396,28 +396,28 @@ expression:
         {
             Syntax *right = list_pop(pscope->parser_stack);
             Syntax *left = list_pop(pscope->parser_stack);
-            list_push(pscope->parser_stack, less_than_new(right, left));
+            list_push(pscope->parser_stack, larger_than_new(left, right));
         }
         |
         expression T_EQUAL expression
         {
             Syntax *right = list_pop(pscope->parser_stack);
             Syntax *left = list_pop(pscope->parser_stack);
-            list_push(pscope->parser_stack, equal_new(right, left));
+            list_push(pscope->parser_stack, equal_new(left, right));
         }
         |
         expression T_NEQUAL expression
         {
             Syntax *right = list_pop(pscope->parser_stack);
             Syntax *left = list_pop(pscope->parser_stack);
-            list_push(pscope->parser_stack, nequal_new(right, left));
+            list_push(pscope->parser_stack, nequal_new(left, right));
         }
         |
         expression T_LARGER_OR_EQUAL expression
         {
             Syntax *right = list_pop(pscope->parser_stack);
             Syntax *left = list_pop(pscope->parser_stack);
-            list_push(pscope->parser_stack, less_or_equal_new(right, left));
+            list_push(pscope->parser_stack, larger_or_equal_new(left, right));
         }
         |
         expression T_LESS_OR_EQUAL expression

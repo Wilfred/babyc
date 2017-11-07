@@ -51,9 +51,11 @@ static int parse_data(char *line, unsigned char *data, int *data_len) {
     *data = 0;
     *data_len = 0;
     char *pt = strstr(line, ":");
+
     if (!pt)
         return 1;
     char *hex = strstr(pt + 1, "\"");
+
     if (!hex)
         return 1;
     pt = strstr(++hex, "\"");
@@ -86,6 +88,7 @@ static int run_test_stdlib(volatile int *return_value) {
 
     /* input and expected data are stored in the C source code */
     FILE *ftext = fopen(path_test_file, "rt");
+
     if (!ftext) {
         print_err("Unable to read C code");
         if (debug) {
@@ -118,6 +121,7 @@ static int run_test_stdlib(volatile int *return_value) {
 #define CHILD_WRITE_FD (pipes[1][1])
 
     int pipes[2][2];
+
     *shared_result = 0x7fffffff;
 
     // pipes for parent to write and read
@@ -342,6 +346,8 @@ void print_help(void) {
 }
 
 int main(int argc, char **argv) {
+    int total_failed = 0;
+
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
             print_help();
@@ -355,7 +361,10 @@ int main(int argc, char **argv) {
         exit(1);
     }
     allocate_shared_memory();
-    test_iterate("./test_programs", run_test_c);
-    test_iterate("./test_stdlib", run_test_stdlib);
-    return 0;
+    total_failed += test_iterate("./test_programs", run_test_c);
+    total_failed += test_iterate("./test_stdlib", run_test_stdlib);
+
+    printf("\n%d tests to fix.\n", total_failed);
+
+    return total_failed ? 1 : 0;
 }

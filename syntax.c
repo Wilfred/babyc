@@ -166,7 +166,7 @@ Syntax *addition_new(Syntax *left, Syntax *right) {
 }
 
 Syntax *subtraction_new(Syntax *left, Syntax *right) {
-    return generic_binary_new(right, left, SUBTRACTION);
+    return generic_binary_new(left, right, SUBTRACTION);
 }
 
 Syntax *multiplication_new(Syntax *left, Syntax *right) {
@@ -174,31 +174,31 @@ Syntax *multiplication_new(Syntax *left, Syntax *right) {
 }
 
 Syntax *division_new(Syntax *left, Syntax *right) {
-    return generic_binary_new(right, left, DIVISION);
+    return generic_binary_new(left, right, DIVISION);
 }
 
 Syntax *modulus_new(Syntax *left, Syntax *right) {
-    return generic_binary_new(right, left, MODULUS);
+    return generic_binary_new(left, right, MODULUS);
 }
 
 Syntax *bitwise_xor_new(Syntax *left, Syntax *right) {
-    return generic_binary_new(right, left, XOR);
+    return generic_binary_new(left, right, XOR);
 }
 
 Syntax *bitwise_or_new(Syntax *left, Syntax *right) {
-    return generic_binary_new(right, left, OR);
+    return generic_binary_new(left, right, OR);
 }
 
 Syntax *bitwise_and_new(Syntax *left, Syntax *right) {
-    return generic_binary_new(right, left, AND);
+    return generic_binary_new(left, right, AND);
 }
 
 Syntax *rshift_new(Syntax *left, Syntax *right) {
-    return generic_binary_new(right, left, RSHIFT);
+    return generic_binary_new(left, right, RSHIFT);
 }
 
 Syntax *lshift_new(Syntax *left, Syntax *right) {
-    return generic_binary_new(right, left, LSHIFT);
+    return generic_binary_new(left, right, LSHIFT);
 }
 
 Syntax *equal_new(Syntax *left, Syntax *right) {
@@ -213,8 +213,16 @@ Syntax *less_than_new(Syntax *left, Syntax *right) {
     return generic_binary_new(left, right, LESS_THAN);
 }
 
+Syntax *larger_than_new(Syntax *left, Syntax *right) {
+    return generic_binary_new(left, right, LARGER_THAN);
+}
+
 Syntax *less_or_equal_new(Syntax *left, Syntax *right) {
     return generic_binary_new(left, right, LESS_THAN_OR_EQUAL);
+}
+
+Syntax *larger_or_equal_new(Syntax *left, Syntax *right) {
+    return generic_binary_new(left, right, LARGER_THAN_OR_EQUAL);
 }
 
 Syntax *function_call_new(char *name, List *args) {
@@ -455,6 +463,11 @@ char *syntax_type_name(Syntax *syntax) {
         } else if (syntax->binary_expression->binary_type ==
                    LESS_THAN_OR_EQUAL) {
             return "LESS THAN OR EQUAL";
+        } else if (syntax->binary_expression->binary_type == LARGER_THAN) {
+            return "LARGER THAN";
+        } else if (syntax->binary_expression->binary_type ==
+                   LARGER_THAN_OR_EQUAL) {
+            return "LARGER THAN OR EQUAL";
         } else
             return "BINARY ???";
     } else if (syntax->type == FUNCTION_CALL) {

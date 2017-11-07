@@ -232,11 +232,13 @@ int main(int argc, char *argv[]) {
 
 cleanup_o_file:
 
-    unlink("out.o");
+    if (!debug)
+        unlink("out.o");
 
 cleanup_s_file:
 
-    unlink("out.s");
+    if (!debug)
+        unlink("out.s");
 
 cleanup_cpp_file:
 

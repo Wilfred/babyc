@@ -1,6 +1,6 @@
 
 
 int main() {
-    int x = 0x10c;
+    int x = 0X10c;
     return x - 0x100;
 }

@@ -34,7 +34,7 @@ typedef enum {
 typedef enum {
     ARITHMETIC_NEGATION,
     BITWISE_NEGATION,
-    LOGICAL_NEGATION
+    LOGICAL_NEGATION,
 } UnaryExpressionType;
 
 typedef enum {
@@ -50,6 +50,8 @@ typedef enum {
     LSHIFT,
     LESS_THAN,
     LESS_THAN_OR_EQUAL,
+    LARGER_THAN,
+    LARGER_THAN_OR_EQUAL,
     EQUAL,
     NEQUAL,
 } BinaryExpressionType;
@@ -221,6 +223,10 @@ Syntax *lshift_new(Syntax *left, Syntax *right);
 Syntax *less_than_new(Syntax *left, Syntax *right);
 
 Syntax *less_or_equal_new(Syntax *left, Syntax *right);
+
+Syntax *larger_than_new(Syntax *left, Syntax *right);
+
+Syntax *larger_or_equal_new(Syntax *left, Syntax *right);
 
 Syntax *equal_new(Syntax *left, Syntax *right);
 

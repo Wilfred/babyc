@@ -100,7 +100,7 @@ IDENT [a-zA-Z_][0-9a-zA-Z_]*
                 yylval = number(yytext, 10); return T_NUMBER;
               }
 
-0x[0-9a-fA-F]+  {
+0[xX][0-9a-fA-F]+  {
                 yylval = number(yytext, 16); return T_NUMBER;
               }
 
