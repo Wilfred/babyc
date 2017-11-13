@@ -177,6 +177,7 @@ static int run_test_stdlib(volatile int *return_value) {
             }
             return 1;
         }
+        close(PARENT_WRITE_FD);
 
         // Read from child’s stdout
         output_len = 0;
@@ -191,7 +192,6 @@ static int run_test_stdlib(volatile int *return_value) {
             output_len += ret;
         }
 
-        close(PARENT_WRITE_FD);
         close(PARENT_READ_FD);
 
         if (expected_len != output_len) {
@@ -221,8 +221,18 @@ static int run_test_stdlib(volatile int *return_value) {
             return 1;
         }
 
-        while (*shared_result == 0x7fffffff)
+        int timeout = 0;
+        while (*shared_result == 0x7fffffff) {
             usleep(100);
+            timeout += 100;
+            if (timeout > 1000000) {
+                printf("[%s] run slower than expected!\n", short_test_name);
+                break;
+            }
+        }
+        while (*shared_result == 0x7fffffff) {
+            usleep(100);
+        }
         *return_value = *shared_result;
     }
 
@@ -249,7 +259,7 @@ static int get_expected_result(char *file_name) {
     return expected_return;
 }
 
-static int test_iterate(char *dir_name,
+static int test_iterate(char *compiler_options, char *dir_name,
                         int (*run)(volatile int *return_value)) {
     int tests_run = 0, tests_passed = 0;
     struct dirent *file;
@@ -275,8 +285,8 @@ static int test_iterate(char *dir_name,
 
             snprintf(path_test_file, 1024, "%s/%s", dir_name, file_name);
             snprintf(short_test_name, 1024, "%s", file_name);
-            snprintf(command, 1024, "./build/babyc -o a.out %s",
-                     path_test_file);
+            snprintf(command, 1024, "./build/babyc %s -o a.out %s",
+                     compiler_options, path_test_file);
             result = WEXITSTATUS(system(command));
 
             if (result != 0) {
@@ -361,9 +371,26 @@ int main(int argc, char **argv) {
         exit(1);
     }
     allocate_shared_memory();
-    total_failed += test_iterate("./test_programs", run_test_c);
-    total_failed += test_iterate("./test_stdlib", run_test_stdlib);
+    printf("-------------------------------------------------------------------"
+           "-\n");
+    printf("Non optimized code -O0\n");
+    printf("-------------------------------------------------------------------"
+           "-\n");
+    printf("\n");
+    total_failed += test_iterate("-O0", "./test_programs", run_test_c);
+    total_failed += test_iterate("-O0", "./test_stdlib", run_test_stdlib);
+    printf("-------------------------------------------------------------------"
+           "-\n");
+    printf("Optimized code -O1\n");
+    printf("-------------------------------------------------------------------"
+           "-\n");
+    printf("\n");
+    total_failed += test_iterate("-O1", "./test_programs", run_test_c);
+    total_failed += test_iterate("-O1", "./test_stdlib", run_test_stdlib);
 
+    printf("-------------------------------------------------------------------"
+           "-\n");
+    printf("\n");
     printf("\n%d tests to fix.\n", total_failed);
 
     return total_failed ? 1 : 0;

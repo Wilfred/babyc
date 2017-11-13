@@ -39,27 +39,31 @@ but we will implement such a small subset of C that it's academic.
 * arithmetic right shift (`foo >> bar`)
 * arithmetic left shift (`foo << bar`)
 * signed comparison (`foo < bar`, `foo <= bar`... '==', '!=', '>', '>=')
+* boolean comparison '&&', '||'
 * comments (`// foo \n` and `/* foo */`)
 * sequences of statements (`foo; bar;`)
 * return statements ('return foo;')
 * nested blocks and local scopes for variables ('{ int i; { int j = i + 1; } }')
-* if statements (`if (foo) { bar }`)
-* if-else statements (`if (foo) { bar } else { foobar; }`)
+* if statements (`if (foo) { bar; }`) 
+* if-else statements (`if (foo) { bar; } else { foobar; }`)
 * labels and gotos (' goto err; ...... err: .... )
 * local variables (`int` only)
 * global variables (`int` only)
 * static variables (`int` only)
 * variable assignment (`int` only)
-* sizeof (`variable` only)
+* sizeof (int `variable` only)
 * while loops (`while (foo) { bar; }`)
+* minimum of support for pointers on signed integers
+* alloca() and arrays of signed integers
 * function declaration (with multiple int arguments, returning int)
 * function calls (with multiple int arguments, returning int)
 * cdecl-type calling convention
 * nested function calls
-* return value from main used as exit code
+* return value from main() used as exit code
 * microscopic stdlib support (write to stdout, read from stdin, assert, exit, rdtsc)
 * simple preprocessor support (for now, we shell out to gcc -E)
-* few usual options from GCC/Clang command line ('-g' '-o' '-O0' '-E' '-S' '-m32')
+* simplified peephole post-optimizer at instruction selection ('option -O1')
+* few usual options from GCC/Clang command line ('-g' '-o' '-O0' '-O1' '-E' '-S' '-m32')
 
 ## License
 
@@ -78,7 +82,9 @@ Compiling babyc:
 Usage:
 
     # Run it, producing a binary file.
-    $ build/babyc -o a.out test_programs/immediate__return_1.c
+    $ build/babyc -O1 -o a.out test_programs/immediate__return_1.c
+    $ ./a.out
+    $ echo $?
 
 Viewing the code after preprocessing:
 
@@ -142,15 +148,21 @@ For code formatting, run:
 * A few known memory leaks in compiler (symbol table in lexer, temp lists in AST build, ....).
 * No syntax/semantic check, and no parsing recovery (use gcc to validate your test programs before using this compiler). Should use 'error' statement in .y file, and should pass line numbers from lex to yacc to alleviate that serious usability problem.
 * Cannot parse standard C headers from '/usr/include' .... (see restrictions below)
-* Mixtures of nested comments is not standard ('//' and '/**/').
 * Operator precedence not fully tested, might not be fully compliant to C99 yet.
 * Hardcoded temp filenames possibly left in current directory ('.extended.c', 'out.s' , 'out.o')
 
 ## Soon
 
-* Working on a bit of code cleanup and code commenting
+* Working on a bit of code cleanup and code commenting, split large files.
+* Adding source code line numbers in compiler error messages
 * Adding a test_stdlib directory with more complex testcases, updating run_tests
-* Support for unsigned ints
+* Support for "unsigned ints" and "uintxx_t"
+
+## When to stop
+
+* compile and run sha1 code
+* compile and run primality test code
+* support BF language (a real proof of Turing completeness)
 
 ## Not implemented
 
@@ -158,7 +170,7 @@ For code formatting, run:
 * No support for pointers (data pointers, function pointers ....)
 * No support for '*' operator (address dereference)
 * No support for '++', '--' pre/post-fix operators
-* No support for '&&', '||' boolean operators
+* No support for '+=', '-=', '*=' unary operators
 * No support for 'void' keyword
 * No support for 'unsigned' type (only signed int)
 * No support for 'signed' keyword (implicit signed int)
@@ -168,22 +180,19 @@ For code formatting, run:
 * No support for float, double, long double types and IEEE 754  (only signed int)
 * No support for arrays
 * No support for enums, struct, typedefs ....
-* No support for const keyword
-* No support for restrict keyword
-* No support for volatile keyword
+* No support for const, restrict, volatile, register keywords
 * No support for inline keyword
-* No support for register keyword
 * No support for loop variants ('for', 'do-while', 'foreach', ....)
 * No support for break/continue statements
 * No support for switch statements ('switch', 'case', 'default', 'duffs device'....)
 * No support for strings and string operators ('strcpy', 'strcat', 'strcmp', ...)
 * No support for printf(), gets()
-* No support for memory allocation 
+* No support for memory allocation (malloc, realloc, free) 
 * No support for threads and parallelization 
 * No support for vectorization
 * No support for signals and exceptions
 * No support for self-modifiable code
-* No support for asm statement
+* No support for asm, __as, __asm__ statements
 * No support for GCC intrinsics
 * No support for assembly file frontend
 * No support for C++ file frontend
@@ -198,7 +207,7 @@ For code formatting, run:
 * optimizer: no constant propagation
 * optimizer: no loop unrolling
 * optimizer: no function inlining
-* optimizer: no peephole simplifications
+* optimizer: no peephole various simplifications
 * optimizer: no dead code elimination
 * optimizer: no red zone shortcuts
 * optimizer: no optimizer at all .....

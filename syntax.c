@@ -1,7 +1,6 @@
-
 /* ----------------------------------------------------------------
  *
- * Brave Algorithms Build Your Code
+ * BabyC toy compiler
  *
  * ---------------------------------------------------------------- */
 
@@ -54,13 +53,15 @@ Variable *scope_get_var(Scope *ctx, char *name) {
     return 0;
 }
 
-Variable *scope_add_var(Scope *ctx, char *name, Storage storage) {
+Variable *scope_add_var(Scope *ctx, char *name, ObjectType type,
+                        Storage storage) {
     Variable *v = malloc(sizeof(Variable));
+    memset(v, 0, sizeof(Variable));
 
     list_push(ctx->var_stack, v);
     v->name = name;
     v->storage = storage;
-    v->offset = 0;
+    v->type = type;
     return v;
 }
 
@@ -109,11 +110,42 @@ Syntax *variable_new(Variable *v) {
     return syntax;
 }
 
-Syntax *address_new(Variable *v) {
+Syntax *address_new(Syntax *expression, Syntax *offset) {
+    AddressExpression *address = malloc(sizeof(AddressExpression));
+    address->identifier = expression;
+    address->offset = offset;
+
     Syntax *syntax = malloc(sizeof(Syntax));
 
     syntax->type = ADDRESS;
-    syntax->variable = v;
+    syntax->address = address;
+
+    return syntax;
+}
+
+Syntax *read_pointer_new(Syntax *address, Syntax *offset) {
+    ReadAddressExpression *pointer = malloc(sizeof(ReadAddressExpression));
+    pointer->address = address;
+    pointer->offset = offset;
+
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    syntax->type = READ_ADDRESS;
+    syntax->read_address = pointer;
+
+    return syntax;
+}
+
+Syntax *write_pointer_new(Syntax *address, Syntax *offset, Syntax *expression) {
+    WriteAddressExpression *pointer = malloc(sizeof(WriteAddressExpression));
+    pointer->address = address;
+    pointer->offset = offset;
+    pointer->expression = expression;
+
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    syntax->type = WRITE_ADDRESS;
+    syntax->write_address = pointer;
 
     return syntax;
 }
@@ -193,6 +225,14 @@ Syntax *bitwise_and_new(Syntax *left, Syntax *right) {
     return generic_binary_new(left, right, AND);
 }
 
+Syntax *logical_or_new(Syntax *left, Syntax *right) {
+    return generic_binary_new(left, right, LOGICAL_OR);
+}
+
+Syntax *logical_and_new(Syntax *left, Syntax *right) {
+    return generic_binary_new(left, right, LOGICAL_AND);
+}
+
 Syntax *rshift_new(Syntax *left, Syntax *right) {
     return generic_binary_new(left, right, RSHIFT);
 }
@@ -265,10 +305,11 @@ Syntax *function_parameter_new(Variable *v) {
     return syntax;
 }
 
-Syntax *function_definition_new(char *name, List *parameters, List *labels,
-                                Syntax *block) {
+Syntax *function_definition_new(char *name, ObjectType type, List *parameters,
+                                List *labels, Syntax *block) {
     FunctionDefinition *function = malloc(sizeof(FunctionDefinition));
 
+    function->type = type;
     function->name = name;
     function->parameters = parameters;
     function->labels = labels;
@@ -375,12 +416,38 @@ void syntax_list_free(List *syntaxes) {
     list_free(syntaxes);
 }
 
+bool syntax_is_boolean(Syntax *syntax) {
+    if (syntax->type == UNARY_OPERATOR) {
+        return syntax_is_boolean(syntax->unary_expression->expression);
+    }
+    if (syntax->type == BINARY_OPERATOR) {
+        BinaryExpressionType binary_type =
+            syntax->binary_expression->binary_type;
+        return (binary_type == LESS_THAN || binary_type == LARGER_THAN ||
+                binary_type == LESS_THAN_OR_EQUAL ||
+                binary_type == LARGER_THAN_OR_EQUAL || binary_type == EQUAL ||
+                binary_type == NEQUAL || binary_type == LOGICAL_OR ||
+                binary_type == LOGICAL_AND);
+    }
+    return false;
+}
+
 void syntax_free(Syntax *syntax) {
     if (syntax->type == IMMEDIATE) {
         /* nothing to clean */
         /* TODO : clean variables from parser scopes (ooops, already deleted) */
     } else if (syntax->type == IMMEDIATE) {
         free(syntax->immediate);
+    } else if (syntax->type == ADDRESS) {
+    } else if (syntax->type == READ_ADDRESS) {
+        syntax_free(syntax->read_address->address);
+        syntax_free(syntax->read_address->offset);
+        free(syntax->read_address);
+    } else if (syntax->type == WRITE_ADDRESS) {
+        syntax_free(syntax->write_address->address);
+        syntax_free(syntax->write_address->offset);
+        syntax_free(syntax->write_address->expression);
+        free(syntax->write_address);
     } else if (syntax->type == UNARY_OPERATOR) {
         syntax_free(syntax->unary_expression->expression);
         free(syntax->unary_expression);
@@ -439,14 +506,14 @@ char *syntax_type_name(Syntax *syntax) {
         return "VARIABLE";
     } else if (syntax->type == UNARY_OPERATOR) {
         if (syntax->unary_expression->unary_type == BITWISE_NEGATION) {
-            return "UNARY BITWISE_NEGATION";
+            return "UNARY BITWISE NEG";
         } else if (syntax->unary_expression->unary_type ==
                    ARITHMETIC_NEGATION) {
-            return "UNARY ARITHMETIC_NEGATION";
+            return "UNARY ARITHMETIC NEG";
         } else if (syntax->unary_expression->unary_type == LOGICAL_NEGATION) {
-            return "UNARY LOGICAL_NEGATION";
+            return "UNARY LOGICAL NEG";
         } else
-            return "UNARY ???";
+            return "UNARY OP ???";
     } else if (syntax->type == BINARY_OPERATOR) {
         if (syntax->binary_expression->binary_type == ADDITION) {
             return "ADDITION";
@@ -458,6 +525,16 @@ char *syntax_type_name(Syntax *syntax) {
             return "DIVISION";
         } else if (syntax->binary_expression->binary_type == MODULUS) {
             return "MODULUS";
+        } else if (syntax->binary_expression->binary_type == OR) {
+            return "BITWISE OR";
+        } else if (syntax->binary_expression->binary_type == AND) {
+            return "BITWISE AND";
+        } else if (syntax->binary_expression->binary_type == XOR) {
+            return "BITWISE XOR";
+        } else if (syntax->binary_expression->binary_type == LOGICAL_OR) {
+            return "LOGICAL OR";
+        } else if (syntax->binary_expression->binary_type == LOGICAL_AND) {
+            return "LOGICAL AND";
         } else if (syntax->binary_expression->binary_type == LESS_THAN) {
             return "LESS THAN";
         } else if (syntax->binary_expression->binary_type ==
@@ -468,8 +545,20 @@ char *syntax_type_name(Syntax *syntax) {
         } else if (syntax->binary_expression->binary_type ==
                    LARGER_THAN_OR_EQUAL) {
             return "LARGER THAN OR EQUAL";
+        } else if (syntax->binary_expression->binary_type == EQUAL) {
+            return "EQUAL";
+        } else if (syntax->binary_expression->binary_type == NEQUAL) {
+            return "NOT EQUAL";
         } else
-            return "BINARY ???";
+            return "BINARY OP ???";
+    } else if (syntax->type == ADDRESS) {
+        return "ADDRESS";
+    } else if (syntax->type == READ_ADDRESS) {
+        return "READ ADDRESS";
+    } else if (syntax->type == WRITE_ADDRESS) {
+        return "WRITE ADDRESS";
+    } else if (syntax->type == BLOCK) {
+        return "BLOCK";
     } else if (syntax->type == FUNCTION_CALL) {
         return "FUNCTION CALL";
     } else if (syntax->type == FUNCTION_ARGUMENT) {
@@ -478,6 +567,8 @@ char *syntax_type_name(Syntax *syntax) {
         return "FUNCTION DEFINITION";
     } else if (syntax->type == FUNCTION_PARAMETER) {
         return "FUNCTION PARAMETER";
+    } else if (syntax->type == NOP_STATEMENT) {
+        return "NOP";
     } else if (syntax->type == IF_STATEMENT) {
         return "IF";
     } else if (syntax->type == GOTO_STATEMENT) {
@@ -486,8 +577,6 @@ char *syntax_type_name(Syntax *syntax) {
         return "LABEL";
     } else if (syntax->type == RETURN_STATEMENT) {
         return "RETURN";
-    } else if (syntax->type == BLOCK) {
-        return "BLOCK";
     } else if (syntax->type == ASSIGNMENT_STATEMENT) {
         return "ASSIGNMENT";
     } else if (syntax->type == ASSIGNMENT_STATIC) {
@@ -575,6 +664,19 @@ void print_syntax_indented(Syntax *syntax, int indent) {
     } else if (syntax->type == RETURN_STATEMENT) {
         printf("%s\n", str);
         print_syntax_indented(syntax->return_statement->expression, indent + 4);
+    } else if (syntax->type == ADDRESS) {
+        printf("%s\n", str);
+        print_syntax_indented(syntax->address->identifier, indent + 4);
+        print_syntax_indented(syntax->address->offset, indent + 4);
+    } else if (syntax->type == READ_ADDRESS) {
+        printf("%s\n", str);
+        print_syntax_indented(syntax->read_address->address, indent + 4);
+        print_syntax_indented(syntax->read_address->offset, indent + 4);
+    } else if (syntax->type == WRITE_ADDRESS) {
+        printf("%s\n", str);
+        print_syntax_indented(syntax->write_address->address, indent + 4);
+        print_syntax_indented(syntax->write_address->offset, indent + 4);
+        print_syntax_indented(syntax->write_address->expression, indent + 4);
     } else if (syntax->type == BLOCK) {
         printf("%s\n", str);
 

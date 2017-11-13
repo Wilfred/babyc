@@ -1,31 +1,31 @@
-
 /* ----------------------------------------------------------------
  *
- * Brave Algorithms Build Your Code
+ * BabyC toy compiler
  *
  * ---------------------------------------------------------------- */
 
+#include "assembly.h"
+#include "bb.tab.h"
+#include "syntax.h"
 #include <assert.h>
-#include <err.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "assembly.h"
-#include "syntax.h"
-
 void print_help() {
-    printf("Babyc is a very basic C compiler.\n\n");
+    printf("Babyc is a very simple C compiler.\n\n");
     printf("To compile a file into a.out:\n");
     printf("    $ babyc foo.c\n");
     printf("To compile a file into foo.exe:\n");
     printf("    $ babyc -o foo.exe foo.c\n");
-    printf("To output the preprocessed code without parsing:\n");
+    printf("To output the preprocessed code without compiling:\n");
     printf("    $ babyc -E foo.c\n");
-    printf("To output the AST without compiling:\n");
+    printf("To output the AST without generating opcodes:\n");
     printf("    $ babyc --dump-ast foo.c\n");
-    printf("To generate the assembly file out.s:\n");
+    printf("To generate the assembly file out.s without assembling:\n");
     printf("    $ babyc -S foo.c\n");
     printf("To print this message:\n");
     printf("    $ babyc --help\n\n");
@@ -33,6 +33,7 @@ void print_help() {
 }
 
 extern int yyparse(void);
+extern bool peephole_optimize;
 
 typedef enum {
     MACRO_EXPAND,
@@ -71,12 +72,17 @@ int main(int argc, char *argv[]) {
             debug = 1;
             continue;
         }
+        if (!strcmp(argv[i], "-O0")) {
+            peephole_optimize = false;
+            continue;
+        }
+        if (!strcmp(argv[i], "-O1")) {
+            peephole_optimize = true;
+            continue;
+        }
 
         /* GCC-like implicit options (what is really implemented) */
         if (!strcmp(argv[i], "-m32")) {
-            continue;
-        }
-        if (!strcmp(argv[i], "-O0")) {
             continue;
         }
         if (!strcmp(argv[i], "-fomit-frame-pointer")) {
@@ -101,8 +107,8 @@ int main(int argc, char *argv[]) {
 
         /* one output file name */
         if (!strcmp(argv[i], "-o")) {
-            if (output_file_name) {
-                printf("Too many output files\n");
+            if (i >= argc - 1 || output_file_name) {
+                printf("Too many output files or missing output file\n");
                 print_help();
                 return 1;
             }
@@ -161,7 +167,7 @@ int main(int argc, char *argv[]) {
 
     parser_setup(".expanded.c");
 
-    result = yyparse();
+    result = bbparse();
 
     Syntax *complete_syntax = parser_complete();
 

@@ -1,37 +1,41 @@
+%file-prefix "bb"
+%name-prefix "bb"
+
 %{
 
 /* ----------------------------------------------------------------
  * 
- * Brave Algorithms Build Your Code
+ * BabyC toy compiler
  * 
  * ---------------------------------------------------------------- */
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include "syntax.h"
 #include "list.h"
+#include "bb_type.h"
+#include "log_error.h"
 
-#define YYSTYPE char*
 #define YYDEBUG 1
+#undef YYDEBUG
+// int yydebug=1;
 
-int yyparse(void);
-int yylex();
+extern int bblex(void);
 
-void yyerror(const char *str)
+int bberror(char *s)
 {
-	fprintf(stderr,"error: %s\n",str);
+    printf("%s", s);
+    return 1;
 }
 
-int yywrap()
+int bbwrap()
 {
 	return 1;
 }
 
-// int yydebug=1;
-
-extern FILE *yyin;
+extern FILE *bbin;
 
 static Scope *pscope;
 static List *parameters_stack;
@@ -42,7 +46,7 @@ void parser_setup(char *file_name)
     pscope = scope_new(0);
     parameters_stack = list_new();
     labels_stack = list_new();
-    yyin = fopen(file_name, "rt");
+    bbin = fopen(file_name, "rt");
 }
 
 Syntax *parser_complete(void)
@@ -50,7 +54,7 @@ Syntax *parser_complete(void)
     Syntax *ret = block_new(pscope->parser_stack);
     list_free(parameters_stack);
     list_free(labels_stack);
-    fclose(yyin);
+    fclose(bbin);
     return ret; 
 }
 
@@ -71,27 +75,102 @@ Label *search_existing_label(char *name)
    return label;
 }
  
+ ObjectType convert_type(char *s)
+ {
+    ObjectType type = 0;
+    if (!strcmp(s, "int")) {
+        type = O_INT32;
+    }
+    else if (!strcmp(s, "bool")) {
+        type = O_UINT1;
+    }
+    else if (!strcmp(s, "long")) {
+        type = O_INT32;
+    }
+    else if (!strcmp(s, "intptr_t")) {
+        type = O_INT32;
+    }
+    else if (!strcmp(s, "int8_t")) {
+        type = O_INT8;
+    }
+    else if (!strcmp(s, "int16_t")) {
+        type = O_INT16;
+    }
+    else if (!strcmp(s, "int32_t")) {
+        type = O_INT32;
+    }
+    else if (!strcmp(s, "int64_t")) {
+        type = O_INT64;
+    }
+    else if (!strcmp(s, "int128_t")) {
+        type = O_INT128;
+    }
+    else if (!strcmp(s, "uint8_t")) {
+        type = O_UINT8;
+    }
+    else if (!strcmp(s, "uint16_t")) {
+        type = O_UINT16;
+    }
+    else if (!strcmp(s, "uint32_t")) {
+        type = O_UINT32;
+    }
+    else if (!strcmp(s, "uint64_t")) {
+        type = O_UINT64;
+    }
+    else if (!strcmp(s, "uint128_t")) {
+        type = O_UINT128;
+    }
+    else
+    {
+        log_error("Invalid type %s", s);
+    }
+    return type;
+ }
+
+Syntax *object_type_size(ObjectType type)
+{
+    if (type & O_ADDRESS)
+                return immediate_new("4");
+    else if (type & O_INT8)
+                return immediate_new("1");
+            else if (type & O_INT16)
+                return immediate_new("2");
+            else if (type & O_INT32)
+                return immediate_new("4");
+            else if (type & O_INT64)
+                return immediate_new("8");
+            else if (type & O_INT128)
+                return immediate_new("16");
+    return immediate_new("4");
+}
+
+static ObjectType current_object_type = O_INT32;
+static ObjectType current_function_type = O_INT32;
+ 
 %}
 
 %define parse.trace
 
-%token T_INCLUDE T_HEADER_NAME
-%token T_STATIC T_TYPE T_STRING T_IDENTIFIER T_RETURN T_NUMBER
+%token T_STATIC T_TYPE T_UNSIGNED T_SIGNED T_VOID 
+%token T_STRING T_IDENTIFIER T_RETURN T_NUMBER
 %token T_OPEN_BRACE T_CLOSE_BRACE
 %token T_IF T_WHILE T_ELSE T_GOTO T_LABEL
-%token T_LSHIFT T_RSHIFT
+%token T_LSHIFT T_RSHIFT T_LOGICAL_OR T_LOGICAL_AND
 %token T_LESS_OR_EQUAL T_EQUAL T_NEQUAL T_LARGER_OR_EQUAL
+%token T_INCREMENT T_DECREMENT T_SIZEOF
 
 /* Operator associativity, least precedence first.
  * See http://en.cppreference.com/w/c/language/operator_precedence
  */
 %left '='
+%left T_LOGICAL_OR T_LOGICAL_AND
 %left '&' '|' '^'
 %left T_EQUAL T_NEQUAL
 %left '<' '>' T_LARGER_OR_EQUAL T_LESS_OR_EQUAL
 %left T_LSHIFT T_RSHIFT
 %left '+' '-' 
 %left '*' '/' '%'
+%precedence T_INCREMENT T_DICREMENT
 %precedence T_MINUS T_PLUS
 %nonassoc '!'
 %nonassoc '~'
@@ -106,12 +185,43 @@ program:
         |
         ;
 
+object_type:
+        basic_object_type
+        |
+        basic_object_type '*' 
+        {
+            current_object_type = current_object_type | O_ADDRESS;
+        }
+        ;
+        
+basic_object_type:
+        T_TYPE
+        {
+            current_object_type = convert_type($1.symbol);
+        }
+        |
+        T_VOID
+        {
+            current_object_type = O_VOID;
+        }
+        |
+        T_SIGNED T_TYPE
+        {
+            current_object_type = convert_type($2.symbol) & ~O_UNSIGNED;   
+        }
+        |
+        T_UNSIGNED T_TYPE
+        {
+            current_object_type = convert_type($2.symbol) | O_UNSIGNED;   
+        }
+        ;
+
 top_element:
-	    T_TYPE T_IDENTIFIER '('  { pscope = scope_new(pscope); } 
+	    object_type T_IDENTIFIER '('  { current_function_type = current_object_type; pscope = scope_new(pscope); } 
         parameter_list ')' T_OPEN_BRACE full_block T_CLOSE_BRACE
         {
             Syntax *block = block_new(pscope->parser_stack);
-            Syntax *syntax = function_definition_new((char*)$2, parameters_stack, labels_stack, block);
+            Syntax *syntax = function_definition_new($2.symbol, current_function_type, parameters_stack, labels_stack, block);
             pscope->parser_stack = list_new();
             parameters_stack = list_new();
             labels_stack = list_new();
@@ -119,17 +229,47 @@ top_element:
             list_push(pscope->parser_stack, syntax);
         }
         |
-        T_TYPE T_IDENTIFIER '=' expression ';'
+        object_type global_identifier_list ';'
+        ;
+
+global_identifier_list:
+        global_identifier ',' global_identifier_list
+        | 
+        global_identifier
+        ;
+
+global_identifier: 
+        T_IDENTIFIER '=' expression
         {
             Syntax *init = list_pop(pscope->parser_stack);
-            Variable *v = scope_add_var(pscope, (char*)$2, GLOBAL);
+            Variable *v = scope_add_var(pscope, $1.symbol, current_object_type, GLOBAL);
             list_push(pscope->parser_stack, assignment_static_new(v, init));
         }
         |
-        T_TYPE T_IDENTIFIER ';'
+        T_IDENTIFIER
         {
-            Variable *v = scope_add_var(pscope, (char*)$2, GLOBAL);
+            Variable *v = scope_add_var(pscope, $1.symbol, current_object_type, GLOBAL);
             list_push(pscope->parser_stack, assignment_static_new(v, 0));
+        }
+        ;
+
+automatic_identifier_list:
+        automatic_identifier ',' automatic_identifier_list
+        | 
+        automatic_identifier
+        ;
+
+automatic_identifier: 
+        T_IDENTIFIER '=' expression
+        {
+            Syntax *init = list_pop(pscope->parser_stack);
+            Variable *v = scope_add_var(pscope, $1.symbol, current_object_type, AUTOMATIC);
+            list_push(pscope->parser_stack, assignment_new(v, init));
+        }
+        |
+        T_IDENTIFIER
+        {
+            scope_add_var(pscope, $1.symbol, current_object_type, AUTOMATIC);
         }
         ;
 
@@ -144,9 +284,9 @@ nonempty_parameter_list:
         parameter 
         ;
 
-parameter: T_TYPE T_IDENTIFIER
+parameter: object_type T_IDENTIFIER
         {
-            Variable *v = scope_add_var(pscope, (char*)$2, PARAMETER);
+            Variable *v = scope_add_var(pscope, $2.symbol, current_object_type, PARAMETER);
             list_push(parameters_stack, function_parameter_new(v));
         }
         ;
@@ -196,13 +336,13 @@ nonempty_statement_list:
 statement:
         T_GOTO T_IDENTIFIER ';'
         {
-            Label *label = search_existing_label((char *)$2);
+            Label *label = search_existing_label($2.symbol);
             list_push(pscope->parser_stack, goto_statement_new(label));
         }
         |
         T_LABEL ':'
         {
-            Label *label = search_existing_label((char *)$1);
+            Label *label = search_existing_label($1.symbol);
             list_push(pscope->parser_stack, label_statement_new(label));
         }
         |
@@ -212,7 +352,7 @@ statement:
             list_push(pscope->parser_stack, return_statement_new(current_syntax));
         }
         |
-        T_IF '(' expression ')' block
+        T_IF '(' expression ')' block_or_statement
         {
             // TODO: else statements.
             Syntax *if_then = list_pop(pscope->parser_stack);
@@ -220,7 +360,7 @@ statement:
             list_push(pscope->parser_stack, if_new(condition, if_then, nop_new()));
         }
         |
-        T_IF '(' expression ')' block T_ELSE block
+        T_IF '(' expression ')' block_or_statement T_ELSE block_or_statement
         {
             // TODO: else statements.
             Syntax *if_else = list_pop(pscope->parser_stack);
@@ -229,67 +369,104 @@ statement:
             list_push(pscope->parser_stack, if_new(condition, if_then, if_else));
         }
         |
-        T_WHILE '(' expression ')' block
+        T_WHILE '(' expression ')' block_or_statement
         {
             Syntax *body = list_pop(pscope->parser_stack);
             Syntax *condition = list_pop(pscope->parser_stack);
             list_push(pscope->parser_stack, while_new(condition, body));
         }
         |
-        T_TYPE T_IDENTIFIER '=' expression ';'
-        {
-            Syntax *init_syntax = list_pop(pscope->parser_stack);
-            Variable *v = scope_add_var(pscope, (char*)$2, AUTOMATIC);
-            list_push(pscope->parser_stack, assignment_new(v, init_syntax));
-        }
+        object_type automatic_identifier_list ';'
         |
-        T_STATIC T_TYPE T_IDENTIFIER '=' expression ';'
-        {
-            Syntax *init_syntax = list_pop(pscope->parser_stack);
-            Variable *v = scope_add_var(pscope, (char*)$3, GLOBAL);
-            list_push(pscope->parser_stack, assignment_static_new(v, init_syntax));
-        }
-        |
-        T_TYPE T_IDENTIFIER ';'
-        {
-            scope_add_var(pscope, (char*)$2, AUTOMATIC);
-        }
-        |
-        T_STATIC T_TYPE T_IDENTIFIER ';'
-        {
-            Variable *v = scope_add_var(pscope, (char*)$3, GLOBAL);
-            list_push(pscope->parser_stack, assignment_static_new(v, 0));
-        }
+        T_STATIC object_type global_identifier_list ';'
         |
         expression ';'
-        {
-            // Nothing to do, we have the AST node already.
-        }
         ;
 
+block_or_statement : 
+        statement
+        {
+            List *l = list_new();
+            list_push(l, list_pop(pscope->parser_stack));
+            Syntax *syntax = block_new(l);
+            list_push(pscope->parser_stack, syntax);
+        }
+        |
+        block
+        ;
+        
+address:
+        T_IDENTIFIER
+        {
+            Variable *v = scope_get_var(pscope, $1.symbol);
+            list_push(pscope->parser_stack, variable_new(v));            
+        }
+        | '(' expression ')'
+        {
+            
+        }
+        ;
+        
 expression:
 	    T_NUMBER
         {
-            list_push(pscope->parser_stack, immediate_new((char*)$1));
+            list_push(pscope->parser_stack, immediate_new($1.symbol));
         }
         |
 	    T_IDENTIFIER
         {
-            Variable *v = scope_get_var(pscope, (char *)$1);
+            Variable *v = scope_get_var(pscope, $1.symbol);
             list_push(pscope->parser_stack, variable_new(v));
         }
         |
 	    '&' T_IDENTIFIER
         {
-            Variable *v = scope_get_var(pscope, (char *)$2);
-            list_push(pscope->parser_stack, address_new(v));
+            Variable *v = scope_get_var(pscope, $2.symbol);
+            list_push(pscope->parser_stack, address_new(variable_new(v), immediate_new("0")));
+        }
+        |
+	    '&' T_IDENTIFIER '[' expression ']'
+        {
+            Variable *v = scope_get_var(pscope, $2.symbol);
+            Syntax *offset = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, address_new(variable_new(v), offset));
+        }
+        |
+	    address '[' expression ']'
+        {
+            Syntax *offset = list_pop(pscope->parser_stack);
+            Syntax *address = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, read_pointer_new(address, offset));
+        }
+        |
+	    '*' address
+        {
+            Syntax *offset = immediate_new("0");
+            Syntax *address = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, read_pointer_new(address, offset));
         }
         |
         T_IDENTIFIER '=' expression
         {
             Syntax *expression = list_pop(pscope->parser_stack);
-            Variable *v = scope_get_var(pscope, (char *)$1);
+            Variable *v = scope_get_var(pscope, $1.symbol);
             list_push(pscope->parser_stack, assignment_new(v, expression));
+        }
+        |
+	    address '[' expression ']' '=' expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Syntax *offset = list_pop(pscope->parser_stack);
+            Syntax *address = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, write_pointer_new(address, offset, expression));
+        }
+        |
+	    '*' address '=' expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Syntax *offset = immediate_new("0");
+            Syntax *address = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, write_pointer_new(address, offset, expression));
         }
         |
         '~' expression
@@ -385,6 +562,20 @@ expression:
             list_push(pscope->parser_stack, lshift_new(left, right));
         }
         |
+        expression T_LOGICAL_OR expression
+        {
+            Syntax *right = list_pop(pscope->parser_stack);
+            Syntax *left = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, logical_or_new(left, right));
+        }
+        |
+        expression T_LOGICAL_AND expression
+        {
+            Syntax *right = list_pop(pscope->parser_stack);
+            Syntax *left = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, logical_and_new(left, right));
+        }
+        |
         expression '<' expression
         {
             Syntax *right = list_pop(pscope->parser_stack);
@@ -427,35 +618,29 @@ expression:
             list_push(pscope->parser_stack, less_or_equal_new(left, right));
         }
         |
+        T_SIZEOF '(' object_type ')'
+        {
+            list_push(pscope->parser_stack, object_type_size(current_object_type));
+        }
+        |
+        T_SIZEOF '(' T_IDENTIFIER ')'
+        {
+            Variable *v = scope_get_var(pscope, $3.symbol);
+            if (!v) {
+                log_error("Should only get the sizeof(%s) for valid variables", $3.symbol);
+            }
+            list_push(pscope->parser_stack, object_type_size(v->type));
+        }
+        |
         T_IDENTIFIER '(' { pscope = scope_new(pscope); } argument_list ')'
         {
-            if (!strcmp($2, "sizeof")) {
-                Syntax *syntax = list_pop(pscope->arguments_stack);
-                if (syntax->type != FUNCTION_ARGUMENT) {
-                    printf("Should only get the sizeof(variable)\n");
-                    assert(0);
-                }
-                FunctionArgument *f = syntax->function_argument;
-                syntax = f->expression;
-                if (syntax->type != VARIABLE) {
-                    printf("Should only get the sizeof(variable)\n");
-                    assert(0);
-                }
-                Variable *v = syntax->variable;
-                if (!v) {
-                     printf("Should only get the sizeof(variable) for valid variables\n");
-                     assert(0);
-                }
-                // TODO : get the real size of variable (int, long ...)
-                pscope = scope_del(pscope);   
-                syntax = immediate_new("4");
-                list_push(pscope->parser_stack, syntax);
+            if (!strcmp($2.symbol, "sizeof")) {
             }
             else {
                 List *l = list_swap(pscope->arguments_stack);
                 pscope->arguments_stack = list_new();
                 pscope = scope_del(pscope);   
-                list_push(pscope->parser_stack, function_call_new((char*)$1, l));
+                list_push(pscope->parser_stack, function_call_new($1.symbol, l));
             }
         }
         |

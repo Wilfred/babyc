@@ -1,7 +1,6 @@
-
 /* ----------------------------------------------------------------
  *
- * Brave Algorithms Build Your Code
+ * BabyC toy compiler
  *
  * ---------------------------------------------------------------- */
 
@@ -9,11 +8,14 @@
 #define BABYC_SYNTAX_HEADER
 
 #include "list.h"
+#include <stdbool.h>
 
 typedef enum {
     IMMEDIATE,
     VARIABLE,
     ADDRESS,
+    READ_ADDRESS,
+    WRITE_ADDRESS,
     UNARY_OPERATOR,
     BINARY_OPERATOR,
     BLOCK,
@@ -48,6 +50,8 @@ typedef enum {
     XOR,
     RSHIFT,
     LSHIFT,
+    LOGICAL_AND,
+    LOGICAL_OR,
     LESS_THAN,
     LESS_THAN_OR_EQUAL,
     LARGER_THAN,
@@ -64,12 +68,29 @@ typedef enum {
                  functions (no need to save and restore)  */
 } Storage;
 
+typedef enum {
+    O_UNSIGNED = 0x001,
+    O_ADDRESS = 0x200,
+    O_VOID = 0x0100,
+    O_UINT1 = 0x0003,
+    O_INT8 = 0x0004,
+    O_INT16 = 0x0008,
+    O_INT32 = 0x0010,
+    O_INT64 = 0x0020,
+    O_INT128 = 0x0040,
+    O_UINT8 = 0x0005,
+    O_UINT16 = 0x0009,
+    O_UINT32 = 0x0011,
+    O_UINT64 = 0x0021,
+    O_UINT128 = 0x0041,
+} ObjectType;
+
 typedef struct Variable {
     char *name;      /* variable name */
     Storage storage; /* where the variable is stored */
     int offset;      /* offset in storage */
     char *assembler_name;
-    // int type;
+    ObjectType type;
 } Variable;
 
 typedef struct Scope {
@@ -82,7 +103,8 @@ typedef struct Scope {
 Scope *scope_new(Scope *current);
 Scope *scope_del(Scope *current);
 Variable *scope_get_var(Scope *ctx, char *name);
-Variable *scope_add_var(Scope *ctx, char *name, Storage storage);
+Variable *scope_add_var(Scope *ctx, char *name, ObjectType type,
+                        Storage storage);
 
 struct Syntax;
 typedef struct Syntax Syntax;
@@ -105,6 +127,22 @@ typedef struct BinaryExpression {
     Syntax *right;
 } BinaryExpression;
 
+typedef struct AddressExpression {
+    Syntax *identifier;
+    Syntax *offset;
+} AddressExpression;
+
+typedef struct ReadAddressExpression {
+    Syntax *address;
+    Syntax *offset;
+} ReadAddressExpression;
+
+typedef struct WriteAddressExpression {
+    Syntax *address;
+    Syntax *offset;
+    Syntax *expression;
+} WriteAddressExpression;
+
 typedef struct FunctionArgument { Syntax *expression; } FunctionArgument;
 
 typedef struct FunctionCall {
@@ -121,6 +159,7 @@ typedef struct FunctionDefinition {
     Syntax *block;
     int max_automatic_offset;
     int max_dynamic_offset;
+    ObjectType type;
 } FunctionDefinition;
 
 typedef struct Assignment {
@@ -155,6 +194,12 @@ struct Syntax {
         Variable *variable;
 
         Label *label;
+
+        AddressExpression *address;
+
+        ReadAddressExpression *read_address;
+
+        WriteAddressExpression *write_address;
 
         UnaryExpression *unary_expression;
 
@@ -192,7 +237,11 @@ Syntax *immediate_new(char *value);
 
 Syntax *variable_new(Variable *v);
 
-Syntax *address_new(Variable *v);
+Syntax *address_new(Syntax *expression, Syntax *offset);
+
+Syntax *read_pointer_new(Syntax *address, Syntax *offset);
+
+Syntax *write_pointer_new(Syntax *address, Syntax *offset, Syntax *expression);
 
 Syntax *bitwise_negation_new(Syntax *expression);
 
@@ -216,6 +265,10 @@ Syntax *bitwise_or_new(Syntax *left, Syntax *right);
 
 Syntax *bitwise_and_new(Syntax *left, Syntax *right);
 
+Syntax *logical_or_new(Syntax *left, Syntax *right);
+
+Syntax *logical_and_new(Syntax *left, Syntax *right);
+
 Syntax *rshift_new(Syntax *left, Syntax *right);
 
 Syntax *lshift_new(Syntax *left, Syntax *right);
@@ -236,8 +289,8 @@ Syntax *function_call_new(char *function_name, List *args);
 
 Syntax *function_argument_new(Syntax *s);
 
-Syntax *function_definition_new(char *name, List *parms, List *labels,
-                                Syntax *block);
+Syntax *function_definition_new(char *name, ObjectType type, List *parms,
+                                List *labels, Syntax *block);
 
 Syntax *function_parameter_new(Variable *v);
 
@@ -252,6 +305,8 @@ Syntax *block_new(List *statements);
 Syntax *if_new(Syntax *condition, Syntax *if_then, Syntax *if_else);
 
 Syntax *while_new(Syntax *condition, Syntax *body);
+
+bool syntax_is_boolean(Syntax *syntax);
 
 void syntax_free(Syntax *syntax);
 
