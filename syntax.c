@@ -1,15 +1,71 @@
+
 /* ----------------------------------------------------------------
  *
  * BabyC toy compiler
  *
  * ---------------------------------------------------------------- */
 
-#include "syntax.h"
-#include "list.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "list.h"
+#include "log_error.h"
+#include "syntax.h"
+
+ObjectType convert_type(char *s) {
+    ObjectType type = 0;
+
+    if (!strcmp(s, "int")) {
+        type = O_INT32;
+    } else if (!strcmp(s, "bool")) {
+        type = O_UINT1;
+    } else if (!strcmp(s, "long")) {
+        type = O_INT32;
+    } else if (!strcmp(s, "intptr_t")) {
+        type = O_INT32;
+    } else if (!strcmp(s, "int8_t")) {
+        type = O_INT8;
+    } else if (!strcmp(s, "int16_t")) {
+        type = O_INT16;
+    } else if (!strcmp(s, "int32_t")) {
+        type = O_INT32;
+    } else if (!strcmp(s, "int64_t")) {
+        type = O_INT64;
+    } else if (!strcmp(s, "int128_t")) {
+        type = O_INT128;
+    } else if (!strcmp(s, "uint8_t")) {
+        type = O_UINT8;
+    } else if (!strcmp(s, "uint16_t")) {
+        type = O_UINT16;
+    } else if (!strcmp(s, "uint32_t")) {
+        type = O_UINT32;
+    } else if (!strcmp(s, "uint64_t")) {
+        type = O_UINT64;
+    } else if (!strcmp(s, "uint128_t")) {
+        type = O_UINT128;
+    } else {
+        log_error("Invalid type %s", s);
+    }
+    return type;
+}
+
+Syntax *object_type_size(ObjectType type) {
+    if (type & O_ADDRESS)
+        return immediate_new("4");
+    else if (type & O_INT8)
+        return immediate_new("1");
+    else if (type & O_INT16)
+        return immediate_new("2");
+    else if (type & O_INT32)
+        return immediate_new("4");
+    else if (type & O_INT64)
+        return immediate_new("8");
+    else if (type & O_INT128)
+        return immediate_new("16");
+    return immediate_new("4");
+}
 
 Scope *scope_new(Scope *current) {
     Scope *ret = malloc(sizeof(Scope));
@@ -56,6 +112,7 @@ Variable *scope_get_var(Scope *ctx, char *name) {
 Variable *scope_add_var(Scope *ctx, char *name, ObjectType type,
                         Storage storage) {
     Variable *v = malloc(sizeof(Variable));
+
     memset(v, 0, sizeof(Variable));
 
     list_push(ctx->var_stack, v);
@@ -112,6 +169,7 @@ Syntax *variable_new(Variable *v) {
 
 Syntax *address_new(Syntax *expression, Syntax *offset) {
     AddressExpression *address = malloc(sizeof(AddressExpression));
+
     address->identifier = expression;
     address->offset = offset;
 
@@ -125,6 +183,7 @@ Syntax *address_new(Syntax *expression, Syntax *offset) {
 
 Syntax *read_pointer_new(Syntax *address, Syntax *offset) {
     ReadAddressExpression *pointer = malloc(sizeof(ReadAddressExpression));
+
     pointer->address = address;
     pointer->offset = offset;
 
@@ -138,6 +197,7 @@ Syntax *read_pointer_new(Syntax *address, Syntax *offset) {
 
 Syntax *write_pointer_new(Syntax *address, Syntax *offset, Syntax *expression) {
     WriteAddressExpression *pointer = malloc(sizeof(WriteAddressExpression));
+
     pointer->address = address;
     pointer->offset = offset;
     pointer->expression = expression;
@@ -404,6 +464,24 @@ Syntax *while_new(Syntax *condition, Syntax *body) {
     return syntax;
 }
 
+Syntax *break_statement_new(void) {
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    syntax->type = BREAK_STATEMENT;
+    syntax->label = 0;
+
+    return syntax;
+}
+
+Syntax *continue_statement_new(void) {
+    Syntax *syntax = malloc(sizeof(Syntax));
+
+    syntax->type = CONTINUE_STATEMENT;
+    syntax->label = 0;
+
+    return syntax;
+}
+
 void syntax_list_free(List *syntaxes) {
     if (syntaxes == NULL) {
         return;
@@ -423,6 +501,7 @@ bool syntax_is_boolean(Syntax *syntax) {
     if (syntax->type == BINARY_OPERATOR) {
         BinaryExpressionType binary_type =
             syntax->binary_expression->binary_type;
+
         return (binary_type == LESS_THAN || binary_type == LARGER_THAN ||
                 binary_type == LESS_THAN_OR_EQUAL ||
                 binary_type == LARGER_THAN_OR_EQUAL || binary_type == EQUAL ||
@@ -466,6 +545,8 @@ void syntax_free(Syntax *syntax) {
         free(syntax->function_argument);
     } else if (syntax->type == FUNCTION_PARAMETER) {
         free(syntax->function_parameter);
+    } else if (syntax->type == BREAK_STATEMENT) {
+    } else if (syntax->type == CONTINUE_STATEMENT) {
     } else if (syntax->type == GOTO_STATEMENT) {
     } else if (syntax->type == LABEL_STATEMENT) {
     } else if (syntax->type == IF_STATEMENT) {
@@ -573,6 +654,10 @@ char *syntax_type_name(Syntax *syntax) {
         return "IF";
     } else if (syntax->type == GOTO_STATEMENT) {
         return "GOTO";
+    } else if (syntax->type == BREAK_STATEMENT) {
+        return "BREAK";
+    } else if (syntax->type == CONTINUE_STATEMENT) {
+        return "CONTINUE";
     } else if (syntax->type == LABEL_STATEMENT) {
         return "LABEL";
     } else if (syntax->type == RETURN_STATEMENT) {
@@ -645,6 +730,10 @@ void print_syntax_indented(Syntax *syntax, int indent) {
 
     } else if (syntax->type == GOTO_STATEMENT) {
         printf("%s '%s'\n", str, syntax->label->name);
+    } else if (syntax->type == BREAK_STATEMENT) {
+        printf("%s\n", str);
+    } else if (syntax->type == CONTINUE_STATEMENT) {
+        printf("%s\n", str);
     } else if (syntax->type == LABEL_STATEMENT) {
         printf("%s '%s'\n", str, syntax->label->name);
     } else if (syntax->type == IF_STATEMENT) {

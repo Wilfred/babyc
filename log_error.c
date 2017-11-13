@@ -1,3 +1,4 @@
+
 /* ----------------------------------------------------------------
  *
  * BabyC toy compiler
@@ -12,6 +13,7 @@
 
 void log_error(char *fmt, ...) {
     va_list ap;
+
     printf("babyc: ");
     printf(fmt, ap);
     printf("\n");

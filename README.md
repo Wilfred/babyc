@@ -52,7 +52,7 @@ but we will implement such a small subset of C that it's academic.
 * static variables (`int` only)
 * variable assignment (`int` only)
 * sizeof (int `variable` only)
-* while loops (`while (foo) { bar; }`)
+* while loop (`while (foo) { bar; }`) with 'break' and 'continue' statements
 * minimum of support for pointers on signed integers
 * alloca() and arrays of signed integers
 * function declaration (with multiple int arguments, returning int)
@@ -183,7 +183,6 @@ For code formatting, run:
 * No support for const, restrict, volatile, register keywords
 * No support for inline keyword
 * No support for loop variants ('for', 'do-while', 'foreach', ....)
-* No support for break/continue statements
 * No support for switch statements ('switch', 'case', 'default', 'duffs device'....)
 * No support for strings and string operators ('strcpy', 'strcat', 'strcmp', ...)
 * No support for printf(), gets()

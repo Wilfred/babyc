@@ -75,75 +75,6 @@ Label *search_existing_label(char *name)
    return label;
 }
  
- ObjectType convert_type(char *s)
- {
-    ObjectType type = 0;
-    if (!strcmp(s, "int")) {
-        type = O_INT32;
-    }
-    else if (!strcmp(s, "bool")) {
-        type = O_UINT1;
-    }
-    else if (!strcmp(s, "long")) {
-        type = O_INT32;
-    }
-    else if (!strcmp(s, "intptr_t")) {
-        type = O_INT32;
-    }
-    else if (!strcmp(s, "int8_t")) {
-        type = O_INT8;
-    }
-    else if (!strcmp(s, "int16_t")) {
-        type = O_INT16;
-    }
-    else if (!strcmp(s, "int32_t")) {
-        type = O_INT32;
-    }
-    else if (!strcmp(s, "int64_t")) {
-        type = O_INT64;
-    }
-    else if (!strcmp(s, "int128_t")) {
-        type = O_INT128;
-    }
-    else if (!strcmp(s, "uint8_t")) {
-        type = O_UINT8;
-    }
-    else if (!strcmp(s, "uint16_t")) {
-        type = O_UINT16;
-    }
-    else if (!strcmp(s, "uint32_t")) {
-        type = O_UINT32;
-    }
-    else if (!strcmp(s, "uint64_t")) {
-        type = O_UINT64;
-    }
-    else if (!strcmp(s, "uint128_t")) {
-        type = O_UINT128;
-    }
-    else
-    {
-        log_error("Invalid type %s", s);
-    }
-    return type;
- }
-
-Syntax *object_type_size(ObjectType type)
-{
-    if (type & O_ADDRESS)
-                return immediate_new("4");
-    else if (type & O_INT8)
-                return immediate_new("1");
-            else if (type & O_INT16)
-                return immediate_new("2");
-            else if (type & O_INT32)
-                return immediate_new("4");
-            else if (type & O_INT64)
-                return immediate_new("8");
-            else if (type & O_INT128)
-                return immediate_new("16");
-    return immediate_new("4");
-}
-
 static ObjectType current_object_type = O_INT32;
 static ObjectType current_function_type = O_INT32;
  
@@ -154,7 +85,7 @@ static ObjectType current_function_type = O_INT32;
 %token T_STATIC T_TYPE T_UNSIGNED T_SIGNED T_VOID 
 %token T_STRING T_IDENTIFIER T_RETURN T_NUMBER
 %token T_OPEN_BRACE T_CLOSE_BRACE
-%token T_IF T_WHILE T_ELSE T_GOTO T_LABEL
+%token T_IF T_WHILE T_ELSE T_GOTO T_LABEL T_BREAK T_CONTINUE
 %token T_LSHIFT T_RSHIFT T_LOGICAL_OR T_LOGICAL_AND
 %token T_LESS_OR_EQUAL T_EQUAL T_NEQUAL T_LARGER_OR_EQUAL
 %token T_INCREMENT T_DECREMENT T_SIZEOF
@@ -338,6 +269,16 @@ statement:
         {
             Label *label = search_existing_label($2.symbol);
             list_push(pscope->parser_stack, goto_statement_new(label));
+        }
+        |
+        T_BREAK ';'
+        {
+            list_push(pscope->parser_stack, break_statement_new());
+        }
+        |
+        T_CONTINUE ';'
+        {
+            list_push(pscope->parser_stack, continue_statement_new());
         }
         |
         T_LABEL ':'

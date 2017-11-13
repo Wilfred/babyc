@@ -222,6 +222,7 @@ static int run_test_stdlib(volatile int *return_value) {
         }
 
         int timeout = 0;
+
         while (*shared_result == 0x7fffffff) {
             usleep(100);
             timeout += 100;

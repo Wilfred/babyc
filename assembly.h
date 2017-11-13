@@ -17,6 +17,7 @@ void write_assembly(char *file_name, Syntax *syntax);
 
 typedef struct Context {
     int label_count;
+    int while_label;
     int offset;
     int max_offset;
     char *function_end_label;

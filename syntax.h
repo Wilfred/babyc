@@ -1,3 +1,4 @@
+
 /* ----------------------------------------------------------------
  *
  * BabyC toy compiler
@@ -21,6 +22,8 @@ typedef enum {
     BLOCK,
     LABEL_STATEMENT,
     GOTO_STATEMENT,
+    BREAK_STATEMENT,
+    CONTINUE_STATEMENT,
     NOP_STATEMENT,
     IF_STATEMENT,
     RETURN_STATEMENT,
@@ -300,11 +303,19 @@ Syntax *assignment_static_new(Variable *v, Syntax *expression);
 
 Syntax *return_statement_new(Syntax *expression);
 
+Syntax *break_statement_new(void);
+
+Syntax *continue_statement_new(void);
+
 Syntax *block_new(List *statements);
 
 Syntax *if_new(Syntax *condition, Syntax *if_then, Syntax *if_else);
 
 Syntax *while_new(Syntax *condition, Syntax *body);
+
+Syntax *object_type_size(ObjectType type);
+
+ObjectType convert_type(char *s);
 
 bool syntax_is_boolean(Syntax *syntax);
 

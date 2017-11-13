@@ -29,6 +29,7 @@ Context *context_new(void) {
     Context *ret = malloc(sizeof(Context));
 
     ret->label_count = 0;
+    ret->while_label = 0;
     ret->offset = 0;
     ret->max_offset = 0;
     ret->function_end_label = "";
@@ -44,6 +45,16 @@ void context_restart(Context *ctx, int offset, char *end_label) {
 }
 
 char *get_var_name(Variable *v) { return v->assembler_name; }
+
+char *fresh_numbered_label(char *prefix, int suffix) {
+    // We assume we never write more than 6 chars of digits, plus a '.' and '_'
+    // and 'nul' byte.
+    size_t buffer_size = strlen(prefix) + 8;
+    char *buffer = malloc(buffer_size + 1);
+
+    snprintf(buffer, buffer_size, ".%s_%d", prefix, suffix);
+    return buffer;
+}
 
 void emit_header(FILE *out, char *name) { fprintf(out, "%s\n", name); }
 
@@ -116,12 +127,7 @@ void emit_instr_format(FILE *out, char *instr, char *operands_format, ...) {
 }
 
 char *fresh_local_label(char *prefix, Context *ctx) {
-    // We assume we never write more than 6 chars of digits, plus a '.' and '_'
-    // and 'nul' byte.
-    size_t buffer_size = strlen(prefix) + 8;
-    char *buffer = malloc(buffer_size + 1);
-
-    snprintf(buffer, buffer_size, ".%s_%d", prefix, ctx->label_count++);
+    char *buffer = fresh_numbered_label(prefix, ctx->label_count++);
     return buffer;
 }
 
@@ -173,6 +179,7 @@ void write_footer(FILE *out, char *comment) {
 
 void emit_var_address(FILE *out, Variable *v) {
     char *reg = "eax";
+
     switch (v->storage) {
     case GLOBAL:
         emit_instr_format(out, "movl", "$%s, %%%s", v->assembler_name, reg);
@@ -187,6 +194,30 @@ void emit_var_address(FILE *out, Variable *v) {
         assert(0);
         break;
     }
+}
+
+/* -----------------------------------------------------------
+ * Write the assembly code
+ * ----------------------------------------------------------- */
+
+bool empty_list(List *list);
+bool empty_syntax(Syntax *syntax);
+
+bool empty_list(List *list) {
+    bool empty = true;
+    for (int i = 0; empty && i < list_length(list); i++) {
+        empty &= empty_syntax(list_get(list, i));
+    }
+    return empty;
+}
+
+bool empty_syntax(Syntax *syntax) {
+    if (syntax->type == BLOCK) {
+        return empty_list(syntax->block->statements);
+    } else if (syntax->type == NOP_STATEMENT) {
+        return true;
+    }
+    return false;
 }
 
 /* -----------------------------------------------------------
@@ -219,6 +250,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         write_syntax(out, syntax->read_address->address, ctx);
         if (syntax->read_address->offset->type == IMMEDIATE) {
             int value = syntax->read_address->offset->immediate->value;
+
             emit_instr_format(out, "movl", "%d(%%eax), %%eax", 4 * value);
         } else {
             emit_instr(out, "pushl", "%eax");
@@ -229,6 +261,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         }
     } else if (syntax->type == WRITE_ADDRESS) {
         int value = 0;
+
         write_syntax(out, syntax->write_address->address, ctx);
         emit_instr(out, "pushl", "%eax");
         if (syntax->write_address->offset->type == IMMEDIATE) {
@@ -246,6 +279,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         emit_var_address(out, syntax->address->identifier->variable);
         if (syntax->address->offset->type == IMMEDIATE) {
             int value = syntax->address->offset->immediate->value;
+
             if (value) {
                 emit_instr_format(out, "movl", "$%d, %%ecx", value);
                 emit_instr(out, "leal", "(%eax,%ecx,4), %eax");
@@ -274,6 +308,14 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         emit_instr_format(out, "jmp", "%s", ctx->function_end_label);
     } else if (syntax->type == GOTO_STATEMENT) {
         emit_instr_format(out, "jmp", "%s", syntax->label->assembler_name);
+    } else if (syntax->type == BREAK_STATEMENT) {
+        char *buffer = fresh_numbered_label("while_end", ctx->while_label + 1);
+        emit_instr_format(out, "jmp", "%s", buffer);
+        free(buffer);
+    } else if (syntax->type == CONTINUE_STATEMENT) {
+        char *buffer = fresh_numbered_label("while_start", ctx->while_label);
+        emit_instr_format(out, "jmp", "%s", buffer);
+        free(buffer);
     } else if (syntax->type == LABEL_STATEMENT) {
         fprintf(out, "%s:\n", syntax->label->assembler_name);
     } else if (syntax->type == IF_STATEMENT) {
@@ -281,20 +323,29 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         char *end_label = fresh_local_label("if_end", ctx);
         char *else_label = fresh_local_label("if_else", ctx);
 
+        /* TODO : check for boolean operators, flags are already set */
         write_syntax(out, if_statement->condition, ctx);
 
-        /* TODO : check for empty blocks in if_else and if_then statements */
         emit_instr(out, "testl", "%eax, %eax");
-        emit_instr_format(out, "jz", "%s", else_label);
-        write_syntax(out, if_statement->if_then, ctx);
-        emit_instr_format(out, "jmp", "%s", end_label);
-        emit_label(out, else_label);
-        write_syntax(out, if_statement->if_else, ctx);
+        if (peephole_optimize && empty_syntax(if_statement->if_then)) {
+            emit_instr_format(out, "jnz", "%s", end_label);
+            write_syntax(out, if_statement->if_else, ctx);
+        } else if (peephole_optimize && empty_syntax(if_statement->if_else)) {
+            emit_instr_format(out, "jz", "%s", end_label);
+            write_syntax(out, if_statement->if_then, ctx);
+        } else {
+            emit_instr_format(out, "jz", "%s", else_label);
+            write_syntax(out, if_statement->if_then, ctx);
+            emit_instr_format(out, "jmp", "%s", end_label);
+            emit_label(out, else_label);
+            write_syntax(out, if_statement->if_else, ctx);
+        }
         emit_label(out, end_label);
-
     } else if (syntax->type == WHILE_STATEMENT) {
         WhileStatement *while_statement = syntax->while_statement;
 
+        int save_while_label = ctx->while_label;
+        ctx->while_label = ctx->label_count;
         char *start_label = fresh_local_label("while_start", ctx);
         char *end_label = fresh_local_label("while_end", ctx);
 
@@ -307,7 +358,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         write_syntax(out, while_statement->body, ctx);
         emit_instr_format(out, "jmp", "%s", start_label);
         emit_label(out, end_label);
-
+        ctx->while_label = save_while_label;
     } else if (syntax->type == BLOCK) {
         write_list(out, syntax->block->statements, ctx);
     } else if (syntax->type == FUNCTION_ARGUMENT) {
@@ -321,6 +372,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
                        "allocate on the stack)\n");
             }
             Syntax *s = list_get(syntax->function_call->arguments, 0);
+
             if (s->type != FUNCTION_ARGUMENT) {
                 printf("_alloca requires exactly 1 parameter (the size to "
                        "allocate on the stack)\n");
@@ -404,6 +456,10 @@ int update_dynamic_syntax(Syntax *syntax) {
         return (c > t) ? c : t;
     } else if (syntax->type == GOTO_STATEMENT) {
         return 0;
+    } else if (syntax->type == BREAK_STATEMENT) {
+        return 0;
+    } else if (syntax->type == CONTINUE_STATEMENT) {
+        return 0;
     } else if (syntax->type == LABEL_STATEMENT) {
         return 0;
     } else if (syntax->type == NOP_STATEMENT) {
@@ -419,6 +475,7 @@ int update_dynamic_syntax(Syntax *syntax) {
     } else if (syntax->type == ADDRESS) {
         int e = update_dynamic_syntax(syntax->address->identifier);
         int a = update_dynamic_syntax(syntax->address->offset);
+
         return (e > a) ? e : a;
     } else if (syntax->type == READ_ADDRESS) {
         return update_dynamic_syntax(syntax->read_address->address);
@@ -427,6 +484,7 @@ int update_dynamic_syntax(Syntax *syntax) {
         int o = update_dynamic_syntax(syntax->write_address->offset);
         int e = update_dynamic_syntax(syntax->write_address->expression);
         int r = (a > o) ? a : o;
+
         return WORD_SIZE + ((e > r) ? e : r);
     } else if (syntax->type == IMMEDIATE) {
         return 0;
@@ -564,6 +622,8 @@ void update_offset_syntax(Syntax *syntax, UpdateOffset *ctx) {
         update_offset_syntax(syntax->if_statement->condition, ctx);
         update_offset_syntax(syntax->if_statement->if_then, ctx);
         update_offset_syntax(syntax->if_statement->if_else, ctx);
+    } else if (syntax->type == BREAK_STATEMENT) {
+    } else if (syntax->type == CONTINUE_STATEMENT) {
     } else if (syntax->type == GOTO_STATEMENT) {
     } else if (syntax->type == LABEL_STATEMENT) {
         update_label(syntax->label, ctx);
