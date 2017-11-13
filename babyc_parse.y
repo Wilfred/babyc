@@ -627,21 +627,17 @@ expression:
         {
             Variable *v = scope_get_var(pscope, $3.symbol);
             if (!v) {
-                log_error("Should only get the sizeof(%s) for valid variables", $3.symbol);
+                log_error("Should only get sizeof(%s) from valid variables", $3.symbol);
             }
             list_push(pscope->parser_stack, object_type_size(v->type));
         }
         |
         T_IDENTIFIER '(' { pscope = scope_new(pscope); } argument_list ')'
         {
-            if (!strcmp($2.symbol, "sizeof")) {
-            }
-            else {
-                List *l = list_swap(pscope->arguments_stack);
-                pscope->arguments_stack = list_new();
-                pscope = scope_del(pscope);   
-                list_push(pscope->parser_stack, function_call_new($1.symbol, l));
-            }
+            List *l = list_swap(pscope->arguments_stack);
+            pscope->arguments_stack = list_new();
+            pscope = scope_del(pscope);   
+            list_push(pscope->parser_stack, function_call_new($1.symbol, l));
         }
         |
         '(' expression ')'
