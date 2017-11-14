@@ -64,6 +64,7 @@ but we will implement such a small subset of C that it's academic.
 * simple preprocessor support (for now, we shell out to gcc -E)
 * simplified peephole post-optimizer at instruction selection ('option -O1')
 * few usual options from GCC/Clang command line ('-g' '-o' '-O0' '-O1' '-E' '-S' '-m32')
+* unusual feature (-O1) : Z-flag propagation thru Sethi-Ullman algorithm (other flags later)
 
 ## License
 
@@ -212,7 +213,6 @@ For code formatting, run:
 * optimizer: no peephole various simplifications
 * optimizer: no dead code elimination
 * optimizer: no red zone shortcuts
-* optimizer: no optimizer at all .....
 
 
 

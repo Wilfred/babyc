@@ -290,12 +290,21 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
 
     /* no immediate operand, push left evaluation on stack */
     ctx->offset -= WORD_SIZE;
-    int stack_offset = ctx->offset;
 
-    int left_flag = write_condition_syntax(out, left, ctx);
-    emit_instr_format(out, "movl", "%%eax, %d(%%ebp)", stack_offset);
-    int right_flag = write_condition_syntax(out, right, ctx);
-    
+    int stack_offset = ctx->offset;
+    int left_flag = FLAG_NONE, right_flag = FLAG_NONE;
+    if (peephole_optimize) {
+        left_flag = write_condition_syntax(out, left, ctx);
+        emit_instr_format(out, "movl", "%%eax, %d(%%ebp)", stack_offset);
+        right_flag = write_condition_syntax(out, right, ctx);
+    }
+    else
+    {
+        write_syntax(out, left, ctx);
+        emit_instr_format(out, "movl", "%%eax, %d(%%ebp)", stack_offset);
+        write_syntax(out, right, ctx);
+    }
+
     if (binary_type == MULTIPLICATION) {
         emit_instr_format(out, "imull", "%d(%%ebp), %%eax", stack_offset);
         flag = FLAG_NONE;
