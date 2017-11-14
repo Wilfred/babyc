@@ -323,10 +323,8 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         IfStatement *if_statement = syntax->if_statement;
         char *end_label = fresh_local_label("if_end", ctx);
         char *else_label = fresh_local_label("if_else", ctx);
-        bool then_empty = empty_syntax(if_statement->if_then);
-        bool else_empty = empty_syntax(if_statement->if_then);
-        ProcessorFlags flags =
-            write_condition_syntax(out, if_statement->condition, ctx);
+        bool else_empty = empty_syntax(if_statement->if_else);
+        ProcessorFlags flags = write_condition_syntax(out, if_statement->condition, ctx);
         if (flags == FLAG_Z_VALID) {
             /* last evaluated to 0 and Z=1 */
             emit_instr_format(out, "jz", "%s", else_label);
@@ -350,27 +348,6 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         if (!else_empty)
             write_syntax(out, if_statement->if_else, ctx);
         emit_label(out, end_label);
-#if 0
-        if (validflags == FLAG_NONE)
-        {
-            emit_instr(out, "testl", "%eax, %eax");
-            validflags = FLAG_Z_VALID;
-        }
-        if (peephole_optimize && empty_syntax(if_statement->if_then)) {
-            emit_instr_format(out, (validflags & FLAG_NZ_BOOL) ? "jz" : "jnz", "%s", end_label);
-            write_syntax(out, if_statement->if_else, ctx);
-        } else if (peephole_optimize && empty_syntax(if_statement->if_else)) {
-            emit_instr_format(out, (validflags & FLAG_NZ_BOOL) ? "jnz" : "jz", "%s", end_label);
-            write_syntax(out, if_statement->if_then, ctx);
-        } else {
-            emit_instr_format(out, (validflags & FLAG_NZ_BOOL) ? "jnz" : "jz", "%s", else_label);
-            write_syntax(out, if_statement->if_then, ctx);
-            emit_instr_format(out, "jmp", "%s", end_label);
-            emit_label(out, else_label);
-            write_syntax(out, if_statement->if_else, ctx);
-        }
-        emit_label(out, end_label);
-#endif
     } else if (syntax->type == WHILE_STATEMENT) {
         WhileStatement *while_statement = syntax->while_statement;
 

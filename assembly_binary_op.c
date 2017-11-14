@@ -131,6 +131,7 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                 }
                 if (value) {
                     emit_instr_format(out, "movl", "$%d, %%eax", value);
+                    flag = FLAG_NONE;
                 } else {
                     emit_instr(out, "xorl", "%eax, %eax");
                     flag = FLAG_Z_VALID;
@@ -138,9 +139,7 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
             } else {
                 int value = right->immediate->value;
 
-                // TODO get flag from recursive call
-                flag = FLAG_NONE;
-                write_syntax(out, left, ctx);
+                flag = write_condition_syntax(out, left, ctx);
 
                 if (binary_type == MULTIPLICATION) {
                     if (value == 0) {
@@ -257,12 +256,18 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                 } else if (binary_type == LOGICAL_OR ||
                            binary_type == LOGICAL_AND) {
                     value = !!value;
-                    // TODO add flags checks here
-                    if (!syntax_is_boolean(left)) {
-                        emit_instr(out, "testl", "$0xFFFFFFFF, %eax");
-                        emit_instr(out, "setz", "%al");
+                    if (flag == FLAG_Z_VALID)
+                    {
+                        emit_instr(out, "setnz", "%al");
                         emit_instr(out, "movzbl", "%al, %eax");
-                        flag = FLAG_Z_BOOL;
+                    }
+                    else if (flag == FLAG_Z_BOOL || flag == FLAG_NZ_BOOL || flag == FLAG_BOOL_VALID)
+                    {
+                    }
+                    else  if (!syntax_is_boolean(left)) {
+                        emit_instr(out, "testl", "%eax, %eax");
+                        emit_instr(out, "setnz", "%al");
+                        emit_instr(out, "movzbl", "%al, %eax");
                     }
                     switch (binary_type) {
                     case LOGICAL_OR:
@@ -287,10 +292,10 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
     ctx->offset -= WORD_SIZE;
     int stack_offset = ctx->offset;
 
-    write_syntax(out, left, ctx);
+    int left_flag = write_condition_syntax(out, left, ctx);
     emit_instr_format(out, "movl", "%%eax, %d(%%ebp)", stack_offset);
-    write_syntax(out, right, ctx);
-
+    int right_flag = write_condition_syntax(out, right, ctx);
+    
     if (binary_type == MULTIPLICATION) {
         emit_instr_format(out, "imull", "%d(%%ebp), %%eax", stack_offset);
         flag = FLAG_NONE;
@@ -385,19 +390,36 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
         // Zero the rest of %eax.
         emit_instr(out, "movzbl", "%al, %eax");
     } else if (binary_type == LOGICAL_OR || binary_type == LOGICAL_AND) {
-
-        // TODO : check flags left/right
-        if (!syntax_is_boolean(right)) {
-            emit_instr(out, "testl", "$0xFFFFFFFF, %eax");
-            emit_instr(out, "setz", "%al");
+        if (right_flag == FLAG_Z_VALID)
+        {
+            emit_instr(out, "setnz", "%al");
             emit_instr(out, "movzbl", "%al, %eax");
         }
-        if (!syntax_is_boolean(left)) {
-            emit_instr_format(out, "testl", "$0xFFFFFFFF, %d(%%ebp)",
-                              stack_offset);
-            emit_instr(out, "setz", "%cl");
+        else if (right_flag == FLAG_Z_BOOL || right_flag == FLAG_NZ_BOOL || right_flag == FLAG_BOOL_VALID)
+        {
+        }
+        else if (!syntax_is_boolean(right))
+        {
+            emit_instr(out, "testl", "%eax, %eax");
+            emit_instr(out, "setnz", "%al");
+            emit_instr(out, "movzbl", "%al, %eax");
+        }
+        
+        if (left_flag == FLAG_Z_BOOL || left_flag == FLAG_NZ_BOOL || left_flag == FLAG_BOOL_VALID)
+        {
+            emit_instr_format(out, "movl", "%d(%%ebp), %%ecx", stack_offset);
+        }
+        else if (!syntax_is_boolean(left))
+        {
+            emit_instr_format(out, "testl", "$0xFFFFFFFF, %d(%%ebp)", stack_offset);
+            emit_instr(out, "setnz", "%cl");
             emit_instr(out, "movzbl", "%cl, %ecx");
-            switch (binary_type) {
+        }
+        else
+        {
+            emit_instr_format(out, "movl", "%d(%%ebp), %%ecx", stack_offset);
+        }
+        switch (binary_type) {
             case LOGICAL_OR:
                 emit_instr(out, "orl", "%ecx, %eax");
                 break;
@@ -406,22 +428,8 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                 break;
             default:
                 break;
-            }
-            flag = FLAG_NZ_BOOL;
-        } else {
-            switch (binary_type) {
-            case LOGICAL_OR:
-                emit_instr_format(out, "orl", "%d(%%ebp), %%eax", stack_offset);
-                break;
-            case LOGICAL_AND:
-                emit_instr_format(out, "andl", "%d(%%ebp), %%eax",
-                                  stack_offset);
-                break;
-            default:
-                break;
-            }
-            flag = FLAG_NZ_BOOL;
         }
+        flag = FLAG_NZ_BOOL;
     }
     ctx->offset += WORD_SIZE;
     return flag;

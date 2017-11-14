@@ -57,7 +57,7 @@ ProcessorFlags write_unary_syntax(FILE *out, UnaryExpressionType unary_type,
         }
     }
 
-    write_syntax(out, expression, ctx);
+    flag = write_condition_syntax(out, expression, ctx);
 
     if (unary_type == BITWISE_NEGATION) {
         emit_instr(out, "notl", "%eax");
@@ -66,14 +66,36 @@ ProcessorFlags write_unary_syntax(FILE *out, UnaryExpressionType unary_type,
         emit_instr(out, "negl", "%eax");
         flag = FLAG_Z_VALID;
     } else if (unary_type == LOGICAL_NEGATION) {
-        if (!syntax_is_boolean(expression)) {
-            emit_instr(out, "testl", "$0xFFFFFFFF, %eax");
+        if (flag == FLAG_Z_VALID)
+        {
+            emit_instr(out, "testl", "%eax, %eax");
+            emit_instr(out, "setz", "%al");
+            emit_instr(out, "movzbl", "%al, %eax");
+            flag = FLAG_Z_BOOL;            
+        }
+        else if (flag == FLAG_Z_BOOL)
+        {
+            emit_instr(out, "xorl", "$1, %eax");
+            flag = FLAG_Z_BOOL;
+        }
+        else if (flag == FLAG_NZ_BOOL)
+        {
+            emit_instr(out, "xorl", "$1, %eax");
+            flag = FLAG_NZ_BOOL;
+        }
+        else if (flag == FLAG_BOOL_VALID)
+        {
+            emit_instr(out, "xorl", "$1, %eax");
+            flag = FLAG_Z_BOOL;
+        }
+        else if (!syntax_is_boolean(expression)) {
+            emit_instr(out, "testl", "%eax, %eax");
             emit_instr(out, "setz", "%al");
             emit_instr(out, "movzbl", "%al, %eax");
             flag = FLAG_Z_BOOL;
         } else {
             emit_instr(out, "xorl", "$1, %eax");
-            flag = FLAG_Z_VALID;
+            flag = FLAG_Z_BOOL;
         }
     }
     return flag;
