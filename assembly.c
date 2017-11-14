@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "assembly.h"
+#include "log_error.h"
 
 bool peephole_optimize = false;
 
@@ -197,7 +198,7 @@ void emit_var_address(FILE *out, Variable *v) {
 }
 
 /* -----------------------------------------------------------
- * Write the assembly code
+ * Detects empty AST branches
  * ----------------------------------------------------------- */
 
 bool empty_list(List *list);
@@ -322,25 +323,54 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         IfStatement *if_statement = syntax->if_statement;
         char *end_label = fresh_local_label("if_end", ctx);
         char *else_label = fresh_local_label("if_else", ctx);
-
-        /* TODO : check for boolean operators, flags are already set */
-        write_syntax(out, if_statement->condition, ctx);
-
-        emit_instr(out, "testl", "%eax, %eax");
+        bool then_empty = empty_syntax(if_statement->if_then);
+        bool else_empty = empty_syntax(if_statement->if_then);
+        ProcessorFlags flags =
+            write_condition_syntax(out, if_statement->condition, ctx);
+        if (flags == FLAG_Z_VALID) {
+            /* last evaluated to 0 and Z=1 */
+            emit_instr_format(out, "jz", "%s", else_label);
+        } else if (flags == FLAG_Z_BOOL) {
+            /* bool condition is true if Z = 1 */
+            emit_instr_format(out, "jnz", "%s", else_label);
+        } else if (flags == FLAG_NZ_BOOL) {
+            /* bool condition is true if Z = 0 */
+            emit_instr_format(out, "jz", "%s", else_label);
+        } else if (flags == FLAG_BOOL_VALID) {
+            emit_instr(out, "testl", "%eax, %eax");
+            emit_instr_format(out, "jz", "%s", else_label);
+        } else {
+            emit_instr(out, "testl", "%eax, %eax");
+            emit_instr_format(out, "jz", "%s", else_label);
+        }
+        write_syntax(out, if_statement->if_then, ctx);
+        if (!else_empty)
+            emit_instr_format(out, "jmp", "%s", end_label);
+        emit_label(out, else_label);
+        if (!else_empty)
+            write_syntax(out, if_statement->if_else, ctx);
+        emit_label(out, end_label);
+#if 0
+        if (validflags == FLAG_NONE)
+        {
+            emit_instr(out, "testl", "%eax, %eax");
+            validflags = FLAG_Z_VALID;
+        }
         if (peephole_optimize && empty_syntax(if_statement->if_then)) {
-            emit_instr_format(out, "jnz", "%s", end_label);
+            emit_instr_format(out, (validflags & FLAG_NZ_BOOL) ? "jz" : "jnz", "%s", end_label);
             write_syntax(out, if_statement->if_else, ctx);
         } else if (peephole_optimize && empty_syntax(if_statement->if_else)) {
-            emit_instr_format(out, "jz", "%s", end_label);
+            emit_instr_format(out, (validflags & FLAG_NZ_BOOL) ? "jnz" : "jz", "%s", end_label);
             write_syntax(out, if_statement->if_then, ctx);
         } else {
-            emit_instr_format(out, "jz", "%s", else_label);
+            emit_instr_format(out, (validflags & FLAG_NZ_BOOL) ? "jnz" : "jz", "%s", else_label);
             write_syntax(out, if_statement->if_then, ctx);
             emit_instr_format(out, "jmp", "%s", end_label);
             emit_label(out, else_label);
             write_syntax(out, if_statement->if_else, ctx);
         }
         emit_label(out, end_label);
+#endif
     } else if (syntax->type == WHILE_STATEMENT) {
         WhileStatement *while_statement = syntax->while_statement;
 
@@ -350,11 +380,24 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         char *end_label = fresh_local_label("while_end", ctx);
 
         emit_label(out, start_label);
-        write_syntax(out, while_statement->condition, ctx);
-
-        emit_instr(out, "testl", "%eax, %eax");
-        emit_instr_format(out, "jz", "%s", end_label);
-
+        ProcessorFlags flags =
+            write_condition_syntax(out, while_statement->condition, ctx);
+        if (flags == FLAG_Z_VALID) {
+            /* last evaluated to 0 and Z=1 */
+            emit_instr_format(out, "jz", "%s", end_label);
+        } else if (flags == FLAG_Z_BOOL) {
+            /* bool condition is true if Z = 1 */
+            emit_instr_format(out, "jnz", "%s", end_label);
+        } else if (flags == FLAG_NZ_BOOL) {
+            /* bool condition is true if Z = 0 */
+            emit_instr_format(out, "jz", "%s", end_label);
+        } else if (flags == FLAG_BOOL_VALID) {
+            emit_instr(out, "testl", "%eax, %eax");
+            emit_instr_format(out, "jz", "%s", end_label);
+        } else {
+            emit_instr(out, "testl", "%eax, %eax");
+            emit_instr_format(out, "jz", "%s", end_label);
+        }
         write_syntax(out, while_statement->body, ctx);
         emit_instr_format(out, "jmp", "%s", start_label);
         emit_label(out, end_label);
@@ -368,19 +411,20 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
     } else if (syntax->type == FUNCTION_CALL) {
         if (!strcmp(syntax->function_call->name, "_alloca")) {
             if (list_length(syntax->function_call->arguments) != 1) {
-                printf("_alloca requires exactly 1 parameter (the size to "
-                       "allocate on the stack)\n");
+                log_error("_alloca requires exactly 1 parameter (the size to "
+                          "allocate on the stack)\n");
             }
             Syntax *s = list_get(syntax->function_call->arguments, 0);
 
             if (s->type != FUNCTION_ARGUMENT) {
-                printf("_alloca requires exactly 1 parameter (the size to "
-                       "allocate on the stack)\n");
+                log_error("_alloca requires exactly 1 parameter (the size to "
+                          "allocate on the stack)\n");
             }
             write_syntax(out, s->function_argument->expression, ctx);
             emit_instr(out, "subl", "%eax, %esp");
             emit_instr(out, "movl", "%esp, %eax");
         } else {
+            // Todo : get the right length for each parameter
             int arg_size =
                 WORD_SIZE * list_length(syntax->function_call->arguments);
 

@@ -313,7 +313,9 @@ Syntax *if_new(Syntax *condition, Syntax *if_then, Syntax *if_else);
 
 Syntax *while_new(Syntax *condition, Syntax *body);
 
-Syntax *object_type_size(ObjectType type);
+Syntax *object_type_size_syntax(ObjectType type);
+
+int object_type_size_value(ObjectType type);
 
 ObjectType convert_type(char *s);
 

@@ -14,6 +14,7 @@
 #include <string.h>
 
 #include "assembly.h"
+#include "log_error.h"
 
 extern bool peephole_optimize;
 
@@ -36,8 +37,10 @@ static const int WORD_SIZE = 4;
  * - emit an opcode to set eax
  * ----------------------------------------------------------- */
 
-void write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
-                         Syntax *left, Syntax *right, Context *ctx) {
+ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
+                                   Syntax *left, Syntax *right, Context *ctx) {
+
+    ProcessorFlags flag = FLAG_NONE;
     if (peephole_optimize) {
 
         /* swap operand if left operand is meediate and if swap makes sense */
@@ -65,19 +68,13 @@ void write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                 if (binary_type == MULTIPLICATION) {
                     value = lvalue * rvalue;
                 } else if (binary_type == DIVISION) {
-                    if (rvalue == 0) {
-                        printf("Divide by zero !\n");
-                        exit(1);
-                    } else {
-                        value = lvalue / rvalue;
-                    }
+                    if (rvalue == 0)
+                        log_error("Divide by zero !\n");
+                    value = lvalue / rvalue;
                 } else if (binary_type == MODULUS) {
-                    if (rvalue == 0) {
-                        printf("Divide by zero !\n");
-                        exit(1);
-                    } else {
-                        value = lvalue % rvalue;
-                    }
+                    if (rvalue == 0)
+                        log_error("Modulus is zero !\n");
+                    value = lvalue % rvalue;
                 } else if (binary_type == OR) {
                     value = lvalue | rvalue;
                 } else if (binary_type == AND) {
@@ -130,66 +127,93 @@ void write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                         break;
                     }
                     value = b;
+                    flag = FLAG_BOOL_VALID;
                 }
                 if (value) {
                     emit_instr_format(out, "movl", "$%d, %%eax", value);
                 } else {
                     emit_instr(out, "xorl", "%eax, %eax");
+                    flag = FLAG_Z_VALID;
                 }
             } else {
                 int value = right->immediate->value;
 
+                // TODO get flag from recursive call
+                flag = FLAG_NONE;
                 write_syntax(out, left, ctx);
 
                 if (binary_type == MULTIPLICATION) {
-                    if (value == 0)
+                    if (value == 0) {
                         emit_instr(out, "xorl", "%eax, %eax");
-                    else if (value == -1)
+                        flag = FLAG_Z_VALID;
+                    } else if (value == -1) {
                         emit_instr(out, "negl", "%eax");
-                    else if (value != 1)
+                        flag = FLAG_Z_VALID;
+                    } else if (value != 1) {
                         emit_instr_format(out, "imull", "$%d, %%eax", value);
+                        flag = FLAG_NONE;
+                    }
                 } else if (binary_type == DIVISION) {
-                    if (value == -1)
+                    if (value == -1) {
                         emit_instr(out, "negl", "%eax");
-                    else if (value != 1) {
+                        flag = FLAG_Z_VALID;
+                    } else if (value != 1) {
                         emit_instr_format(out, "movl", "$%d, %%ecx", value);
                         emit_instr(out, "xorl", "%edx, %edx");
                         emit_instr(out, "idivl", "%ecx");
+                        flag = FLAG_NONE;
                     }
                 } else if (binary_type == MODULUS) {
                     emit_instr_format(out, "movl", "$%d, %%ecx", value);
                     emit_instr(out, "xorl", "%edx, %edx");
                     emit_instr(out, "idivl", "%ecx");
                     emit_instr(out, "movl", "%edx, %eax");
+                    flag = FLAG_NONE;
                 } else if (binary_type == OR) {
-                    if (value != 0)
+                    if (value != 0) {
                         emit_instr_format(out, "orl", "$%d, %%eax", value);
+                        flag = FLAG_Z_VALID;
+                    }
                 } else if (binary_type == AND) {
-                    if (value != -1)
+                    if (value != -1) {
                         emit_instr_format(out, "andl", "$%d, %%eax", value);
+                        flag = FLAG_Z_VALID;
+                    }
                 } else if (binary_type == XOR) {
-                    if (value != 0)
+                    if (value != 0) {
                         emit_instr_format(out, "xorl", "$%d, %%eax", value);
+                        flag = FLAG_Z_VALID;
+                    }
                 } else if (binary_type == RSHIFT) {
                     if (value <= 31) {
-                        if (value)
+                        if (value) {
                             emit_instr_format(out, "sarl", "$%d, %%eax", value);
+                            flag = FLAG_Z_VALID;
+                        }
                     } else {
                         emit_instr(out, "xorl", "%eax, %eax");
+                        flag = FLAG_Z_VALID;
                     }
                 } else if (binary_type == LSHIFT) {
                     if (value <= 31) {
-                        if (value)
+                        if (value) {
                             emit_instr_format(out, "sall", "$%d, %%eax", value);
+                            flag = FLAG_Z_VALID;
+                        }
                     } else {
                         emit_instr(out, "xorl", "%eax, %eax");
+                        flag = FLAG_Z_VALID;
                     }
                 } else if (binary_type == ADDITION) {
-                    if (value)
+                    if (value) {
                         emit_instr_format(out, "addl", "$%d, %%eax", value);
+                        flag = FLAG_Z_VALID;
+                    }
                 } else if (binary_type == SUBTRACTION) {
-                    if (value)
+                    if (value) {
                         emit_instr_format(out, "subl", "$%d, %%eax", value);
+                        flag = FLAG_Z_VALID;
+                    }
                 } else if (binary_type == LESS_THAN ||
                            binary_type == LARGER_THAN ||
                            binary_type == LESS_THAN_OR_EQUAL ||
@@ -203,21 +227,27 @@ void write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                     switch (binary_type) {
                     case LESS_THAN:
                         emit_instr(out, "setl", "%al");
+                        flag = FLAG_BOOL_VALID;
                         break;
                     case LARGER_THAN:
                         emit_instr(out, "setg", "%al");
+                        flag = FLAG_BOOL_VALID;
                         break;
                     case LESS_THAN_OR_EQUAL:
                         emit_instr(out, "setle", "%al");
+                        flag = FLAG_BOOL_VALID;
                         break;
                     case LARGER_THAN_OR_EQUAL:
                         emit_instr(out, "setge", "%al");
+                        flag = FLAG_BOOL_VALID;
                         break;
                     case EQUAL:
                         emit_instr(out, "setz", "%al");
+                        flag = FLAG_Z_BOOL;
                         break;
                     case NEQUAL:
                         emit_instr(out, "setnz", "%al");
+                        flag = FLAG_NZ_BOOL;
                         break;
                     default:
                         break;
@@ -227,10 +257,12 @@ void write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                 } else if (binary_type == LOGICAL_OR ||
                            binary_type == LOGICAL_AND) {
                     value = !!value;
+                    // TODO add flags checks here
                     if (!syntax_is_boolean(left)) {
                         emit_instr(out, "testl", "$0xFFFFFFFF, %eax");
                         emit_instr(out, "setz", "%al");
                         emit_instr(out, "movzbl", "%al, %eax");
+                        flag = FLAG_Z_BOOL;
                     }
                     switch (binary_type) {
                     case LOGICAL_OR:
@@ -244,9 +276,10 @@ void write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                     default:
                         break;
                     }
+                    flag = FLAG_NZ_BOOL;
                 }
             }
-            return;
+            return flag;
         }
     }
 
@@ -260,23 +293,29 @@ void write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
 
     if (binary_type == MULTIPLICATION) {
         emit_instr_format(out, "imull", "%d(%%ebp), %%eax", stack_offset);
+        flag = FLAG_NONE;
     } else if (binary_type == DIVISION) {
         emit_instr(out, "movl", "%eax, %ecx");
         emit_instr_format(out, "movl", "%d(%%ebp), %%eax", stack_offset);
         emit_instr(out, "xorl", "%edx, %edx");
         emit_instr(out, "idivl", "%ecx");
+        flag = FLAG_NONE;
     } else if (binary_type == MODULUS) {
         emit_instr(out, "movl", "%eax, %ecx");
         emit_instr_format(out, "movl", "%d(%%ebp), %%eax", stack_offset);
         emit_instr(out, "xorl", "%edx, %edx");
         emit_instr(out, "idivl", "%ecx");
         emit_instr(out, "movl", "%edx, %eax");
+        flag = FLAG_NONE;
     } else if (binary_type == OR) {
         emit_instr_format(out, "orl", "%d(%%ebp), %%eax", stack_offset);
+        flag = FLAG_Z_VALID;
     } else if (binary_type == AND) {
         emit_instr_format(out, "andl", "%d(%%ebp), %%eax", stack_offset);
+        flag = FLAG_Z_VALID;
     } else if (binary_type == XOR) {
         emit_instr_format(out, "xorl", "%d(%%ebp), %%eax", stack_offset);
+        flag = FLAG_Z_VALID;
     } else if (binary_type == RSHIFT) {
         /* right shift, check for shift amount larger than operand size
          * if (shift > 31) dst = 0 else dest = eax >> shift
@@ -287,6 +326,7 @@ void write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
         emit_instr(out, "sarl", "%cl, %eax");
         emit_instr(out, "cmpl", "$31, %ecx");
         emit_instr(out, "cmova", "%edx, %eax");
+        flag = FLAG_NONE;
     } else if (binary_type == LSHIFT) {
         /* left shift, check for shift amount larger than operand size
          * if (shift > 31) dst = 0 else dest = eax << shift
@@ -297,12 +337,15 @@ void write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
         emit_instr(out, "sall", "%cl, %eax");
         emit_instr(out, "cmpl", "$31, %ecx");
         emit_instr(out, "cmova", "%edx, %eax");
+        flag = FLAG_NONE;
     } else if (binary_type == ADDITION) {
         emit_instr_format(out, "addl", "%d(%%ebp), %%eax", stack_offset);
+        flag = FLAG_Z_VALID;
     } else if (binary_type == SUBTRACTION) {
         emit_instr(out, "movl", "%eax, %ecx");
         emit_instr_format(out, "movl", "%d(%%ebp), %%eax", stack_offset);
         emit_instr(out, "subl", "%ecx, %eax");
+        flag = FLAG_Z_VALID;
     } else if (binary_type == LESS_THAN || binary_type == LARGER_THAN ||
                binary_type == LESS_THAN_OR_EQUAL ||
                binary_type == LARGER_THAN_OR_EQUAL || binary_type == EQUAL ||
@@ -314,21 +357,27 @@ void write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
         switch (binary_type) {
         case LESS_THAN:
             emit_instr(out, "setl", "%al");
+            flag = FLAG_BOOL_VALID;
             break;
         case LARGER_THAN:
             emit_instr(out, "setg", "%al");
+            flag = FLAG_BOOL_VALID;
             break;
         case LESS_THAN_OR_EQUAL:
             emit_instr(out, "setle", "%al");
+            flag = FLAG_BOOL_VALID;
             break;
         case LARGER_THAN_OR_EQUAL:
             emit_instr(out, "setge", "%al");
+            flag = FLAG_BOOL_VALID;
             break;
         case EQUAL:
             emit_instr(out, "setz", "%al");
+            flag = FLAG_Z_BOOL;
             break;
         case NEQUAL:
             emit_instr(out, "setnz", "%al");
+            flag = FLAG_NZ_BOOL;
             break;
         default:
             break;
@@ -336,6 +385,8 @@ void write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
         // Zero the rest of %eax.
         emit_instr(out, "movzbl", "%al, %eax");
     } else if (binary_type == LOGICAL_OR || binary_type == LOGICAL_AND) {
+
+        // TODO : check flags left/right
         if (!syntax_is_boolean(right)) {
             emit_instr(out, "testl", "$0xFFFFFFFF, %eax");
             emit_instr(out, "setz", "%al");
@@ -356,6 +407,7 @@ void write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
             default:
                 break;
             }
+            flag = FLAG_NZ_BOOL;
         } else {
             switch (binary_type) {
             case LOGICAL_OR:
@@ -368,7 +420,9 @@ void write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
             default:
                 break;
             }
+            flag = FLAG_NZ_BOOL;
         }
     }
     ctx->offset += WORD_SIZE;
+    return flag;
 }

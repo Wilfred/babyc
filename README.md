@@ -149,6 +149,7 @@ For code formatting, run:
 * No syntax/semantic check, and no parsing recovery (use gcc to validate your test programs before using this compiler). Should use 'error' statement in .y file, and should pass line numbers from lex to yacc to alleviate that serious usability problem.
 * Cannot parse standard C headers from '/usr/include' .... (see restrictions below)
 * Operator precedence not fully tested, might not be fully compliant to C99 yet.
+* Chaos guaranteed when function prototypes do not match functions calls.
 * Hardcoded temp filenames possibly left in current directory ('.extended.c', 'out.s' , 'out.o')
 
 ## Soon
@@ -175,7 +176,7 @@ For code formatting, run:
 * No support for 'unsigned' type (only signed int)
 * No support for 'signed' keyword (implicit signed int)
 * No support for casts (only one type : signed int)
-* No support for char, byte, bool, word, short, dword, long, longlong, qwords, intptr_t, uintxx_t types
+* No support for bit, char, byte, bool, word, short, dword, long, longlong, qwords, intptr_t, uintxx_t types
 * No support for nibble, tetrade, nybble, half-byte, semi-octet, quadbit types
 * No support for float, double, long double types and IEEE 754  (only signed int)
 * No support for arrays
@@ -184,6 +185,7 @@ For code formatting, run:
 * No support for inline keyword
 * No support for loop variants ('for', 'do-while', 'foreach', ....)
 * No support for switch statements ('switch', 'case', 'default', 'duffs device'....)
+* No support for ternary operator ('condition' ? 'if true' : 'if false')
 * No support for strings and string operators ('strcpy', 'strcat', 'strcmp', ...)
 * No support for printf(), gets()
 * No support for memory allocation (malloc, realloc, free) 
@@ -191,6 +193,7 @@ For code formatting, run:
 * No support for vectorization
 * No support for signals and exceptions
 * No support for self-modifiable code
+* No support for function forward definitions
 * No support for asm, __as, __asm__ statements
 * No support for GCC intrinsics
 * No support for assembly file frontend

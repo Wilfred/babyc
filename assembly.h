@@ -23,11 +23,22 @@ typedef struct Context {
     char *function_end_label;
 } Context;
 
-void write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
-                         Syntax *left, Syntax *right, Context *ctx);
+typedef enum {
+    FLAG_NONE = 0x00,
+    FLAG_BOOL_VALID = 0x01,
+    FLAG_Z_VALID = 0x02,
+    FLAG_Z_BOOL = 0x04,
+    FLAG_NZ_BOOL = 0x8,
+} ProcessorFlags;
 
-void write_unary_syntax(FILE *out, UnaryExpressionType unary_type,
-                        Syntax *expression, Context *ctx);
+ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
+                                   Syntax *left, Syntax *right, Context *ctx);
+
+ProcessorFlags write_unary_syntax(FILE *out, UnaryExpressionType unary_type,
+                                  Syntax *expression, Context *ctx);
+
+ProcessorFlags write_condition_syntax(FILE *out, Syntax *expression,
+                                      Context *ctx);
 
 void emit_instr_format(FILE *out, char *instr, char *operands_format, ...);
 

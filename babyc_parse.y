@@ -77,7 +77,7 @@ Label *search_existing_label(char *name)
  
 static ObjectType current_object_type = O_INT32;
 static ObjectType current_function_type = O_INT32;
- 
+static ObjectType saved_object_type = O_INT32; 
 %}
 
 %define parse.trace
@@ -94,7 +94,8 @@ static ObjectType current_function_type = O_INT32;
  * See http://en.cppreference.com/w/c/language/operator_precedence
  */
 %left '='
-%left T_LOGICAL_OR T_LOGICAL_AND
+%left T_LOGICAL_OR
+%left T_LOGICAL_AND
 %left '&' '|' '^'
 %left T_EQUAL T_NEQUAL
 %left '<' '>' T_LARGER_OR_EQUAL T_LESS_OR_EQUAL
@@ -128,21 +129,25 @@ object_type:
 basic_object_type:
         T_TYPE
         {
+            saved_object_type = current_object_type;
             current_object_type = convert_type($1.symbol);
         }
         |
         T_VOID
         {
+            saved_object_type = current_object_type;
             current_object_type = O_VOID;
         }
         |
         T_SIGNED T_TYPE
         {
+            saved_object_type = current_object_type;
             current_object_type = convert_type($2.symbol) & ~O_UNSIGNED;   
         }
         |
         T_UNSIGNED T_TYPE
         {
+            saved_object_type = current_object_type;
             current_object_type = convert_type($2.symbol) | O_UNSIGNED;   
         }
         ;
@@ -295,15 +300,14 @@ statement:
         |
         T_IF '(' expression ')' block_or_statement
         {
-            // TODO: else statements.
+            Syntax *if_else = nop_new();
             Syntax *if_then = list_pop(pscope->parser_stack);
             Syntax *condition = list_pop(pscope->parser_stack);
-            list_push(pscope->parser_stack, if_new(condition, if_then, nop_new()));
+            list_push(pscope->parser_stack, if_new(condition, if_then, if_else));
         }
         |
         T_IF '(' expression ')' block_or_statement T_ELSE block_or_statement
         {
-            // TODO: else statements.
             Syntax *if_else = list_pop(pscope->parser_stack);
             Syntax *if_then = list_pop(pscope->parser_stack);
             Syntax *condition = list_pop(pscope->parser_stack);
@@ -561,7 +565,8 @@ expression:
         |
         T_SIZEOF '(' object_type ')'
         {
-            list_push(pscope->parser_stack, object_type_size(current_object_type));
+            list_push(pscope->parser_stack, object_type_size_syntax(current_object_type));
+            current_object_type = saved_object_type;
         }
         |
         T_SIZEOF '(' T_IDENTIFIER ')'
@@ -570,7 +575,7 @@ expression:
             if (!v) {
                 log_error("Should only get sizeof(%s) from valid variables", $3.symbol);
             }
-            list_push(pscope->parser_stack, object_type_size(v->type));
+            list_push(pscope->parser_stack, object_type_size_syntax(v->type));
         }
         |
         T_IDENTIFIER '(' { pscope = scope_new(pscope); } argument_list ')'

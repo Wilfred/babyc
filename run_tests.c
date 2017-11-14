@@ -73,6 +73,7 @@ static int parse_data(char *line, unsigned char *data, int *data_len) {
         sscanf(hex, "%02hhx", &data[(*data_len)++]);
         hex += 2;
     }
+    data[*data_len] = 0;
     return 0;
 }
 
@@ -171,7 +172,7 @@ static int run_test_stdlib(volatile int *return_value) {
         if (write_count != input_len) {
             print_err("write incomplete");
             if (debug) {
-                printf("[%s] Provided %d bytes, but wrote %d bytes!\n",
+                printf("[%s] Provided %d bytes, but wrote %d only bytes!\n",
                        short_test_name, input_len, write_count);
                 exit(1);
             }

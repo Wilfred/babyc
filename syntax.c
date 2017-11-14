@@ -51,7 +51,7 @@ ObjectType convert_type(char *s) {
     return type;
 }
 
-Syntax *object_type_size(ObjectType type) {
+Syntax *object_type_size_syntax(ObjectType type) {
     if (type & O_ADDRESS)
         return immediate_new("4");
     else if (type & O_INT8)
@@ -65,6 +65,22 @@ Syntax *object_type_size(ObjectType type) {
     else if (type & O_INT128)
         return immediate_new("16");
     return immediate_new("4");
+}
+
+int object_type_size_value(ObjectType type) {
+    if (type & O_ADDRESS)
+        return 4;
+    else if (type & O_INT8)
+        return 1;
+    else if (type & O_INT16)
+        return 2;
+    else if (type & O_INT32)
+        return 4;
+    else if (type & O_INT64)
+        return 8;
+    else if (type & O_INT128)
+        return 16;
+    return 4;
 }
 
 Scope *scope_new(Scope *current) {
@@ -747,6 +763,10 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         printf("%s THEN\n", str);
         print_syntax_indented(syntax->if_statement->if_then, indent + 4);
 
+        for (int i = 0; i < indent; i++) {
+            printf(" ");
+        }
+
         printf("%s ELSE\n", str);
         print_syntax_indented(syntax->if_statement->if_else, indent + 4);
 
@@ -774,6 +794,9 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         for (int i = 0; i < list_length(statements); i++) {
             print_syntax_indented(list_get(statements, i), indent + 4);
         }
+
+    } else if (syntax->type == NOP_STATEMENT) {
+        printf("%s\n", str);
 
     } else if (syntax->type == ASSIGNMENT_STATEMENT) {
         printf("%s '%s'\n", str, syntax->assignment->variable->name);

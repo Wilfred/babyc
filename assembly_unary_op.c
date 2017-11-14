@@ -32,8 +32,9 @@ static const int MAX_MNEMONIC_LENGTH = 7;
  * - emit an opcode to set eax
  * ----------------------------------------------------------- */
 
-void write_unary_syntax(FILE *out, UnaryExpressionType unary_type,
-                        Syntax *expression, Context *ctx) {
+ProcessorFlags write_unary_syntax(FILE *out, UnaryExpressionType unary_type,
+                                  Syntax *expression, Context *ctx) {
+    ProcessorFlags flag = FLAG_NONE;
     if (peephole_optimize) {
         if (expression->type == IMMEDIATE) {
             int value = expression->immediate->value;
@@ -50,8 +51,9 @@ void write_unary_syntax(FILE *out, UnaryExpressionType unary_type,
                 emit_instr_format(out, "movl", "$%d, %%eax", value);
             } else {
                 emit_instr(out, "xorl", "%eax, %eax");
+                flag = FLAG_Z_VALID;
             }
-            return;
+            return flag;
         }
     }
 
@@ -59,15 +61,20 @@ void write_unary_syntax(FILE *out, UnaryExpressionType unary_type,
 
     if (unary_type == BITWISE_NEGATION) {
         emit_instr(out, "notl", "%eax");
+        flag = FLAG_Z_VALID;
     } else if (unary_type == ARITHMETIC_NEGATION) {
         emit_instr(out, "negl", "%eax");
+        flag = FLAG_Z_VALID;
     } else if (unary_type == LOGICAL_NEGATION) {
         if (!syntax_is_boolean(expression)) {
             emit_instr(out, "testl", "$0xFFFFFFFF, %eax");
             emit_instr(out, "setz", "%al");
             emit_instr(out, "movzbl", "%al, %eax");
+            flag = FLAG_Z_BOOL;
         } else {
             emit_instr(out, "xorl", "$1, %eax");
+            flag = FLAG_Z_VALID;
         }
     }
+    return flag;
 }
