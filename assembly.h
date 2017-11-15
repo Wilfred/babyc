@@ -24,11 +24,11 @@ typedef struct Context {
 } Context;
 
 typedef enum {
-    FLAG_NONE = 0x00,
-    FLAG_BOOL_VALID = 0x01,
-    FLAG_Z_VALID = 0x02,
-    FLAG_Z_BOOL = 0x04,
-    FLAG_NZ_BOOL = 0x8,
+    FLAG_NONE = 0x00,       /* processor FLAGs unrelated to eax       */
+    FLAG_BOOL_VALID = 0x01, /* eax == 0 || eax == 1 already a boolean */
+    FLAG_Z_VALID = 0x02,    /* Z == (eax == 0)                        */
+    FLAG_Z_BOOL = 0x04,     /* eax == Z                               */
+    FLAG_NZ_BOOL = 0x08,    /* eax == !Z                              */
 } ProcessorFlags;
 
 ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,

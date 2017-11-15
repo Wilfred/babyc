@@ -324,7 +324,8 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         char *end_label = fresh_local_label("if_end", ctx);
         char *else_label = fresh_local_label("if_else", ctx);
         bool else_empty = empty_syntax(if_statement->if_else);
-        ProcessorFlags flags = write_condition_syntax(out, if_statement->condition, ctx);
+        ProcessorFlags flags =
+            write_condition_syntax(out, if_statement->condition, ctx);
         if (flags == FLAG_Z_VALID) {
             /* last evaluated to 0 and Z=1 */
             emit_instr_format(out, "jz", "%s", else_label);

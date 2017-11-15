@@ -204,7 +204,8 @@ For code formatting, run:
 * No support for 64-bits architecture and processors other than i386
 * No support for alien OSes (other than linux-like)
 * No support for assembly annotation with source code references for debugger purposes
-* optimizer: no AST coalescing
+* optimizer: no AST logical simplifications and coalescing
+* optimizer: no DAG step, no labelling
 * optimizer: no optimizations specific to leaf functions
 * optimizer: no register allocation/spill
 * optimizer: no constant propagation

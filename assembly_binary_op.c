@@ -129,12 +129,15 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                     value = b;
                     flag = FLAG_BOOL_VALID;
                 }
-                if (value) {
-                    emit_instr_format(out, "movl", "$%d, %%eax", value);
-                    flag = FLAG_NONE;
-                } else {
+                if (value == 0) {
                     emit_instr(out, "xorl", "%eax, %eax");
                     flag = FLAG_Z_VALID;
+                } else if (value == 1) {
+                    emit_instr(out, "movl", "$1, %eax");
+                    flag = FLAG_BOOL_VALID;
+                } else {
+                    emit_instr_format(out, "movl", "$%d, %%eax", value);
+                    flag = FLAG_NONE;
                 }
             } else {
                 int value = right->immediate->value;
@@ -256,15 +259,12 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                 } else if (binary_type == LOGICAL_OR ||
                            binary_type == LOGICAL_AND) {
                     value = !!value;
-                    if (flag == FLAG_Z_VALID)
-                    {
+                    if (flag == FLAG_Z_VALID) {
                         emit_instr(out, "setnz", "%al");
                         emit_instr(out, "movzbl", "%al, %eax");
-                    }
-                    else if (flag == FLAG_Z_BOOL || flag == FLAG_NZ_BOOL || flag == FLAG_BOOL_VALID)
-                    {
-                    }
-                    else  if (!syntax_is_boolean(left)) {
+                    } else if (flag == FLAG_Z_BOOL || flag == FLAG_NZ_BOOL ||
+                               flag == FLAG_BOOL_VALID) {
+                    } else if (!syntax_is_boolean(left)) {
                         emit_instr(out, "testl", "%eax, %eax");
                         emit_instr(out, "setnz", "%al");
                         emit_instr(out, "movzbl", "%al, %eax");
@@ -292,18 +292,9 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
     ctx->offset -= WORD_SIZE;
 
     int stack_offset = ctx->offset;
-    int left_flag = FLAG_NONE, right_flag = FLAG_NONE;
-    if (peephole_optimize) {
-        left_flag = write_condition_syntax(out, left, ctx);
-        emit_instr_format(out, "movl", "%%eax, %d(%%ebp)", stack_offset);
-        right_flag = write_condition_syntax(out, right, ctx);
-    }
-    else
-    {
-        write_syntax(out, left, ctx);
-        emit_instr_format(out, "movl", "%%eax, %d(%%ebp)", stack_offset);
-        write_syntax(out, right, ctx);
-    }
+    int left_flag = write_condition_syntax(out, left, ctx);
+    emit_instr_format(out, "movl", "%%eax, %d(%%ebp)", stack_offset);
+    int right_flag = write_condition_syntax(out, right, ctx);
 
     if (binary_type == MULTIPLICATION) {
         emit_instr_format(out, "imull", "%d(%%ebp), %%eax", stack_offset);
@@ -399,44 +390,37 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
         // Zero the rest of %eax.
         emit_instr(out, "movzbl", "%al, %eax");
     } else if (binary_type == LOGICAL_OR || binary_type == LOGICAL_AND) {
-        if (right_flag == FLAG_Z_VALID)
-        {
+        if (right_flag == FLAG_Z_VALID) {
             emit_instr(out, "setnz", "%al");
             emit_instr(out, "movzbl", "%al, %eax");
-        }
-        else if (right_flag == FLAG_Z_BOOL || right_flag == FLAG_NZ_BOOL || right_flag == FLAG_BOOL_VALID)
-        {
-        }
-        else if (!syntax_is_boolean(right))
-        {
+        } else if (right_flag == FLAG_Z_BOOL || right_flag == FLAG_NZ_BOOL ||
+                   right_flag == FLAG_BOOL_VALID) {
+        } else if (!syntax_is_boolean(right)) {
             emit_instr(out, "testl", "%eax, %eax");
             emit_instr(out, "setnz", "%al");
             emit_instr(out, "movzbl", "%al, %eax");
         }
-        
-        if (left_flag == FLAG_Z_BOOL || left_flag == FLAG_NZ_BOOL || left_flag == FLAG_BOOL_VALID)
-        {
+
+        if (left_flag == FLAG_Z_BOOL || left_flag == FLAG_NZ_BOOL ||
+            left_flag == FLAG_BOOL_VALID) {
             emit_instr_format(out, "movl", "%d(%%ebp), %%ecx", stack_offset);
-        }
-        else if (!syntax_is_boolean(left))
-        {
-            emit_instr_format(out, "testl", "$0xFFFFFFFF, %d(%%ebp)", stack_offset);
+        } else if (!syntax_is_boolean(left)) {
+            emit_instr_format(out, "testl", "$0xFFFFFFFF, %d(%%ebp)",
+                              stack_offset);
             emit_instr(out, "setnz", "%cl");
             emit_instr(out, "movzbl", "%cl, %ecx");
-        }
-        else
-        {
+        } else {
             emit_instr_format(out, "movl", "%d(%%ebp), %%ecx", stack_offset);
         }
         switch (binary_type) {
-            case LOGICAL_OR:
-                emit_instr(out, "orl", "%ecx, %eax");
-                break;
-            case LOGICAL_AND:
-                emit_instr(out, "andl", "%ecx, %eax");
-                break;
-            default:
-                break;
+        case LOGICAL_OR:
+            emit_instr(out, "orl", "%ecx, %eax");
+            break;
+        case LOGICAL_AND:
+            emit_instr(out, "andl", "%ecx, %eax");
+            break;
+        default:
+            break;
         }
         flag = FLAG_NZ_BOOL;
     }
