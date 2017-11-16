@@ -298,7 +298,7 @@ statement:
             list_push(pscope->parser_stack, return_statement_new(current_syntax));
         }
         |
-        T_IF '(' expression ')' block_or_statement
+        T_IF '(' expression ')' statement
         {
             Syntax *if_else = nop_new();
             Syntax *if_then = list_pop(pscope->parser_stack);
@@ -306,7 +306,7 @@ statement:
             list_push(pscope->parser_stack, if_new(condition, if_then, if_else));
         }
         |
-        T_IF '(' expression ')' block_or_statement T_ELSE block_or_statement
+        T_IF '(' expression ')' statement T_ELSE statement
         {
             Syntax *if_else = list_pop(pscope->parser_stack);
             Syntax *if_then = list_pop(pscope->parser_stack);
@@ -314,7 +314,7 @@ statement:
             list_push(pscope->parser_stack, if_new(condition, if_then, if_else));
         }
         |
-        T_WHILE '(' expression ')' block_or_statement
+        T_WHILE '(' expression ')' statement
         {
             Syntax *body = list_pop(pscope->parser_stack);
             Syntax *condition = list_pop(pscope->parser_stack);
@@ -326,20 +326,10 @@ statement:
         T_STATIC object_type global_identifier_list ';'
         |
         expression ';'
-        ;
-
-block_or_statement : 
-        statement
-        {
-            List *l = list_new();
-            list_push(l, list_pop(pscope->parser_stack));
-            Syntax *syntax = block_new(l);
-            list_push(pscope->parser_stack, syntax);
-        }
-        |
+        | 
         block
         ;
-        
+
 address:
         T_IDENTIFIER
         {
