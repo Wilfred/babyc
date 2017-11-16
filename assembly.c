@@ -1,7 +1,7 @@
 
 /* ----------------------------------------------------------------
  *
- * Brave Algorithms Build Your Code
+ * BabyC Toy compiler for educational purposes
  *
  * ---------------------------------------------------------------- */
 

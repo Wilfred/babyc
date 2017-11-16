@@ -1,4 +1,4 @@
-
+/* BabyC a toy compiler */
 
 int main() {
     static int w = (15 * 15 - 200); /* 25 */

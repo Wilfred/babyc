@@ -1,4 +1,4 @@
-
+/* BabyC a toy compiler */
 
 /* read bytes from stdin and convert to number (atoi from C library) */
 

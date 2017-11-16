@@ -1,4 +1,4 @@
-
+/* BabyC a toy compiler */
 
 int foo() {
     return 3;

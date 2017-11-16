@@ -1,3 +1,4 @@
+/* BabyC a toy compiler */
 
 /* Do not remove this comment !!! INPUT and EXPECTED are needed to run the tests
 

@@ -1,4 +1,4 @@
-
+/* BabyC a toy compiler */
 
 int main() {
     int *ptr = _alloca(sizeof(int));

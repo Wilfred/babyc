@@ -1,3 +1,4 @@
+/* BabyC a toy compiler */
 int foo(int x, int y) {
     if (!(x + 1 != y - 1)) {
         goto err;

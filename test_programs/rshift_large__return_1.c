@@ -1,3 +1,4 @@
+/* BabyC a toy compiler */
 
 int fn(int x) {
     return x * 10;

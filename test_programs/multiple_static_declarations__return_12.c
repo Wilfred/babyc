@@ -1,3 +1,4 @@
+/* BabyC a toy compiler */
 int i, k = 21, j;
 
 int foo() {

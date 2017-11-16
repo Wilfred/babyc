@@ -1,4 +1,4 @@
-
+/* BabyC a toy compiler */
 
 static int xxx = 2;
 

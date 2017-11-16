@@ -1,3 +1,4 @@
+/* BabyC a toy compiler */
 
 int X(int a, int b, int c) {
     int t = (a != 1);

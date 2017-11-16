@@ -1,3 +1,4 @@
+/* BabyC a toy compiler */
 int foo() {
     int x = 1;
     x = x + 1;
