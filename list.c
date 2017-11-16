@@ -35,7 +35,9 @@ void list_free(List *list) {
         free(list);
 }
 
-int list_length(List *list) { return list->size; }
+int list_length(List *list) {
+    return list->size;
+}
 
 /* Insert item as the last element in list. */
 void list_append(List *list, void *item) {
@@ -43,7 +45,9 @@ void list_append(List *list, void *item) {
     list->items[list->size - 1] = item;
 }
 
-void list_push(List *list, void *item) { list_append(list, item); }
+void list_push(List *list, void *item) {
+    list_append(list, item);
+}
 
 /* Insert item as the first element in list. */
 void list_prepend(List *list, void *item) {
@@ -68,9 +72,13 @@ void *list_last(List *list) {
     return item;
 }
 
-void *list_pop(List *list) { return list_last(list); }
+void *list_pop(List *list) {
+    return list_last(list);
+}
 
-void *list_peek(List *list) { return list_get(list, list->size - 1); }
+void *list_peek(List *list) {
+    return list_get(list, list->size - 1);
+}
 
 void *list_get(List *list, int index) {
     assert(index < list->size);

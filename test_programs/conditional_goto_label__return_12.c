@@ -18,4 +18,6 @@ err:
     return 0x8;
 }
 
-int main() { return foo(2, 4) + bar(6, 8); }
+int main() {
+    return foo(2, 4) + bar(6, 8);
+}

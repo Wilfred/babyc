@@ -16,4 +16,6 @@ int one() {
     return x;
 }
 
-int main() { return (foo() + bar()) * one(); }
+int main() {
+    return (foo() + bar()) * one();
+}

@@ -9,7 +9,9 @@ input and output from different length
 
 */
 
-int swap2(int t) { return ((t << 8) & 0xffff) | ((t >> 8) & 0xff); }
+int swap2(int t) {
+    return ((t << 8) & 0xffff) | ((t >> 8) & 0xff);
+}
 
 int swap4(int t) {
     return (swap2(t & 0xffff) << 16) | swap2((t >> 16) & 0xffff);

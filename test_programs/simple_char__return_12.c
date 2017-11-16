@@ -1,3 +1,5 @@
 
 
-int main() { return '\n'; }
+int main() {
+    return '\n';
+}

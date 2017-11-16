@@ -37,7 +37,9 @@ Context *context_new(void) {
     return ret;
 }
 
-void context_free(Context *ctx) { free(ctx); }
+void context_free(Context *ctx) {
+    free(ctx);
+}
 
 void context_restart(Context *ctx, int offset, char *end_label) {
     ctx->offset = offset;
@@ -45,7 +47,9 @@ void context_restart(Context *ctx, int offset, char *end_label) {
     ctx->function_end_label = end_label;
 }
 
-char *get_var_name(Variable *v) { return v->assembler_name; }
+char *get_var_name(Variable *v) {
+    return v->assembler_name;
+}
 
 char *fresh_numbered_label(char *prefix, int suffix) {
     // We assume we never write more than 6 chars of digits, plus a '.' and '_'
@@ -57,7 +61,9 @@ char *fresh_numbered_label(char *prefix, int suffix) {
     return buffer;
 }
 
-void emit_header(FILE *out, char *name) { fprintf(out, "%s\n", name); }
+void emit_header(FILE *out, char *name) {
+    fprintf(out, "%s\n", name);
+}
 
 void emit_line(FILE *out) {
     fprintf(
@@ -132,7 +138,9 @@ char *fresh_local_label(char *prefix, Context *ctx) {
     return buffer;
 }
 
-void emit_label(FILE *out, char *label) { fprintf(out, "%s:\n", label); }
+void emit_label(FILE *out, char *label) {
+    fprintf(out, "%s:\n", label);
+}
 
 void emit_function_declaration(FILE *out, char *name) {
     emit_line(out);

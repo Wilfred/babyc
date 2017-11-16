@@ -23,7 +23,9 @@ static volatile int *shared_result;
 
 static bool debug = false;
 
-static void print_err(char *msg) { printf("[%s] %s!\n", short_test_name, msg); }
+static void print_err(char *msg) {
+    printf("[%s] %s!\n", short_test_name, msg);
+}
 
 /* --------------------------------------------------------------
  * Run test programs (check "baby C" features)

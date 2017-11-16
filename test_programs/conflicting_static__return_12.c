@@ -16,4 +16,6 @@ int bar() {
     return xxx * (yyy + yyy);
 }
 
-int main() { return (xxx + foo()) * bar(); }
+int main() {
+    return (xxx + foo()) * bar();
+}

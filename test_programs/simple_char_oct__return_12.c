@@ -1,2 +1,4 @@
 
-int main() { return '\014'; }
+int main() {
+    return '\014';
+}

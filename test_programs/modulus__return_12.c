@@ -1,1 +1,3 @@
-int main() { return 35 % 23; }
+int main() {
+    return 35 % 23;
+}

@@ -19,4 +19,6 @@ err:
     return 0x8;
 }
 
-int main() { return foo(0) + bar(0); }
+int main() {
+    return foo(0) + bar(0);
+}

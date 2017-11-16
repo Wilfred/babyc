@@ -13,4 +13,6 @@ int fibb(int n) {
     return fnext;
 }
 
-int main() { return fibb(8); }
+int main() {
+    return fibb(8);
+}

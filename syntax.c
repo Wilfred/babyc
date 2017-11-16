@@ -105,7 +105,9 @@ Scope *scope_del(Scope *current) {
     return ret;
 }
 
-void scope_free(Scope *ctx) { free(ctx); }
+void scope_free(Scope *ctx) {
+    free(ctx);
+}
 
 Variable *scope_get_var(Scope *ctx, char *name) {
     int i;
@@ -816,7 +818,9 @@ void print_syntax_indented(Syntax *syntax, int indent) {
     }
 }
 
-void print_syntax_item(Syntax *syntax) { print_syntax_indented(syntax, 0); }
+void print_syntax_item(Syntax *syntax) {
+    print_syntax_indented(syntax, 0);
+}
 
 void print_syntax_list(List *list) {
     for (int i = 0; i < list_length(list); i++) {

@@ -1,3 +1,5 @@
 
 
-int main() { return sizeof(uint64_t); }
+int main() {
+    return sizeof(uint64_t);
+}

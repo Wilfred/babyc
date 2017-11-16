@@ -1,1 +1,3 @@
-int main() { return '\xc'; }
+int main() {
+    return '\xc';
+}

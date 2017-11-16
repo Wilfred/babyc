@@ -1,1 +1,3 @@
-int main() { return -(0 - 12); }
+int main() {
+    return -(0 - 12);
+}
