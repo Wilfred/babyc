@@ -96,6 +96,16 @@ IDENT [a-zA-Z_][0-9a-zA-Z_]*
 [ \t\r]+        { /* Ignore whitespace */ }
 \n            { ++line_number; }
 
+"+="          { LVAL(0); return T_PLUS_EQ; }
+"-="          { LVAL(0); return T_MINUS_EQ; }
+"*="          { LVAL(0); return T_MUL_EQ; }
+"/="          { LVAL(0); return T_DIV_EQ; }
+"%="          { LVAL(0); return T_MOD_EQ; }
+"|="          { LVAL(0); return T_OR_EQ; }
+"&="          { LVAL(0); return T_AND_EQ; }
+"^="          { LVAL(0); return T_XOR_EQ; }
+">>="         { LVAL(0); return T_RSHIFT_EQ; }
+"<<="         { LVAL(0); return T_LSHIFT_EQ; }
 
 "++"          { LVAL(0); return T_INCREMENT; }
 "--"          { LVAL(0); return T_DECREMENT; }

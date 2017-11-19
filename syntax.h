@@ -72,10 +72,12 @@ typedef enum {
 } Storage;
 
 typedef enum {
+    O_UNDEF = 0,
     O_UNSIGNED = 0x001,
     O_ADDRESS = 0x200,
     O_VOID = 0x0100,
     O_UINT1 = 0x0003,
+    O_BOOL = 0x0003,
     O_INT8 = 0x0004,
     O_INT16 = 0x0008,
     O_INT32 = 0x0010,
@@ -93,7 +95,7 @@ typedef struct Variable {
     Storage storage; /* where the variable is stored */
     int offset;      /* offset in storage */
     char *assembler_name;
-    ObjectType type;
+    ObjectType objectType;
 } Variable;
 
 typedef struct Scope {
@@ -122,12 +124,14 @@ typedef struct Label {
 typedef struct UnaryExpression {
     UnaryExpressionType unary_type;
     Syntax *expression;
+    ObjectType objectType;
 } UnaryExpression;
 
 typedef struct BinaryExpression {
     BinaryExpressionType binary_type;
     Syntax *left;
     Syntax *right;
+    ObjectType objectType;
 } BinaryExpression;
 
 typedef struct AddressExpression {
@@ -138,12 +142,14 @@ typedef struct AddressExpression {
 typedef struct ReadAddressExpression {
     Syntax *address;
     Syntax *offset;
+    ObjectType objectType;
 } ReadAddressExpression;
 
 typedef struct WriteAddressExpression {
     Syntax *address;
     Syntax *offset;
     Syntax *expression;
+    ObjectType objectType;
 } WriteAddressExpression;
 
 typedef struct FunctionArgument { Syntax *expression; } FunctionArgument;
@@ -176,7 +182,9 @@ typedef struct IfStatement {
     Syntax *if_else;
 } IfStatement;
 
-typedef struct DefineVarStatement { char *var_name; } DefineVarStatement;
+typedef struct DefineVarStatement { 
+    char *var_name; 
+} DefineVarStatement;
 
 typedef struct WhileStatement {
     Syntax *condition;
@@ -323,7 +331,9 @@ bool syntax_is_boolean(Syntax *syntax);
 
 void syntax_free(Syntax *syntax);
 
-char *syntax_type_name(Syntax *syntax);
+const char *syntax_type_name(Syntax *syntax);
+const char *syntax_type_type(ObjectType type);
+ObjectType ast_annotate_syntax(Syntax *syntax, ObjectType dest);
 
 void print_syntax_item(Syntax *syntax);
 void print_syntax_list(List *list);

@@ -35,9 +35,11 @@ but we will implement such a small subset of C that it's academic.
 * arithmetic negation (`-FOO` (unary subtraction))
 * arithmetic subtraction (`foo - bar` (binary subtraction))
 * arithmetic operators (`foo + bar`, `foo * bar`, `foo / bar`, `foo % bar`)
+* arithmetic operators (`foo += bar`, `foo *= bar`, `foo /= bar`, `foo %= bar`)
 * bitwise operators ('foo & bar', 'foo | bar', 'foo ^ bar')
-* arithmetic right shift (`foo >> bar`)
-* arithmetic left shift (`foo << bar`)
+* bitwise operators ('foo &= bar', 'foo |= bar', 'foo ^= bar')
+* arithmetic right and left shift (`foo >> bar`, 'foo << bar')
+* arithmetic left shift (`foo <<= bar`, 'foo >>= bar')
 * signed comparison (`foo < bar`, `foo <= bar`... '==', '!=', '>', '>=')
 * boolean comparison '&&', '||'
 * comments (`// foo \n` and `/* foo */`)
@@ -172,7 +174,6 @@ For code formatting, run:
 * No support for pointers (data pointers, function pointers ....)
 * No support for '*' operator (address dereference)
 * No support for '++', '--' pre/post-fix operators
-* No support for '+=', '-=', '*=' unary operators
 * No support for 'void' keyword
 * No support for 'unsigned' type (only signed int)
 * No support for 'signed' keyword (implicit signed int)
@@ -189,7 +190,7 @@ For code formatting, run:
 * No support for ternary operator ('condition' ? 'if true' : 'if false')
 * No support for strings and string operators ('strcpy', 'strcat', 'strcmp', ...)
 * No support for printf(), gets()
-* No support for memory allocation (malloc, realloc, free) 
+* No support for memory allocation (malloc, realloc, calloc, free) 
 * No support for threads and parallelization 
 * No support for vectorization
 * No support for signals and exceptions

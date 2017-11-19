@@ -89,11 +89,12 @@ static ObjectType saved_object_type = O_INT32;
 %token T_LSHIFT T_RSHIFT T_LOGICAL_OR T_LOGICAL_AND
 %token T_LESS_OR_EQUAL T_EQUAL T_NEQUAL T_LARGER_OR_EQUAL
 %token T_INCREMENT T_DECREMENT T_SIZEOF
+%token T_PLUS_EQ T_MINUS_EQ T_MUL_EQ T_DIV_EQ T_MOD_EQ T_OR_EQ T_AND_EQ T_XOR_EQ T_RSHIFT_EQ T_LSHIFT_EQ
 
 /* Operator associativity, least precedence first.
  * See http://en.cppreference.com/w/c/language/operator_precedence
  */
-%left '='
+%left '=' T_PLUS_EQ T_MINUS_EQ T_MUL_EQ T_DIV_EQ T_MOD_EQ T_OR_EQ T_AND_EQ T_RSHIFT_EQ T_LSHIFT_EQ
 %left T_LOGICAL_OR
 %left T_LOGICAL_AND
 %left '&' '|' '^'
@@ -388,6 +389,76 @@ expression:
             list_push(pscope->parser_stack, assignment_new(v, expression));
         }
         |
+        T_IDENTIFIER T_PLUS_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Variable *v = scope_get_var(pscope, $1.symbol);
+            list_push(pscope->parser_stack, assignment_new(v, addition_new(variable_new(v), expression)));
+        }
+        |
+        T_IDENTIFIER T_MINUS_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Variable *v = scope_get_var(pscope, $1.symbol);
+            list_push(pscope->parser_stack, assignment_new(v, subtraction_new(variable_new(v), expression)));
+        }
+        |
+        T_IDENTIFIER T_MUL_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Variable *v = scope_get_var(pscope, $1.symbol);
+            list_push(pscope->parser_stack, assignment_new(v, multiplication_new(variable_new(v), expression)));
+        }
+        |
+        T_IDENTIFIER T_DIV_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Variable *v = scope_get_var(pscope, $1.symbol);
+            list_push(pscope->parser_stack, assignment_new(v, division_new(variable_new(v), expression)));
+        }
+        |
+        T_IDENTIFIER T_MOD_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Variable *v = scope_get_var(pscope, $1.symbol);
+            list_push(pscope->parser_stack, assignment_new(v, modulus_new(variable_new(v), expression)));
+        }
+        |
+        T_IDENTIFIER T_AND_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Variable *v = scope_get_var(pscope, $1.symbol);
+            list_push(pscope->parser_stack, assignment_new(v, bitwise_and_new(variable_new(v), expression)));
+        }
+        |
+        T_IDENTIFIER T_OR_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Variable *v = scope_get_var(pscope, $1.symbol);
+            list_push(pscope->parser_stack, assignment_new(v, bitwise_or_new(variable_new(v), expression)));
+        }
+        |
+        T_IDENTIFIER T_XOR_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Variable *v = scope_get_var(pscope, $1.symbol);
+            list_push(pscope->parser_stack, assignment_new(v, bitwise_xor_new(variable_new(v), expression)));
+        }
+        |
+        T_IDENTIFIER T_LSHIFT_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Variable *v = scope_get_var(pscope, $1.symbol);
+            list_push(pscope->parser_stack, assignment_new(v, lshift_new(variable_new(v), expression)));
+        }
+        |
+        T_IDENTIFIER T_RSHIFT_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Variable *v = scope_get_var(pscope, $1.symbol);
+            list_push(pscope->parser_stack, assignment_new(v, rshift_new(variable_new(v), expression)));
+        }
+        |
 	    address '[' expression ']' '=' expression
         {
             Syntax *expression = list_pop(pscope->parser_stack);
@@ -565,7 +636,7 @@ expression:
             if (!v) {
                 log_error("Should only get sizeof(%s) from valid variables", $3.symbol);
             }
-            list_push(pscope->parser_stack, object_type_size_syntax(v->type));
+            list_push(pscope->parser_stack, object_type_size_syntax(v->objectType));
         }
         |
         T_IDENTIFIER '(' { pscope = scope_new(pscope); } argument_list ')'

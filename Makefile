@@ -11,7 +11,8 @@ OBJ = $(BUILD_DIR)/lex.bb.o $(BUILD_DIR)/bb.tab.o \
       $(BUILD_DIR)/syntax.o $(BUILD_DIR)/list.o \
       $(BUILD_DIR)/assembly.o $(BUILD_DIR)/assembly_binary_op.o \
       $(BUILD_DIR)/assembly_unary_op.o $(BUILD_DIR)/assembly_condition_op.o \
-      $(BUILD_DIR)/main.o $(BUILD_DIR)/log_error.o
+      $(BUILD_DIR)/ast_annotate.o $(BUILD_DIR)/log_error.o \
+      $(BUILD_DIR)/main.o
 
 all: $(BUILD_DIR)/babyc
 
@@ -40,6 +41,9 @@ $(BUILD_DIR)/assembly_unary_op.o: assembly_unary_op.c assembly.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/assembly_condition_op.o: assembly_condition_op.c assembly.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/ast_annotate.o: ast_annotate.c syntax.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/syntax.o: syntax.c list.h

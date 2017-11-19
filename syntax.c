@@ -136,7 +136,7 @@ Variable *scope_add_var(Scope *ctx, char *name, ObjectType type,
     list_push(ctx->var_stack, v);
     v->name = name;
     v->storage = storage;
-    v->type = type;
+    v->objectType = type;
     return v;
 }
 
@@ -598,7 +598,40 @@ void syntax_free(Syntax *syntax) {
     free(syntax);
 }
 
-char *syntax_type_name(Syntax *syntax) {
+const char *object_type_name(ObjectType type)
+{
+    if (type & O_ADDRESS) 
+    {
+        if (type == O_UINT128) return "uint128_t *";
+        if (type == O_UINT64) return "uint64_t *";
+        if (type == O_UINT32) return "uint32_t *";
+        if (type == O_UINT16) return "uint16_t *";
+        if (type == O_UINT8) return "uint8_t *";
+        if (type == O_INT128) return "int128_t *";
+        if (type == O_INT64) return "int64_t *";
+        if (type == O_INT32) return "int32_t *";
+        if (type == O_INT16) return "int16_t *";
+        if (type == O_INT8) return "int8_t *";
+        if (type == O_BOOL) return "int32_t *";
+        if (type == O_VOID) return "int8_t *";
+        return "undefined type";
+    }
+    if (type == O_UINT128) return "uint128_t";
+    if (type == O_UINT64) return "uint64_t";
+    if (type == O_UINT32) return "uint32_t";
+    if (type == O_UINT16) return "uint16_t";
+    if (type == O_UINT8) return "uint8_t";
+    if (type == O_INT128) return "int128_t";
+    if (type == O_INT64) return "int64_t";
+    if (type == O_INT32) return "int32_t";
+    if (type == O_INT16) return "int16_t";
+    if (type == O_INT8) return "int8_t";
+    if (type == O_BOOL) return "int32_t";
+    if (type == O_VOID) return "int8_t";
+    return "undefined type";
+}
+
+const char *syntax_type_name(Syntax *syntax) {
     if (syntax->type == IMMEDIATE) {
         return "IMMEDIATE";
     } else if (syntax->type == VARIABLE) {
@@ -697,25 +730,27 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         printf(" ");
     }
 
-    char *str = syntax_type_name(syntax);
+    const char *str = syntax_type_name(syntax);
 
     if (syntax->type == IMMEDIATE) {
         printf("%s '%d'\n", str, syntax->immediate->value);
     } else if (syntax->type == VARIABLE) {
         printf("%s '%s'\n", str, syntax->variable->name);
     } else if (syntax->type == UNARY_OPERATOR) {
-        printf("%s\n", str);
+        const char *strtype = object_type_name(syntax->unary_expression->objectType);
+        printf("%s %s\n", str, strtype);
         print_syntax_indented(syntax->unary_expression->expression, indent + 4);
 
     } else if (syntax->type == BINARY_OPERATOR) {
-        printf("%s LEFT\n", str);
+        const char *strtype = object_type_name(syntax->binary_expression->objectType);
+        printf("%s %s LEFT\n", str, strtype);
         print_syntax_indented(syntax->binary_expression->left, indent + 4);
 
         for (int i = 0; i < indent; i++) {
             printf(" ");
         }
 
-        printf("%s RIGHT\n", str);
+        printf("%s %s RIGHT\n", str, strtype);
         print_syntax_indented(syntax->binary_expression->right, indent + 4);
 
     } else if (syntax->type == FUNCTION_CALL) {
@@ -801,11 +836,11 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         printf("%s\n", str);
 
     } else if (syntax->type == ASSIGNMENT_STATEMENT) {
-        printf("%s '%s'\n", str, syntax->assignment->variable->name);
+        printf("%s '%s' %s\n", str, syntax->assignment->variable->name, object_type_name(syntax->assignment->variable->objectType));
         print_syntax_indented(syntax->assignment->expression, indent + 4);
 
     } else if (syntax->type == ASSIGNMENT_STATIC) {
-        printf("%s '%s'\n", str, syntax->assignment->variable->name);
+        printf("%s '%s' %s\n", str, syntax->assignment->variable->name, object_type_name(syntax->assignment->variable->objectType));
         print_syntax_indented(syntax->assignment->expression, indent + 4);
 
     } else if (syntax->type == WHILE_STATEMENT) {
