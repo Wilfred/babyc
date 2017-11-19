@@ -382,6 +382,7 @@ int main(int argc, char **argv) {
            "-\n");
     printf("\n");
     total_failed += test_iterate("-O0", "./test_programs", run_test_c);
+    total_failed += test_iterate("-O0", "./test_pointer", run_test_c);
     total_failed += test_iterate("-O0", "./test_stdlib", run_test_stdlib);
     printf("-------------------------------------------------------------------"
            "-\n");
@@ -390,6 +391,7 @@ int main(int argc, char **argv) {
            "-\n");
     printf("\n");
     total_failed += test_iterate("-O1", "./test_programs", run_test_c);
+    total_failed += test_iterate("-O1", "./test_pointer", run_test_c);
     total_failed += test_iterate("-O1", "./test_stdlib", run_test_stdlib);
 
     printf("-------------------------------------------------------------------"

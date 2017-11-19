@@ -467,6 +467,86 @@ expression:
             list_push(pscope->parser_stack, write_pointer_new(address, offset, expression));
         }
         |
+	    address '[' expression ']' T_PLUS_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Syntax *offset = list_pop(pscope->parser_stack);
+            Syntax *address = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, write_pointer_new(address, offset, addition_new(read_pointer_new(address, offset), expression)));
+        }
+        |
+	    address '[' expression ']' T_MINUS_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Syntax *offset = list_pop(pscope->parser_stack);
+            Syntax *address = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, write_pointer_new(address, offset, subtraction_new(read_pointer_new(address, offset), expression)));
+        }
+        |
+	    address '[' expression ']' T_MUL_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Syntax *offset = list_pop(pscope->parser_stack);
+            Syntax *address = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, write_pointer_new(address, offset, multiplication_new(read_pointer_new(address, offset), expression)));
+        }
+        |
+	    address '[' expression ']' T_DIV_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Syntax *offset = list_pop(pscope->parser_stack);
+            Syntax *address = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, write_pointer_new(address, offset, division_new(read_pointer_new(address, offset), expression)));
+        }
+        |
+	    address '[' expression ']' T_MOD_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Syntax *offset = list_pop(pscope->parser_stack);
+            Syntax *address = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, write_pointer_new(address, offset, modulus_new(read_pointer_new(address, offset), expression)));
+        }
+        |
+	    address '[' expression ']' T_LSHIFT_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Syntax *offset = list_pop(pscope->parser_stack);
+            Syntax *address = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, write_pointer_new(address, offset, lshift_new(read_pointer_new(address, offset), expression)));
+        }
+        |
+	    address '[' expression ']' T_RSHIFT_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Syntax *offset = list_pop(pscope->parser_stack);
+            Syntax *address = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, write_pointer_new(address, offset, rshift_new(read_pointer_new(address, offset), expression)));
+        }
+        |
+	    address '[' expression ']' T_AND_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Syntax *offset = list_pop(pscope->parser_stack);
+            Syntax *address = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, write_pointer_new(address, offset, bitwise_and_new(read_pointer_new(address, offset), expression)));
+        }
+        |
+	    address '[' expression ']' T_OR_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Syntax *offset = list_pop(pscope->parser_stack);
+            Syntax *address = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, write_pointer_new(address, offset, bitwise_or_new(read_pointer_new(address, offset), expression)));
+        }
+        |
+	    address '[' expression ']' T_XOR_EQ expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            Syntax *offset = list_pop(pscope->parser_stack);
+            Syntax *address = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, write_pointer_new(address, offset, bitwise_xor_new(read_pointer_new(address, offset), expression)));
+        }
+        |
 	    '*' address '=' expression
         {
             Syntax *expression = list_pop(pscope->parser_stack);
