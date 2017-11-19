@@ -1,14 +1,13 @@
 
 /* 
-#INPUT: "20"
-#EXPECTED: "20"
+#INPUT: ""
+#EXPECTED: "00"
 */
 
 int main()
 {
-   int c;
-   c = _getc();
-   _putc(c);
-   return 0;
+   int c = 0;
+   c = _putchar(c);
+   return c;
 }
 

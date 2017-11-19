@@ -548,7 +548,7 @@ typedef struct UpdateOffset {
     int automatic_offset;
     int max_automatic_offset;
     bool function_read_seen;
-    bool function_putc_seen;
+    bool function_putchar_seen;
     bool function_getc_seen;
     bool function_write_seen;
     bool function_assert_seen;
@@ -633,8 +633,8 @@ void update_offset_syntax(Syntax *syntax, UpdateOffset *ctx) {
         if (!strcmp(syntax->function_call->name, "_write")) {
             ctx->function_write_seen = true;
         }
-        if (!strcmp(syntax->function_call->name, "_putc")) {
-            ctx->function_putc_seen = true;
+        if (!strcmp(syntax->function_call->name, "_putchar")) {
+            ctx->function_putchar_seen = true;
         }
         if (!strcmp(syntax->function_call->name, "_getc")) {
             ctx->function_getc_seen = true;
@@ -763,7 +763,7 @@ void write_global(FILE *out, Syntax *syntax) {
  * ---------------------------------------------------------------------- */
 void write_stdlib(FILE *out, UpdateOffset *ctx) {
     if (ctx->function_read_seen || ctx->function_rdtsc_seen ||
-        ctx->function_putc_seen || ctx->function_getc_seen ||
+        ctx->function_putchar_seen || ctx->function_getc_seen ||
         ctx->function_write_seen || ctx->function_assert_seen ||
         ctx->function_exit_seen) {
         write_header(out, "Stdlib");
@@ -823,15 +823,17 @@ void write_stdlib(FILE *out, UpdateOffset *ctx) {
         emit_instr(out, "leave", "");
         emit_instr(out, "ret", "");
     }
-    if (ctx->function_putc_seen) {
-        fprintf(out, "    .global %s\n", "_putc");
-        fprintf(out, "%s:\n", "_putc");
+    if (ctx->function_putchar_seen) {
+        fprintf(out, "    .global %s\n", "_putchar");
+        fprintf(out, "%s:\n", "_putchar");
         emit_instr(out, "enter", "$0, $0");
         emit_instr(out, "movl", "$4, %eax");
         emit_instr(out, "movl", "$1, %ebx");
         emit_instr(out, "leal", "8(%ebp), %ecx");
         emit_instr(out, "movl", "$1, %edx");
         emit_instr(out, "int", "$0x80");
+        emit_instr(out, "subl", "$1, %eax");  /* 1 byte read : status = 0, 0 byte read : status = -1 */
+        emit_instr(out, "orb", "8(%ebp), %al");  /* 1 byte read : result = byte, 0 byte read : result = -1 */
         emit_instr(out, "leave", "");
         emit_instr(out, "ret", "");
     }
@@ -844,8 +846,8 @@ void write_stdlib(FILE *out, UpdateOffset *ctx) {
         emit_instr(out, "leal", "-4(%ebp), %ecx");
         emit_instr(out, "movl", "$1, %edx");
         emit_instr(out, "int", "$0x80");
-        emit_instr(out, "sub", "$1, %eax");  /* 1 byte read : status = 0, 0 byte read : status = -1 */
-        emit_instr(out, "or", "-4(%ebp), %eax");  /* 1 byte read : result = byte, 0 byte read : result = -1 */
+        emit_instr(out, "subl", "$1, %eax");  /* 1 byte read : status = 0, 0 byte read : status = -1 */
+        emit_instr(out, "orb", "-4(%ebp), %al");  /* 1 byte read : result = byte, 0 byte read : result = -1 */
         emit_instr(out, "leave", "");
         emit_instr(out, "ret", "");
     }

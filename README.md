@@ -60,7 +60,7 @@ but we will implement such a small subset of C that it's academic.
 * cdecl-type calling convention
 * nested function calls
 * return value from main() used as exit code
-* microscopic stdlib support (write to stdout, read from stdin, putc, getc, assert, exit, rdtsc)
+* microscopic stdlib support (write to stdout, read from stdin, putchar, getc, assert, exit, rdtsc)
 * simple preprocessor support (for now, we shell out to gcc -E)
 * simplified peephole post-optimizer at instruction selection ('option -O1')
 * few usual options from GCC/Clang command line ('-g' '-o' '-O0' '-O1' '-E' '-S' '-m32')

@@ -8,7 +8,7 @@ int main()
 {
    int c;
    while ( (c = _getc() ) != -1) {
-   _putc(c);
+   _putchar(c);
    }
    return 0;
 }
