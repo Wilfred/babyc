@@ -152,11 +152,15 @@ typedef struct WriteAddressExpression {
     ObjectType objectType;
 } WriteAddressExpression;
 
-typedef struct FunctionArgument { Syntax *expression; } FunctionArgument;
+typedef struct FunctionArgument {
+    Syntax *expression;
+    ObjectType objectType;
+} FunctionArgument;
 
 typedef struct FunctionCall {
     char *name;
     List *arguments;
+    ObjectType objectType;
 } FunctionCall;
 
 typedef struct FunctionParameter { Variable *variable; } FunctionParameter;
@@ -168,7 +172,7 @@ typedef struct FunctionDefinition {
     Syntax *block;
     int max_automatic_offset;
     int max_dynamic_offset;
-    ObjectType type;
+    ObjectType objectType;
 } FunctionDefinition;
 
 typedef struct Assignment {
@@ -182,16 +186,17 @@ typedef struct IfStatement {
     Syntax *if_else;
 } IfStatement;
 
-typedef struct DefineVarStatement { 
-    char *var_name; 
-} DefineVarStatement;
+typedef struct DefineVarStatement { char *var_name; } DefineVarStatement;
 
 typedef struct WhileStatement {
     Syntax *condition;
     Syntax *body;
 } WhileStatement;
 
-typedef struct ReturnStatement { Syntax *expression; } ReturnStatement;
+typedef struct ReturnStatement {
+    Syntax *expression;
+    ObjectType objectType;
+} ReturnStatement;
 
 typedef struct Block { List *statements; } Block;
 
@@ -309,7 +314,7 @@ Syntax *assignment_new(Variable *v, Syntax *expression);
 
 Syntax *assignment_static_new(Variable *v, Syntax *expression);
 
-Syntax *return_statement_new(Syntax *expression);
+Syntax *return_statement_new(Syntax *expression, ObjectType type);
 
 Syntax *break_statement_new(void);
 
@@ -325,6 +330,8 @@ Syntax *object_type_size_syntax(ObjectType type);
 
 int object_type_size_value(ObjectType type);
 
+int syntax_type_size_value(Syntax *syntax);
+
 ObjectType convert_type(char *s);
 
 bool syntax_is_boolean(Syntax *syntax);
@@ -333,7 +340,9 @@ void syntax_free(Syntax *syntax);
 
 const char *syntax_type_name(Syntax *syntax);
 const char *syntax_type_type(ObjectType type);
-ObjectType ast_annotate_syntax(Syntax *syntax, ObjectType dest);
+ObjectType syntax_type_size_type(Syntax *syntax);
+
+void ast_annotate_syntax_tree(Syntax *syntax);
 
 void print_syntax_item(Syntax *syntax);
 void print_syntax_list(List *list);

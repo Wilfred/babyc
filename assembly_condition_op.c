@@ -17,9 +17,6 @@
 
 extern bool peephole_optimize;
 
-static const int WORD_SIZE = 4;
-static const int MAX_MNEMONIC_LENGTH = 7;
-
 /* -----------------------------------------------------------
  * Helper functions
  *

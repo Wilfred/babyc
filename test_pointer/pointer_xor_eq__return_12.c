@@ -8,4 +8,3 @@ int main() {
     ptr[1] ^= ptr[0];
     return ptr[1];
 }
-

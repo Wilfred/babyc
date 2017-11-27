@@ -3,11 +3,9 @@
 #EXPECTED: "20"
 */
 
-int main()
-{
-   int c;
-   c = _getc();
-   c = _putchar(c);
-   return c;
+int main() {
+    int c;
+    c = _getchar();
+    c = _putchar(c);
+    return c;
 }
-

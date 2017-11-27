@@ -18,8 +18,6 @@
 
 extern bool peephole_optimize;
 
-static const int WORD_SIZE = 4;
-
 /* -----------------------------------------------------------
  * Helper functions
  *
@@ -289,7 +287,8 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
     }
 
     /* no immediate operand, push left evaluation on stack */
-    ctx->offset -= WORD_SIZE;
+    int arg_size = syntax_type_size_value(left);
+    ctx->offset -= arg_size;
 
     int stack_offset = ctx->offset;
     int left_flag = write_condition_syntax(out, left, ctx);
@@ -347,9 +346,8 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
         emit_instr_format(out, "addl", "%d(%%ebp), %%eax", stack_offset);
         flag = FLAG_Z_VALID;
     } else if (binary_type == SUBTRACTION) {
-        emit_instr(out, "movl", "%eax, %ecx");
-        emit_instr_format(out, "movl", "%d(%%ebp), %%eax", stack_offset);
-        emit_instr(out, "subl", "%ecx, %eax");
+        emit_instr_format(out, "subl", "%d(%%ebp), %%eax", stack_offset);
+        emit_instr(out, "negl", "%eax");
         flag = FLAG_Z_VALID;
     } else if (binary_type == LESS_THAN || binary_type == LARGER_THAN ||
                binary_type == LESS_THAN_OR_EQUAL ||
@@ -424,6 +422,6 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
         }
         flag = FLAG_NZ_BOOL;
     }
-    ctx->offset += WORD_SIZE;
+    ctx->offset += arg_size;
     return flag;
 }

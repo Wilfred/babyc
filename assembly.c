@@ -18,7 +18,6 @@
 
 bool peephole_optimize = false;
 
-static const int WORD_SIZE = 4;
 static const int MAX_MNEMONIC_LENGTH = 7;
 
 /* -----------------------------------------------------------
@@ -411,8 +410,13 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
             emit_instr(out, "movl", "%esp, %eax");
         } else {
             // Todo : get the right length for each parameter
-            int arg_size =
-                WORD_SIZE * list_length(syntax->function_call->arguments);
+            int arg_size = 0;
+            int i = list_length(syntax->function_call->arguments);
+            while (i--) {
+                Syntax *s = list_get(syntax->function_call->arguments, i);
+                FunctionArgument *arg = s->function_argument;
+                arg_size += object_type_size_value(arg->objectType);
+            }
 
             ctx->offset -= arg_size;
             write_list(out, syntax->function_call->arguments, ctx);
@@ -463,7 +467,8 @@ int update_dynamic_syntax(Syntax *syntax) {
         int r = update_dynamic_syntax(syntax->binary_expression->right);
         int l = update_dynamic_syntax(syntax->binary_expression->left);
 
-        return WORD_SIZE + ((r > l) ? r : l);
+        return object_type_size_value(syntax->binary_expression->objectType) +
+               ((r > l) ? r : l);
     } else if (syntax->type == FUNCTION_ARGUMENT) {
         return update_dynamic_syntax(syntax->function_argument->expression);
     } else if (syntax->type == FUNCTION_PARAMETER) {
@@ -515,7 +520,7 @@ int update_dynamic_syntax(Syntax *syntax) {
         int e = update_dynamic_syntax(syntax->write_address->expression);
         int r = (a > o) ? a : o;
 
-        return WORD_SIZE + ((e > r) ? e : r);
+        return object_type_size_value(O_ADDRESS) + ((e > r) ? e : r);
     } else if (syntax->type == IMMEDIATE) {
         return 0;
     }
@@ -549,7 +554,7 @@ typedef struct UpdateOffset {
     int max_automatic_offset;
     bool function_read_seen;
     bool function_putchar_seen;
-    bool function_getc_seen;
+    bool function_getchar_seen;
     bool function_write_seen;
     bool function_assert_seen;
     bool function_exit_seen;
@@ -636,8 +641,8 @@ void update_offset_syntax(Syntax *syntax, UpdateOffset *ctx) {
         if (!strcmp(syntax->function_call->name, "_putchar")) {
             ctx->function_putchar_seen = true;
         }
-        if (!strcmp(syntax->function_call->name, "_getc")) {
-            ctx->function_getc_seen = true;
+        if (!strcmp(syntax->function_call->name, "_getchar")) {
+            ctx->function_getchar_seen = true;
         }
         if (!strcmp(syntax->function_call->name, "_assert")) {
             ctx->function_assert_seen = true;
@@ -763,7 +768,7 @@ void write_global(FILE *out, Syntax *syntax) {
  * ---------------------------------------------------------------------- */
 void write_stdlib(FILE *out, UpdateOffset *ctx) {
     if (ctx->function_read_seen || ctx->function_rdtsc_seen ||
-        ctx->function_putchar_seen || ctx->function_getc_seen ||
+        ctx->function_putchar_seen || ctx->function_getchar_seen ||
         ctx->function_write_seen || ctx->function_assert_seen ||
         ctx->function_exit_seen) {
         write_header(out, "Stdlib");
@@ -832,22 +837,30 @@ void write_stdlib(FILE *out, UpdateOffset *ctx) {
         emit_instr(out, "leal", "8(%ebp), %ecx");
         emit_instr(out, "movl", "$1, %edx");
         emit_instr(out, "int", "$0x80");
-        emit_instr(out, "subl", "$1, %eax");  /* 1 byte read : status = 0, 0 byte read : status = -1 */
-        emit_instr(out, "orb", "8(%ebp), %al");  /* 1 byte read : result = byte, 0 byte read : result = -1 */
+        emit_instr(out, "subl",
+                   "$1, %eax"); /* 1 byte read : status = 0, 0 byte read :
+                                   status = -1 */
+        emit_instr(out,
+                   "orb", "8(%ebp), %al"); /* 1 byte read : result = byte, 0
+                                              byte read : result = -1 */
         emit_instr(out, "leave", "");
         emit_instr(out, "ret", "");
     }
-    if (ctx->function_getc_seen) {
-        fprintf(out, "    .global %s\n", "_getc");
-        fprintf(out, "%s:\n", "_getc");
+    if (ctx->function_getchar_seen) {
+        fprintf(out, "    .global %s\n", "_getchar");
+        fprintf(out, "%s:\n", "_getchar");
         emit_instr(out, "enter", "$4, $0");
         emit_instr(out, "movl", "$3, %eax");
         emit_instr(out, "movl", "$0, %ebx");
         emit_instr(out, "leal", "-4(%ebp), %ecx");
         emit_instr(out, "movl", "$1, %edx");
         emit_instr(out, "int", "$0x80");
-        emit_instr(out, "subl", "$1, %eax");  /* 1 byte read : status = 0, 0 byte read : status = -1 */
-        emit_instr(out, "orb", "-4(%ebp), %al");  /* 1 byte read : result = byte, 0 byte read : result = -1 */
+        emit_instr(out, "subl",
+                   "$1, %eax"); /* 1 byte read : status = 0, 0 byte read :
+                                   status = -1 */
+        emit_instr(out,
+                   "orb", "-4(%ebp), %al"); /* 1 byte read : result = byte, 0
+                                               byte read : result = -1 */
         emit_instr(out, "leave", "");
         emit_instr(out, "ret", "");
     }

@@ -177,11 +177,11 @@ int main(int argc, char *argv[]) {
         goto cleanup_cpp_file;
     }
 
-   /* -------------------------------------------------------------------
-     *  AST symbols and types resolution
-     * ------------------------------------------------------------------- */
-     
-    ast_annotate_syntax(complete_syntax, O_UNDEF);
+    /* -------------------------------------------------------------------
+      *  AST symbols and types resolution
+      * ------------------------------------------------------------------- */
+
+    ast_annotate_syntax_tree(complete_syntax);
 
     if (terminate_at == PARSE) {
 

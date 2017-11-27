@@ -9,4 +9,3 @@ int main() {
     ptr[0] += ptr[1];
     return ptr[0];
 }
-

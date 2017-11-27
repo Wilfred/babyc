@@ -296,7 +296,7 @@ statement:
         T_RETURN expression ';'
         {
             Syntax *current_syntax = list_pop(pscope->parser_stack);
-            list_push(pscope->parser_stack, return_statement_new(current_syntax));
+            list_push(pscope->parser_stack, return_statement_new(current_syntax, current_function_type));
         }
         |
         T_IF '(' expression ')' statement
