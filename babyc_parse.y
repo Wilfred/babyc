@@ -728,7 +728,6 @@ expression:
         }
         |
         '(' expression ')'
-        {
-            // Nothing to do, we have the AST node already.
-        }
+        |
+        '(' block ')'
         ;

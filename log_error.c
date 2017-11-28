@@ -15,7 +15,9 @@ void log_error(char *fmt, ...) {
     va_list ap;
 
     printf("babyc: ");
-    printf(fmt, ap);
+    va_start(ap, fmt);
+    vprintf(fmt, ap);
     printf("\n");
+    va_end(ap);
     exit(1);
 }

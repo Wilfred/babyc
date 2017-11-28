@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ast_annotate.h"
 #include "assembly.h"
 
 extern bool peephole_optimize;
@@ -32,26 +33,22 @@ extern bool peephole_optimize;
 ProcessorFlags write_unary_syntax(FILE *out, UnaryExpressionType unary_type,
                                   Syntax *expression, Context *ctx) {
     ProcessorFlags flag = FLAG_NONE;
+
     if (peephole_optimize) {
         if (expression->type == IMMEDIATE) {
-            int value = expression->immediate->value;
+            AstInteger value;
+            ast_integer_unary_operation(&value, &expression->immediate->value,
+                                        unary_type);
 
-            if (unary_type == BITWISE_NEGATION) {
-                value = ~value;
-            } else if (unary_type == ARITHMETIC_NEGATION) {
-                value = -value;
-            } else if (unary_type == LOGICAL_NEGATION) {
-                value = !value;
-            }
-
-            if (value == 0) {
+            if (ast_integer_is_zero(&value)) {
                 emit_instr(out, "xorl", "%eax, %eax");
                 flag = FLAG_Z_VALID;
-            } else if (value == 1) {
+            } else if (ast_integer_is_one(&value)) {
                 emit_instr(out, "movl", "$1, %eax");
                 flag = FLAG_BOOL_VALID;
             } else {
-                emit_instr_format(out, "movl", "$%d, %%eax", value);
+                unsigned v = ast_integer_get_uint(&value, 32);
+                emit_instr_format(out, "movl", "$%u, %%eax", v);
             }
             return flag;
         }

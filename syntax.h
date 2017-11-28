@@ -9,6 +9,7 @@
 #define BABYC_SYNTAX_HEADER
 
 #include "list.h"
+#include <stdint.h>
 #include <stdbool.h>
 
 typedef enum {
@@ -114,7 +115,12 @@ Variable *scope_add_var(Scope *ctx, char *name, ObjectType type,
 struct Syntax;
 typedef struct Syntax Syntax;
 
-typedef struct Immediate { int value; } Immediate;
+typedef struct AstInteger {
+    uint64_t val[2];
+    ObjectType objectType;
+} AstInteger;
+
+typedef struct Immediate { AstInteger value; } Immediate;
 
 typedef struct Label {
     char *name;
@@ -341,8 +347,6 @@ void syntax_free(Syntax *syntax);
 const char *syntax_type_name(Syntax *syntax);
 const char *syntax_type_type(ObjectType type);
 ObjectType syntax_type_size_type(Syntax *syntax);
-
-void ast_annotate_syntax_tree(Syntax *syntax);
 
 void print_syntax_item(Syntax *syntax);
 void print_syntax_list(List *list);

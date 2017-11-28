@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ast_annotate.h"
 #include "assembly.h"
 #include "log_error.h"
 
@@ -39,6 +40,7 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                                    Syntax *left, Syntax *right, Context *ctx) {
 
     ProcessorFlags flag = FLAG_NONE;
+
     if (peephole_optimize) {
 
         /* swap operand if left operand is meediate and if swap makes sense */
@@ -59,132 +61,111 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
             /* detect both operands are immediate, evaluate and generate short
              * code */
             if (left->type == IMMEDIATE) {
-                int value = 0;
-                int lvalue = left->immediate->value;
-                int rvalue = right->immediate->value;
+                AstInteger value;
 
-                if (binary_type == MULTIPLICATION) {
-                    value = lvalue * rvalue;
-                } else if (binary_type == DIVISION) {
-                    if (rvalue == 0)
-                        log_error("Divide by zero !\n");
-                    value = lvalue / rvalue;
-                } else if (binary_type == MODULUS) {
-                    if (rvalue == 0)
-                        log_error("Modulus is zero !\n");
-                    value = lvalue % rvalue;
-                } else if (binary_type == OR) {
-                    value = lvalue | rvalue;
-                } else if (binary_type == AND) {
-                    value = lvalue & rvalue;
-                } else if (binary_type == XOR) {
-                    value = lvalue ^ rvalue;
-                } else if (binary_type == RSHIFT) {
-                    value = rvalue <= 31 ? lvalue >> rvalue : 0;
-                } else if (binary_type == LSHIFT) {
-                    value = rvalue <= 31 ? lvalue << rvalue : 0;
-                } else if (binary_type == ADDITION) {
-                    value = lvalue + rvalue;
-                } else if (binary_type == SUBTRACTION) {
-                    value = lvalue - rvalue;
-                } else if (binary_type == LESS_THAN ||
-                           binary_type == LARGER_THAN ||
-                           binary_type == LESS_THAN_OR_EQUAL ||
-                           binary_type == LARGER_THAN_OR_EQUAL ||
-                           binary_type == EQUAL || binary_type == NEQUAL ||
-                           binary_type == LOGICAL_OR ||
-                           binary_type == LOGICAL_AND) {
-                    bool b = 0;
+                if (binary_type == LESS_THAN || binary_type == LARGER_THAN ||
+                    binary_type == LESS_THAN_OR_EQUAL ||
+                    binary_type == LARGER_THAN_OR_EQUAL ||
+                    binary_type == EQUAL || binary_type == NEQUAL) {
+                    ast_integer_binary_operation(
+                        &value, &left->immediate->value,
+                        &right->immediate->value, binary_type);
+                    ast_integer_set_bool(&value, !ast_integer_is_zero(&value));
+                } else if (binary_type == LOGICAL_OR) {
+                    bool lvalue = !ast_integer_is_zero(&left->immediate->value);
+                    bool rvalue =
+                        !ast_integer_is_zero(&right->immediate->value);
 
-                    switch (binary_type) {
-                    case LESS_THAN:
-                        b = (lvalue < rvalue);
-                        break;
-                    case LARGER_THAN:
-                        b = (lvalue > rvalue);
-                        break;
-                    case LESS_THAN_OR_EQUAL:
-                        b = (lvalue <= rvalue);
-                        break;
-                    case LARGER_THAN_OR_EQUAL:
-                        b = (lvalue >= rvalue);
-                        break;
-                    case EQUAL:
-                        b = (lvalue == rvalue);
-                        break;
-                    case NEQUAL:
-                        b = (lvalue != rvalue);
-                        break;
-                    case LOGICAL_OR:
-                        b = (!!lvalue || !!rvalue);
-                        break;
-                    case LOGICAL_AND:
-                        b = (!!lvalue && !!rvalue);
-                        break;
-                    default:
-                        break;
-                    }
-                    value = b;
-                    flag = FLAG_BOOL_VALID;
+                    ast_integer_set_bool(&value, lvalue || rvalue);
+                } else if (binary_type == LOGICAL_AND) {
+                    bool lvalue = !ast_integer_is_zero(&left->immediate->value);
+                    bool rvalue =
+                        !ast_integer_is_zero(&right->immediate->value);
+
+                    ast_integer_set_bool(&value, lvalue && rvalue);
+                } else {
+                    ast_integer_binary_operation(
+                        &value, &left->immediate->value,
+                        &right->immediate->value, binary_type);
                 }
-                if (value == 0) {
+
+                if (ast_integer_is_zero(&value)) {
                     emit_instr(out, "xorl", "%eax, %eax");
                     flag = FLAG_Z_VALID;
-                } else if (value == 1) {
+                } else if (ast_integer_is_one(&value)) {
                     emit_instr(out, "movl", "$1, %eax");
                     flag = FLAG_BOOL_VALID;
                 } else {
-                    emit_instr_format(out, "movl", "$%d, %%eax", value);
+                    emit_instr_format(out, "movl", "$%d, %%eax",
+                                      ast_integer_get_int(&value, 32));
                     flag = FLAG_NONE;
                 }
             } else {
-                int value = right->immediate->value;
-
                 flag = write_condition_syntax(out, left, ctx);
 
                 if (binary_type == MULTIPLICATION) {
-                    if (value == 0) {
+                    if (ast_integer_is_zero(&right->immediate->value)) {
                         emit_instr(out, "xorl", "%eax, %eax");
-                        flag = FLAG_Z_VALID;
-                    } else if (value == -1) {
-                        emit_instr(out, "negl", "%eax");
-                        flag = FLAG_Z_VALID;
-                    } else if (value != 1) {
-                        emit_instr_format(out, "imull", "$%d, %%eax", value);
+                        flag = FLAG_NZ_BOOL;
+                    } else if (!ast_integer_is_one(&right->immediate->value)) {
+                        emit_instr_format(
+                            out, "imull", "$%d, %%eax",
+                            ast_integer_get_int(&right->immediate->value, 32));
                         flag = FLAG_NONE;
                     }
                 } else if (binary_type == DIVISION) {
-                    if (value == -1) {
-                        emit_instr(out, "negl", "%eax");
-                        flag = FLAG_Z_VALID;
-                    } else if (value != 1) {
-                        emit_instr_format(out, "movl", "$%d, %%ecx", value);
+                    if (ast_integer_is_zero(&right->immediate->value)) {
+                        log_error("Divide by 0");
+                    }
+                    if (!ast_integer_is_one(&right->immediate->value)) {
+                        emit_instr_format(
+                            out, "movl", "$%d, %%ecx",
+                            ast_integer_get_int(&right->immediate->value, 32));
                         emit_instr(out, "xorl", "%edx, %edx");
                         emit_instr(out, "idivl", "%ecx");
                         flag = FLAG_NONE;
                     }
                 } else if (binary_type == MODULUS) {
-                    emit_instr_format(out, "movl", "$%d, %%ecx", value);
+                    if (ast_integer_is_zero(&right->immediate->value)) {
+                        log_error("Modulus by 0");
+                    }
+                    emit_instr_format(
+                        out, "movl", "$%d, %%ecx",
+                        ast_integer_get_int(&right->immediate->value, 32));
                     emit_instr(out, "xorl", "%edx, %edx");
                     emit_instr(out, "idivl", "%ecx");
                     emit_instr(out, "movl", "%edx, %eax");
                     flag = FLAG_NONE;
                 } else if (binary_type == OR) {
+                    unsigned value =
+                        ast_integer_get_uint(&right->immediate->value, 32);
                     if (value != 0) {
-                        emit_instr_format(out, "orl", "$%d, %%eax", value);
+                        emit_instr_format(out, "orl", "$%u, %%eax", value);
                         flag = FLAG_Z_VALID;
                     }
                 } else if (binary_type == AND) {
-                    if (value != -1) {
-                        emit_instr_format(out, "andl", "$%d, %%eax", value);
+                    unsigned value =
+                        ast_integer_get_uint(&right->immediate->value, 32);
+                    if (value == 0) {
+                        emit_instr(out, "xorl", "%eax, %eax");
+                        flag = FLAG_NZ_BOOL;
+                    } else if (value == 1) {
+                        emit_instr(out, "andl", "$1, %eax");
+                        flag = FLAG_NZ_BOOL;
+                    } else if (value != 0xffffffff) {
+                        emit_instr_format(out, "andl", "$%u, %%eax", value);
                         flag = FLAG_Z_VALID;
                     }
                 } else if (binary_type == XOR) {
+                    unsigned value =
+                        ast_integer_get_uint(&right->immediate->value, 32);
                     if (value != 0) {
-                        emit_instr_format(out, "xorl", "$%d, %%eax", value);
+                        emit_instr_format(out, "xorl", "$%u, %%eax", value);
                         flag = FLAG_Z_VALID;
                     }
                 } else if (binary_type == RSHIFT) {
+                    unsigned value =
+                        ast_integer_get_uint(&right->immediate->value, 32);
                     if (value <= 31) {
                         if (value) {
                             emit_instr_format(out, "sarl", "$%d, %%eax", value);
@@ -192,9 +173,11 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                         }
                     } else {
                         emit_instr(out, "xorl", "%eax, %eax");
-                        flag = FLAG_Z_VALID;
+                        flag = FLAG_NZ_BOOL;
                     }
                 } else if (binary_type == LSHIFT) {
+                    unsigned value =
+                        ast_integer_get_uint(&right->immediate->value, 32);
                     if (value <= 31) {
                         if (value) {
                             emit_instr_format(out, "sall", "$%d, %%eax", value);
@@ -202,14 +185,18 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                         }
                     } else {
                         emit_instr(out, "xorl", "%eax, %eax");
-                        flag = FLAG_Z_VALID;
+                        flag = FLAG_NZ_BOOL;
                     }
                 } else if (binary_type == ADDITION) {
+                    unsigned value =
+                        ast_integer_get_uint(&right->immediate->value, 32);
                     if (value) {
                         emit_instr_format(out, "addl", "$%d, %%eax", value);
                         flag = FLAG_Z_VALID;
                     }
                 } else if (binary_type == SUBTRACTION) {
+                    unsigned value =
+                        ast_integer_get_uint(&right->immediate->value, 32);
                     if (value) {
                         emit_instr_format(out, "subl", "$%d, %%eax", value);
                         flag = FLAG_Z_VALID;
@@ -221,6 +208,8 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                            binary_type == EQUAL || binary_type == NEQUAL) {
                     // To compare x < y in AT&T syntax, we write CMP y,x.
                     // http://stackoverflow.com/q/25493255/509706
+                    unsigned value =
+                        ast_integer_get_uint(&right->immediate->value, 32);
                     emit_instr_format(out, "cmpl", "$%d, %%eax", value);
                     // Set the low byte of %eax to 0 or 1 depending on condition
                     // output
@@ -256,6 +245,8 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                     emit_instr(out, "movzbl", "%al, %eax");
                 } else if (binary_type == LOGICAL_OR ||
                            binary_type == LOGICAL_AND) {
+                    unsigned value =
+                        ast_integer_get_uint(&right->immediate->value, 32);
                     value = !!value;
                     if (flag == FLAG_Z_VALID) {
                         emit_instr(out, "setnz", "%al");
@@ -288,10 +279,12 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
 
     /* no immediate operand, push left evaluation on stack */
     int arg_size = syntax_type_size_value(left);
+
     ctx->offset -= arg_size;
 
     int stack_offset = ctx->offset;
     int left_flag = write_condition_syntax(out, left, ctx);
+
     emit_instr_format(out, "movl", "%%eax, %d(%%ebp)", stack_offset);
     int right_flag = write_condition_syntax(out, right, ctx);
 

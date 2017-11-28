@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ast_annotate.h"
 #include "assembly.h"
 #include "log_error.h"
 
@@ -134,6 +135,7 @@ void emit_instr_format(FILE *out, char *instr, char *operands_format, ...) {
 
 char *fresh_local_label(char *prefix, Context *ctx) {
     char *buffer = fresh_numbered_label(prefix, ctx->label_count++);
+
     return buffer;
 }
 
@@ -213,6 +215,7 @@ bool empty_syntax(Syntax *syntax);
 
 bool empty_list(List *list) {
     bool empty = true;
+
     for (int i = 0; empty && i < list_length(list); i++) {
         empty &= empty_syntax(list_get(list, i));
     }
@@ -250,21 +253,28 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         write_unary_syntax(out, unary_syntax->unary_type,
                            unary_syntax->expression, ctx);
     } else if (syntax->type == IMMEDIATE) {
-        emit_instr_format(out, "movl", "$%d, %%eax", syntax->immediate->value);
+        emit_instr_format(out, "movl", "$%d, %%eax",
+                          ast_integer_get_int(&syntax->immediate->value, 31));
     } else if (syntax->type == VARIABLE) {
         emit_instr_format(out, "movl", "%s, %%eax",
                           get_var_name(syntax->variable));
     } else if (syntax->type == READ_ADDRESS) {
+        int elemLength =
+            object_type_size_value(syntax->read_address->objectType);
+
         write_syntax(out, syntax->read_address->address, ctx);
         if (syntax->read_address->offset->type == IMMEDIATE) {
-            int value = syntax->read_address->offset->immediate->value;
+            int value = ast_integer_get_int(
+                &syntax->read_address->offset->immediate->value, 27);
 
-            emit_instr_format(out, "movl", "%d(%%eax), %%eax", 4 * value);
+            emit_instr_format(out, "movl", "%d(%%eax), %%eax",
+                              elemLength * value);
         } else {
             emit_instr(out, "pushl", "%eax");
             write_syntax(out, syntax->read_address->offset, ctx);
             emit_instr(out, "popl", "%ecx");
-            emit_instr(out, "leal", "(%ecx,%eax,4), %eax");
+            emit_instr_format(out, "leal", "(%%ecx,%%eax,%d), %%eax",
+                              elemLength);
             emit_instr(out, "movl", "(%eax), %eax");
         }
     } else if (syntax->type == WRITE_ADDRESS) {
@@ -273,30 +283,42 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         write_syntax(out, syntax->write_address->address, ctx);
         emit_instr(out, "pushl", "%eax");
         if (syntax->write_address->offset->type == IMMEDIATE) {
-            value = syntax->write_address->offset->immediate->value;
+            value = ast_integer_get_int(
+                &syntax->write_address->offset->immediate->value, 27);
         } else {
-            write_syntax(out, syntax->read_address->offset, ctx);
+            write_syntax(out, syntax->write_address->offset, ctx);
             emit_instr(out, "popl", "%ecx");
-            emit_instr(out, "leal", "(%ecx,%eax,4), %eax");
+            emit_instr_format(
+                out, "leal", "(%%ecx,%%eax,%d), %%eax",
+                object_type_size_value(syntax->write_address->objectType));
             emit_instr(out, "pushl", "%eax");
         }
         write_syntax(out, syntax->write_address->expression, ctx);
         emit_instr(out, "popl", "%ecx");
-        emit_instr_format(out, "movl", "%%eax, %d(%%ecx)", 4 * value);
+        emit_instr_format(
+            out, "movl", "%%eax, %d(%%ecx)",
+            object_type_size_value(syntax->write_address->objectType) * value);
     } else if (syntax->type == ADDRESS) {
         emit_var_address(out, syntax->address->identifier->variable);
         if (syntax->address->offset->type == IMMEDIATE) {
-            int value = syntax->address->offset->immediate->value;
+            int value = ast_integer_get_int(
+                &syntax->address->offset->immediate->value, 27);
 
             if (value) {
                 emit_instr_format(out, "movl", "$%d, %%ecx", value);
-                emit_instr(out, "leal", "(%eax,%ecx,4), %eax");
+                emit_instr_format(
+                    out, "leal", "(%%eax,%%ecx,%d), %%eax",
+                    object_type_size_value(
+                        syntax->address->identifier->variable->objectType));
             }
         } else {
             emit_instr(out, "pushl", "%eax");
             write_syntax(out, syntax->address->offset, ctx);
             emit_instr(out, "popl", "%ecx");
-            emit_instr(out, "leal", "(%ecx,%eax,4), %eax");
+            emit_instr_format(
+                out, "leal", "(%%ecx,%%eax,%d), %%eax",
+                object_type_size_value(
+                    syntax->address->identifier->variable->objectType));
         }
     } else if (syntax->type == BINARY_OPERATOR) {
         BinaryExpression *binary_syntax = syntax->binary_expression;
@@ -318,10 +340,12 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         emit_instr_format(out, "jmp", "%s", syntax->label->assembler_name);
     } else if (syntax->type == BREAK_STATEMENT) {
         char *buffer = fresh_numbered_label("while_end", ctx->while_label + 1);
+
         emit_instr_format(out, "jmp", "%s", buffer);
         free(buffer);
     } else if (syntax->type == CONTINUE_STATEMENT) {
         char *buffer = fresh_numbered_label("while_start", ctx->while_label);
+
         emit_instr_format(out, "jmp", "%s", buffer);
         free(buffer);
     } else if (syntax->type == LABEL_STATEMENT) {
@@ -333,6 +357,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         bool else_empty = empty_syntax(if_statement->if_else);
         ProcessorFlags flags =
             write_condition_syntax(out, if_statement->condition, ctx);
+
         if (flags == FLAG_Z_VALID) {
             /* last evaluated to 0 and Z=1 */
             emit_instr_format(out, "jz", "%s", else_label);
@@ -360,6 +385,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         WhileStatement *while_statement = syntax->while_statement;
 
         int save_while_label = ctx->while_label;
+
         ctx->while_label = ctx->label_count;
         char *start_label = fresh_local_label("while_start", ctx);
         char *end_label = fresh_local_label("while_end", ctx);
@@ -367,6 +393,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         emit_label(out, start_label);
         ProcessorFlags flags =
             write_condition_syntax(out, while_statement->condition, ctx);
+
         if (flags == FLAG_Z_VALID) {
             /* last evaluated to 0 and Z=1 */
             emit_instr_format(out, "jz", "%s", end_label);
@@ -412,9 +439,11 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
             // Todo : get the right length for each parameter
             int arg_size = 0;
             int i = list_length(syntax->function_call->arguments);
+
             while (i--) {
                 Syntax *s = list_get(syntax->function_call->arguments, i);
                 FunctionArgument *arg = s->function_argument;
+
                 arg_size += object_type_size_value(arg->objectType);
             }
 
@@ -840,9 +869,9 @@ void write_stdlib(FILE *out, UpdateOffset *ctx) {
         emit_instr(out, "subl",
                    "$1, %eax"); /* 1 byte read : status = 0, 0 byte read :
                                    status = -1 */
-        emit_instr(out,
-                   "orb", "8(%ebp), %al"); /* 1 byte read : result = byte, 0
-                                              byte read : result = -1 */
+        emit_instr(out, "orb",
+                   "8(%ebp), %al"); /* 1 byte read : result = byte, 0
+                                       byte read : result = -1 */
         emit_instr(out, "leave", "");
         emit_instr(out, "ret", "");
     }
@@ -858,9 +887,9 @@ void write_stdlib(FILE *out, UpdateOffset *ctx) {
         emit_instr(out, "subl",
                    "$1, %eax"); /* 1 byte read : status = 0, 0 byte read :
                                    status = -1 */
-        emit_instr(out,
-                   "orb", "-4(%ebp), %al"); /* 1 byte read : result = byte, 0
-                                               byte read : result = -1 */
+        emit_instr(out, "orb",
+                   "-4(%ebp), %al"); /* 1 byte read : result = byte, 0
+                                        byte read : result = -1 */
         emit_instr(out, "leave", "");
         emit_instr(out, "ret", "");
     }

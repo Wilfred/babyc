@@ -13,6 +13,7 @@
 #include "list.h"
 #include "log_error.h"
 #include "syntax.h"
+#include "ast_annotate.h"
 
 ObjectType convert_type(char *s) {
     ObjectType type = 0;
@@ -201,7 +202,7 @@ Syntax *goto_statement_new(Label *label) {
 Syntax *immediate_new(char *value) {
     Immediate *immediate = malloc(sizeof(Immediate));
 
-    immediate->value = atoi(value);
+    ast_integer_set_str(&immediate->value, value, 10);
 
     Syntax *syntax = malloc(sizeof(Syntax));
 
@@ -791,19 +792,22 @@ void print_syntax_indented(Syntax *syntax, int indent) {
     }
 
     if (syntax->type == IMMEDIATE) {
-        printf("%s '%d'\n", str, syntax->immediate->value);
+        printf("%s '%llu'\n", str, ast_integer_get_unsigned_long_long(
+                                       &syntax->immediate->value, 64));
     } else if (syntax->type == VARIABLE) {
         printf("%s '%s' %s\n", str, syntax->variable->name,
                object_type_name(syntax->variable->objectType));
     } else if (syntax->type == UNARY_OPERATOR) {
         const char *strtype =
             object_type_name(syntax->unary_expression->objectType);
+
         printf("%s %s\n", str, strtype);
         print_syntax_indented(syntax->unary_expression->expression, indent + 4);
 
     } else if (syntax->type == BINARY_OPERATOR) {
         const char *strtype =
             object_type_name(syntax->binary_expression->objectType);
+
         printf("%s %s LEFT\n", str, strtype);
         print_syntax_indented(syntax->binary_expression->left, indent + 4);
 
@@ -842,7 +846,8 @@ void print_syntax_indented(Syntax *syntax, int indent) {
             "%s '%s' %s\n", str, syntax->function_parameter->variable->name,
             object_type_name(syntax->function_parameter->variable->objectType));
     } else if (syntax->type == FUNCTION_ARGUMENT) {
-        printf("%s\n", str);
+        printf("%s %s\n", str,
+               object_type_name(syntax->function_argument->objectType));
         print_syntax_indented(syntax->function_argument->expression,
                               indent + 4);
 
@@ -873,8 +878,7 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         print_syntax_indented(syntax->if_statement->if_else, indent + 4);
 
     } else if (syntax->type == RETURN_STATEMENT) {
-        printf("%s %s\n", str, object_type_name(syntax_type_size_type(
-                                   syntax->return_statement->expression)));
+        printf("%s %s\n", str, object_type_name(syntax->return_statement->objectType));
         print_syntax_indented(syntax->return_statement->expression, indent + 4);
     } else if (syntax->type == ADDRESS) {
         printf("%s\n", str);

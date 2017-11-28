@@ -12,6 +12,7 @@
 #include "bb_type.h"
 #include "bb.tab.h"
 #include "log_error.h"
+#include "ast_annotate.h"
 
 static char **raw_symbol_table = NULL;
 static int raw_symbol_size = 0;
@@ -31,30 +32,31 @@ static char *symbol(char *s)
 
 static char *number(char *n, int radix)
 {
-    char temp[30];
-    unsigned long long v = strtoull(n, NULL, radix);
-    snprintf(temp, 30, "%llu", v);
-    return symbol(temp);
+    AstInteger s;
+    char str[100];
+    
+    ast_integer_set_str(&s, n, radix);
+    return symbol(ast_integer_get_str(&s, str, 100));
 }
 
 static char *char_escape(char *n, int radix)
 {
-    char temp[30];
+    char temp[10];
+    unsigned long v = 0;
+    
     if (radix == 8)
     {
-        unsigned long long v = strtoull(n+2, NULL, 8);
-        snprintf(temp, 30, "%llu", v);
+        v = strtoul(n+2, NULL, 8);
     }
     else if (radix == 16)
     {
-        unsigned long long v = strtoull(n+3, NULL, 16);
-        snprintf(temp, 30, "%llu", v);
+        v = strtoull(n+3, NULL, 16);
     }
     else
     {
-        unsigned char u = n[1];
-        snprintf(temp, 30, "%u", (unsigned)u);
+        v = (unsigned char)n[1];
     }
+    sprintf(temp, "%lu", v);
     return symbol(temp);    
 }
 
@@ -146,7 +148,7 @@ IDENT [a-zA-Z_][0-9a-zA-Z_]*
               }
 
 0[xX][0-9a-fA-F]+  {
-                LVAL(0); bblval.symbol = number(yytext, 16); return T_NUMBER;
+                LVAL(0); bblval.symbol = number(&yytext[2], 16); return T_NUMBER;
               }
 
 0[0-7]*       {

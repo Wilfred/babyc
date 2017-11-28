@@ -5,9 +5,6 @@
  *
  * ---------------------------------------------------------------- */
 
-#include "assembly.h"
-#include "bb.tab.h"
-#include "syntax.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -15,6 +12,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "ast_annotate.h"
+#include "assembly.h"
+#include "bb.tab.h"
+#include "syntax.h"
 
 void print_help() {
     printf("Babyc is a very simple C compiler.\n\n");
@@ -178,8 +180,8 @@ int main(int argc, char *argv[]) {
     }
 
     /* -------------------------------------------------------------------
-      *  AST symbols and types resolution
-      * ------------------------------------------------------------------- */
+     *  AST symbols and types resolution
+     * ------------------------------------------------------------------- */
 
     ast_annotate_syntax_tree(complete_syntax);
 
