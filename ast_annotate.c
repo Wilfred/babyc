@@ -25,51 +25,8 @@ bool ast_optimize = false;
 
 ObjectType ast_annotate_expressions_syntax(Syntax *syntax, ObjectType dest);
 ObjectType ast_annotate_expressions_list(List *list, ObjectType dest);
-ObjectType ast_convert_value_to_type(char *hexvalue) {
-    char *pt = hexvalue + strlen(hexvalue);
-    ObjectType type = O_UINT8;
 
-    if (--pt == hexvalue)
-        return type;
-    if (--pt == hexvalue)
-        return type;
-    type = O_UINT16;
-    if (--pt == hexvalue)
-        return type;
-    if (--pt == hexvalue)
-        return type;
-    type = O_UINT32;
-    if (--pt == hexvalue)
-        return type;
-    if (--pt == hexvalue)
-        return type;
-    if (--pt == hexvalue)
-        return type;
-    if (--pt == hexvalue)
-        return type;
-    type = O_UINT64;
-    if (--pt == hexvalue)
-        return type;
-    if (--pt == hexvalue)
-        return type;
-    if (--pt == hexvalue)
-        return type;
-    if (--pt == hexvalue)
-        return type;
-    if (--pt == hexvalue)
-        return type;
-    if (--pt == hexvalue)
-        return type;
-    if (--pt == hexvalue)
-        return type;
-    if (--pt == hexvalue)
-        return type;
-    type = O_UINT128;
-    return type;
-}
-
-ObjectType ast_annotate_expressions_syntax(Syntax *syntax,
-                                           ObjectType destType) {
+ObjectType ast_annotate_expressions_syntax(Syntax *syntax, ObjectType destType) {
     ObjectType type;
 
     if (syntax->type == BLOCK) {

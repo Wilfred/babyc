@@ -121,7 +121,7 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                         emit_instr_format(
                             out, "movl", "$%d, %%ecx",
                             ast_integer_get_int(&right->immediate->value, 32));
-                        emit_instr(out, "xorl", "%edx, %edx");
+                        emit_instr(out, "cltd", "");
                         emit_instr(out, "idivl", "%ecx");
                         flag = FLAG_NONE;
                     }
@@ -132,7 +132,7 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                     emit_instr_format(
                         out, "movl", "$%d, %%ecx",
                         ast_integer_get_int(&right->immediate->value, 32));
-                    emit_instr(out, "xorl", "%edx, %edx");
+                        emit_instr(out, "cltd", "");
                     emit_instr(out, "idivl", "%ecx");
                     emit_instr(out, "movl", "%edx, %eax");
                     flag = FLAG_NONE;
@@ -294,13 +294,13 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
     } else if (binary_type == DIVISION) {
         emit_instr(out, "movl", "%eax, %ecx");
         emit_instr_format(out, "movl", "%d(%%ebp), %%eax", stack_offset);
-        emit_instr(out, "xorl", "%edx, %edx");
+        emit_instr(out, "cltd", "");
         emit_instr(out, "idivl", "%ecx");
         flag = FLAG_NONE;
     } else if (binary_type == MODULUS) {
         emit_instr(out, "movl", "%eax, %ecx");
         emit_instr_format(out, "movl", "%d(%%ebp), %%eax", stack_offset);
-        emit_instr(out, "xorl", "%edx, %edx");
+        emit_instr(out, "cltd", "");
         emit_instr(out, "idivl", "%ecx");
         emit_instr(out, "movl", "%edx, %eax");
         flag = FLAG_NONE;

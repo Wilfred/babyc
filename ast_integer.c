@@ -64,6 +64,11 @@ void ast_set_object_type(AstInteger *p) {
     } else {
         p->objectType = O_UINT8;
     }
+
+#if 1
+        // TODO for now
+        p->objectType = O_UINT32;
+#endif
 }
 
 void ast_integer_set_str(AstInteger *p, char *str, int radix) {
