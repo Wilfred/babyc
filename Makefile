@@ -32,16 +32,16 @@ $(BUILD_DIR)/bb.tab.c $(BUILD_DIR)/bb.tab.h: babyc_parse.y bb_type.h
 $(BUILD_DIR)/bb.tab.o: $(BUILD_DIR)/bb.tab.c syntax.h
 	$(CC) $(CFLAGS) -I. -c $< -o $@
 
-$(BUILD_DIR)/assembly.o: assembly.c assembly.h
+$(BUILD_DIR)/assembly.o: assembly.c assembly.h syntax.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/assembly_binary_op.o: assembly_binary_op.c assembly.h
+$(BUILD_DIR)/assembly_binary_op.o: assembly_binary_op.c assembly.h syntax.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/assembly_unary_op.o: assembly_unary_op.c assembly.h
+$(BUILD_DIR)/assembly_unary_op.o: assembly_unary_op.c assembly.h syntax.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/assembly_condition_op.o: assembly_condition_op.c assembly.h
+$(BUILD_DIR)/assembly_condition_op.o: assembly_condition_op.c assembly.h syntax.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/ast_integer.o: ast_integer.c syntax.h ast_annotate.h
@@ -50,7 +50,7 @@ $(BUILD_DIR)/ast_integer.o: ast_integer.c syntax.h ast_annotate.h
 $(BUILD_DIR)/ast_annotate.o: ast_annotate.c syntax.h ast_annotate.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/syntax.o: syntax.c list.h
+$(BUILD_DIR)/syntax.o: syntax.c list.h syntax.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/log_error.o: log_error.c log_error.h
@@ -59,7 +59,7 @@ $(BUILD_DIR)/log_error.o: log_error.c log_error.h
 $(BUILD_DIR)/list.o: list.c list.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD_DIR)/main.o: main.c
+$(BUILD_DIR)/main.o: main.c syntax.h ast_annotate.h assembly.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/babyc: $(BUILD_DIR) $(OBJ)
