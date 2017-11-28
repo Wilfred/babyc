@@ -16,7 +16,26 @@
 #include "syntax.h"
 #include "log_error.h"
 #include "list.h"
-#include <x86intrin.h>
+
+static inline char addcarry_uint64(char carry_in, unsigned long long a, unsigned long long b, unsigned long long *r)
+{
+    unsigned long long t = a + b;
+    char carry_out = (t < a);
+    unsigned long long s = t + carry_in;
+    carry_out |= (s < t);
+    *r = s;
+    return carry_out;
+}
+
+static inline char subborrow_uint64(char borrow_in, unsigned long long a, unsigned long long b, unsigned long long *r)
+{
+    unsigned long long t = b - a;
+    char borrow_out = (t > a);
+    unsigned long long s = t - borrow_in;
+    borrow_out |= (s > t);
+    *r = s;
+    return borrow_out;
+}
 
 /* ----------------------------------------------------------------
  * Integer immediate in AST tree
@@ -94,8 +113,8 @@ static uint64_t mul_u64(uint64_t a, uint64_t b, uint64_t *hi) {
     uint64_t t3 = (uint64_t)a_hi * b_lo;
     uint64_t t4 = (uint64_t)a_hi * b_hi;
 
-    t4 += _addcarry_u64(0, lo, t2 << 32, (unsigned long long *)&lo);
-    t4 += _addcarry_u64(0, lo, t3 << 32, (unsigned long long *)&lo);
+    t4 += addcarry_uint64(0, lo, t2 << 32, (unsigned long long *)&lo);
+    t4 += addcarry_uint64(0, lo, t3 << 32, (unsigned long long *)&lo);
     t4 += t2 >> 32;
     t4 += t3 >> 32;
     *hi = t4;
@@ -140,8 +159,8 @@ char *ast_integer_get_str(AstInteger *p, char *str, int len) {
 
 void ast_integer_set_int(AstInteger *p, int i) {
     if (i < 0) {
-        char b = _subborrow_u64(0, i, 0, (unsigned long long *)&p->val[0]);
-        b = _subborrow_u64(b, 0, 0, (unsigned long long *)&p->val[1]);
+        char b = subborrow_uint64(0, i, 0, (unsigned long long *)&p->val[0]);
+        subborrow_uint64(b, 0, 0, (unsigned long long *)&p->val[1]);
     } else {
         p->val[0] = i;
         p->val[1] = 0;
@@ -261,24 +280,24 @@ void ast_integer_binary_operation(AstInteger *res, AstInteger *left,
             res->val[0] = (left->val[0] << s);
         }
     } else if (binary_type == ADDITION) {
-            char c = _addcarry_u64(0, left->val[0], right->val[0],
+            char c = addcarry_uint64(0, left->val[0], right->val[0],
                                    (unsigned long long *)&res->val[0]);
 
-            _addcarry_u64(c, left->val[1], right->val[1],
+            addcarry_uint64(c, left->val[1], right->val[1],
                               (unsigned long long *)&res->val[1]);
     } else if (binary_type == SUBTRACTION) {
-            char b = _subborrow_u64(0, right->val[0], left->val[0],
+            char b = subborrow_uint64(0, right->val[0], left->val[0],
                                     (unsigned long long *)&res->val[0]);
 
-            _subborrow_u64(b, right->val[1], left->val[1],
+            subborrow_uint64(b, right->val[1], left->val[1],
                                (unsigned long long *)&res->val[1]);
     } else if (binary_type == LESS_THAN || binary_type == LARGER_THAN ||
                binary_type == LESS_THAN_OR_EQUAL ||
                binary_type == LARGER_THAN_OR_EQUAL || binary_type == EQUAL ||
                binary_type == NEQUAL) {
         unsigned long long t0, t1;
-        char b = _subborrow_u64(0, right->val[0], left->val[0], &t0);
-            b = _subborrow_u64(b, right->val[1], left->val[1], &t1);
+        char b = subborrow_uint64(0, right->val[0], left->val[0], &t0);
+            b = subborrow_uint64(b, right->val[1], left->val[1], &t1);
 
         bool c = (b != 0);
         bool z = ((t0 | t1) == 0);
@@ -320,8 +339,8 @@ void ast_integer_unary_operation(AstInteger *res, AstInteger *b,
         res->val[0] = ~b->val[0];
         res->val[1] = ~b->val[1];
     } else if (unary_type == ARITHMETIC_NEGATION) {
-        char c = _subborrow_u64(0, b->val[0], 0, (unsigned long long *)&res->val[0]);
-        _subborrow_u64(c, b->val[1], 0, (unsigned long long *)&res->val[1]);
+        char c = subborrow_uint64(0, b->val[0], 0, (unsigned long long *)&res->val[0]);
+        subborrow_uint64(c, b->val[1], 0, (unsigned long long *)&res->val[1]);
     } else if (unary_type == LOGICAL_NEGATION) {
         res->val[0] = ast_integer_is_zero(b);
         res->val[1] = 0;
