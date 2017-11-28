@@ -197,7 +197,7 @@ int ast_integer_get_int(AstInteger *p, int bits) {
         /* negative number is ok */
     }
     else if (p->val[1] || p->val[0] > 0xffffffffull) {
-        log_error("signed integer loss of accuracy when getting %d bits", bits);
+//        log_error("signed integer loss of accuracy when getting %d bits", bits);
     }
     return ret;
 }

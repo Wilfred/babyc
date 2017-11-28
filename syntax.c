@@ -716,6 +716,10 @@ const char *syntax_type_name(Syntax *syntax) {
             return "DIVISION";
         } else if (syntax->binary_expression->binary_type == MODULUS) {
             return "MODULUS";
+        } else if (syntax->binary_expression->binary_type == LSHIFT) {
+            return "LSHIFT";
+        } else if (syntax->binary_expression->binary_type == RSHIFT) {
+            return "RSHIFT";
         } else if (syntax->binary_expression->binary_type == OR) {
             return "BITWISE OR";
         } else if (syntax->binary_expression->binary_type == AND) {
@@ -728,13 +732,11 @@ const char *syntax_type_name(Syntax *syntax) {
             return "LOGICAL AND";
         } else if (syntax->binary_expression->binary_type == LESS_THAN) {
             return "LESS THAN";
-        } else if (syntax->binary_expression->binary_type ==
-                   LESS_THAN_OR_EQUAL) {
+        } else if (syntax->binary_expression->binary_type == LESS_THAN_OR_EQUAL) {
             return "LESS THAN OR EQUAL";
         } else if (syntax->binary_expression->binary_type == LARGER_THAN) {
             return "LARGER THAN";
-        } else if (syntax->binary_expression->binary_type ==
-                   LARGER_THAN_OR_EQUAL) {
+        } else if (syntax->binary_expression->binary_type == LARGER_THAN_OR_EQUAL) {
             return "LARGER THAN OR EQUAL";
         } else if (syntax->binary_expression->binary_type == EQUAL) {
             return "EQUAL";
