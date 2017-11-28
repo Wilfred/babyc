@@ -30,7 +30,7 @@ static inline char addcarry_uint64(char carry_in, unsigned long long a, unsigned
 static inline char subborrow_uint64(char borrow_in, unsigned long long a, unsigned long long b, unsigned long long *r)
 {
     unsigned long long t = b - a;
-    char borrow_out = (t > a);
+    char borrow_out = (t > b);
     unsigned long long s = t - borrow_in;
     borrow_out |= (s > t);
     *r = s;
