@@ -73,10 +73,16 @@ void ast_set_object_type(AstInteger *p) {
 
 void ast_integer_set_str(AstInteger *p, char *str, int radix) {
     char c, *s = str;
+    char upper_limit = radix > 10 ? 'A' + radix - 10 : 'A';
+    char lower_limit = radix > 10 ? 'a' + radix - 10 : 'a';
+    char digit_limit = radix > 10 ? '0' + 10 : '0' + radix;
     uint64_t mask = (1ull << 56) - 1;
     uint64_t val0 = 0, val1 = 0, val2 = 0;
 
     while ((c = *s++) != 0) {
+        if (!((c >= 'a' && c < lower_limit) || (c >= 'A' && c < upper_limit) || (c >= '0' && c < digit_limit)))
+            break;
+
         val0 *= radix;
         val1 *= radix;
         val2 *= radix;
