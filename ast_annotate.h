@@ -17,9 +17,9 @@ void ast_integer_set_bool(AstInteger *p, bool b);
 void ast_integer_set_int(AstInteger *p, int i);
 
 char *ast_integer_get_str(AstInteger *p, char *str, int len);
-int ast_integer_get_int(AstInteger *p, int bits);
-unsigned int ast_integer_get_uint(AstInteger *p, int bits);
-unsigned long long ast_integer_get_unsigned_long_long(AstInteger *p, int bits);
+int ast_integer_get_int(AstInteger *p);
+unsigned int ast_integer_get_uint(AstInteger *p);
+unsigned long long ast_integer_get_unsigned_long_long(AstInteger *p);
 
 void ast_integer_binary_operation(AstInteger *p, AstInteger *a, AstInteger *b,
                                   BinaryExpressionType type);

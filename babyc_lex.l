@@ -143,15 +143,15 @@ IDENT [a-zA-Z_][0-9a-zA-Z_]*
 ","           { LVAL(0); return ','; }
 ":"           { LVAL(0); return ':'; }
 
-[1-9][0-9]*(u|ul|ull)?   {
+[1-9][0-9]*(u|ul|ull|l|ll)?   {
                 LVAL(0); bblval.symbol = number(yytext, 10); return T_NUMBER;
               }
 
-0[xX][0-9a-fA-F]+(u|ul|ull)?  {
+0[xX][0-9a-fA-F]+(u|ul|ull|l|ll)?  {
                 LVAL(0); bblval.symbol = number(&yytext[2], 16); return T_NUMBER;
               }
 
-0[0-7]*(u|ul|ull)?   {
+0[0-7]*(u|ul|ull|l|ll)?   {
                 LVAL(0); bblval.symbol = number(yytext, 8); return T_NUMBER;
               }
 

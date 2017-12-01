@@ -240,6 +240,7 @@ Syntax *read_pointer_new(Syntax *address, Syntax *offset) {
 
     pointer->address = address;
     pointer->offset = offset;
+    pointer->objectType = O_UNDEF;
 
     Syntax *syntax = malloc(sizeof(Syntax));
 
@@ -255,6 +256,7 @@ Syntax *write_pointer_new(Syntax *address, Syntax *offset, Syntax *expression) {
     pointer->address = address;
     pointer->offset = offset;
     pointer->expression = expression;
+    pointer->objectType = O_UNDEF;
 
     Syntax *syntax = malloc(sizeof(Syntax));
 
@@ -270,6 +272,7 @@ static Syntax *generic_unary_new(Syntax *expression,
 
     unary_syntax->unary_type = unary_type;
     unary_syntax->expression = expression;
+    unary_syntax->objectType = O_UNDEF;
 
     Syntax *syntax = malloc(sizeof(Syntax));
 
@@ -280,12 +283,13 @@ static Syntax *generic_unary_new(Syntax *expression,
 }
 
 static Syntax *generic_binary_new(Syntax *left, Syntax *right,
-                                  UnaryExpressionType unary_type) {
+                                  BinaryExpressionType binary_type) {
     BinaryExpression *binary_syntax = malloc(sizeof(BinaryExpression));
 
-    binary_syntax->binary_type = unary_type;
+    binary_syntax->binary_type = binary_type;
     binary_syntax->left = left;
     binary_syntax->right = right;
+    binary_syntax->objectType = O_UNDEF;
 
     Syntax *syntax = malloc(sizeof(Syntax));
 
@@ -384,6 +388,7 @@ Syntax *function_call_new(char *name, List *args) {
 
     function_call->name = name;
     function_call->arguments = args;
+    function_call->objectType = O_UNDEF;
 
     Syntax *syntax = malloc(sizeof(Syntax));
 
@@ -397,6 +402,7 @@ Syntax *function_argument_new(Syntax *expression) {
     FunctionArgument *arg = malloc(sizeof(FunctionArgument));
 
     arg->expression = expression;
+    arg->objectType = O_UNDEF;
 
     Syntax *syntax = malloc(sizeof(Syntax));
 
@@ -487,6 +493,12 @@ Syntax *block_new(List *statements) {
     syntax->type = BLOCK;
     syntax->block = block;
 
+    return syntax;
+}
+
+Syntax *cast_new(ObjectType type, Syntax *expression) {
+    Syntax *syntax = generic_unary_new(expression, CAST);
+    syntax->unary_expression->objectType = type;
     return syntax;
 }
 
@@ -637,6 +649,7 @@ void syntax_free(Syntax *syntax) {
 
 const char *object_type_name(ObjectType type) {
     if (type & O_ADDRESS) {
+        type &= ~O_ADDRESS;
         if (type == O_UINT128)
             return "uint128 *";
         if (type == O_UINT64)
@@ -703,6 +716,8 @@ const char *syntax_type_name(Syntax *syntax) {
             return "UNARY ARITHMETIC NEG";
         } else if (syntax->unary_expression->unary_type == LOGICAL_NEGATION) {
             return "UNARY LOGICAL NEG";
+        } else if (syntax->unary_expression->unary_type == CAST) {
+            return "UNARY CAST";
         } else
             return "UNARY OP ???";
     } else if (syntax->type == BINARY_OPERATOR) {
@@ -732,11 +747,13 @@ const char *syntax_type_name(Syntax *syntax) {
             return "LOGICAL AND";
         } else if (syntax->binary_expression->binary_type == LESS_THAN) {
             return "LESS THAN";
-        } else if (syntax->binary_expression->binary_type == LESS_THAN_OR_EQUAL) {
+        } else if (syntax->binary_expression->binary_type ==
+                   LESS_THAN_OR_EQUAL) {
             return "LESS THAN OR EQUAL";
         } else if (syntax->binary_expression->binary_type == LARGER_THAN) {
             return "LARGER THAN";
-        } else if (syntax->binary_expression->binary_type == LARGER_THAN_OR_EQUAL) {
+        } else if (syntax->binary_expression->binary_type ==
+                   LARGER_THAN_OR_EQUAL) {
             return "LARGER THAN OR EQUAL";
         } else if (syntax->binary_expression->binary_type == EQUAL) {
             return "EQUAL";
@@ -794,8 +811,8 @@ void print_syntax_indented(Syntax *syntax, int indent) {
     }
 
     if (syntax->type == IMMEDIATE) {
-        printf("%s '%llu'\n", str, ast_integer_get_unsigned_long_long(
-                                       &syntax->immediate->value, 64));
+        printf("%s '%llu'\n", str,
+               ast_integer_get_unsigned_long_long(&syntax->immediate->value));
     } else if (syntax->type == VARIABLE) {
         printf("%s '%s' %s\n", str, syntax->variable->name,
                object_type_name(syntax->variable->objectType));
@@ -880,7 +897,8 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         print_syntax_indented(syntax->if_statement->if_else, indent + 4);
 
     } else if (syntax->type == RETURN_STATEMENT) {
-        printf("%s %s\n", str, object_type_name(syntax->return_statement->objectType));
+        printf("%s %s\n", str,
+               object_type_name(syntax->return_statement->objectType));
         print_syntax_indented(syntax->return_statement->expression, indent + 4);
     } else if (syntax->type == ADDRESS) {
         printf("%s\n", str);
@@ -903,7 +921,6 @@ void print_syntax_indented(Syntax *syntax, int indent) {
         for (int i = 0; i < list_length(statements); i++) {
             print_syntax_indented(list_get(statements, i), indent + 4);
         }
-
     } else if (syntax->type == NOP_STATEMENT) {
         printf("%s\n", str);
 

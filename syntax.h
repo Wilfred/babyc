@@ -41,6 +41,7 @@ typedef enum {
     ARITHMETIC_NEGATION,
     BITWISE_NEGATION,
     LOGICAL_NEGATION,
+    CAST,
 } UnaryExpressionType;
 
 typedef enum {
@@ -75,20 +76,21 @@ typedef enum {
 typedef enum {
     O_UNDEF = 0,
     O_UNSIGNED = 0x001,
-    O_ADDRESS = 0x200,
-    O_VOID = 0x0100,
+    O_ADDRESS = 0x8000,
+    O_VOID = 0x04000,
+    O_INT1 = 0x0001,
     O_UINT1 = 0x0003,
     O_BOOL = 0x0003,
-    O_INT8 = 0x0004,
-    O_INT16 = 0x0008,
-    O_INT32 = 0x0010,
-    O_INT64 = 0x0020,
-    O_INT128 = 0x0040,
-    O_UINT8 = 0x0005,
-    O_UINT16 = 0x0009,
-    O_UINT32 = 0x0011,
-    O_UINT64 = 0x0021,
-    O_UINT128 = 0x0041,
+    O_INT8 = 0x0010,
+    O_INT16 = 0x040,
+    O_INT32 = 0x0100,
+    O_INT64 = 0x0400,
+    O_INT128 = 0x1000,
+    O_UINT8 = 0x0011,
+    O_UINT16 = 0x0041,
+    O_UINT32 = 0x0101,
+    O_UINT64 = 0x0401,
+    O_UINT128 = 0x1001,
 } ObjectType;
 
 typedef struct Variable {
@@ -315,6 +317,8 @@ Syntax *function_definition_new(char *name, ObjectType type, List *parms,
                                 List *labels, Syntax *block);
 
 Syntax *function_parameter_new(Variable *v);
+
+Syntax *cast_new(ObjectType type, Syntax *expression);
 
 Syntax *assignment_new(Variable *v, Syntax *expression);
 

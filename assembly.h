@@ -40,6 +40,9 @@ ProcessorFlags write_unary_syntax(FILE *out, UnaryExpressionType unary_type,
 ProcessorFlags write_condition_syntax(FILE *out, Syntax *expression,
                                       Context *ctx);
 
+ProcessorFlags write_top_condition_syntax(FILE *out, Syntax *expression,
+                                          Context *ctx);
+
 void emit_instr_format(FILE *out, char *instr, char *operands_format, ...);
 
 void emit_instr(FILE *out, char *instr, char *operands);

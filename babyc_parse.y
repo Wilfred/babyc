@@ -77,6 +77,7 @@ Label *search_existing_label(char *name)
  
 static ObjectType current_object_type = O_INT32;
 static ObjectType current_function_type = O_INT32;
+static ObjectType current_cast_type = O_INT32;
 static ObjectType saved_object_type = O_INT32; 
 %}
 
@@ -708,6 +709,13 @@ expression:
         {
             list_push(pscope->parser_stack, object_type_size_syntax(current_object_type));
             current_object_type = saved_object_type;
+        }
+        |
+        '(' object_type { current_cast_type = current_object_type;  current_object_type = saved_object_type; } ')' expression
+        {
+            Syntax *expression = list_pop(pscope->parser_stack);
+            list_push(pscope->parser_stack, cast_new(current_cast_type, expression));
+           
         }
         |
         T_SIZEOF '(' T_IDENTIFIER ')'

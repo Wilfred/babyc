@@ -48,3 +48,18 @@ ProcessorFlags write_condition_syntax(FILE *out, Syntax *condition,
     write_syntax(out, condition, ctx);
     return flag;
 }
+
+ProcessorFlags write_top_condition_syntax(FILE *out, Syntax *condition,
+                                          Context *ctx) {
+    ProcessorFlags flag = FLAG_NONE;
+
+    if (peephole_optimize) {
+#if 0
+// TODO analyse first binary operator
+// generate simplified code , because only Z flag is needed and eax is at end of liverange
+#endif
+    }
+
+    write_syntax(out, condition, ctx);
+    return flag;
+}

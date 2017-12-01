@@ -97,7 +97,7 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                     flag = FLAG_BOOL_VALID;
                 } else {
                     emit_instr_format(out, "movl", "$%d, %%eax",
-                                      ast_integer_get_int(&value, 32));
+                                      ast_integer_get_int(&value));
                     flag = FLAG_NONE;
                 }
             } else {
@@ -110,7 +110,7 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                     } else if (!ast_integer_is_one(&right->immediate->value)) {
                         emit_instr_format(
                             out, "imull", "$%d, %%eax",
-                            ast_integer_get_int(&right->immediate->value, 32));
+                            ast_integer_get_int(&right->immediate->value));
                         flag = FLAG_NONE;
                     }
                 } else if (binary_type == DIVISION) {
@@ -120,7 +120,7 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                     if (!ast_integer_is_one(&right->immediate->value)) {
                         emit_instr_format(
                             out, "movl", "$%d, %%ecx",
-                            ast_integer_get_int(&right->immediate->value, 32));
+                            ast_integer_get_int(&right->immediate->value));
                         emit_instr(out, "cltd", "");
                         emit_instr(out, "idivl", "%ecx");
                         flag = FLAG_NONE;
@@ -131,21 +131,21 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                     }
                     emit_instr_format(
                         out, "movl", "$%d, %%ecx",
-                        ast_integer_get_int(&right->immediate->value, 32));
-                        emit_instr(out, "cltd", "");
+                        ast_integer_get_int(&right->immediate->value));
+                    emit_instr(out, "cltd", "");
                     emit_instr(out, "idivl", "%ecx");
                     emit_instr(out, "movl", "%edx, %eax");
                     flag = FLAG_NONE;
                 } else if (binary_type == OR) {
                     unsigned value =
-                        ast_integer_get_uint(&right->immediate->value, 32);
+                        ast_integer_get_uint(&right->immediate->value);
                     if (value != 0) {
                         emit_instr_format(out, "orl", "$%u, %%eax", value);
                         flag = FLAG_Z_VALID;
                     }
                 } else if (binary_type == AND) {
                     unsigned value =
-                        ast_integer_get_uint(&right->immediate->value, 32);
+                        ast_integer_get_uint(&right->immediate->value);
                     if (value == 0) {
                         emit_instr(out, "xorl", "%eax, %eax");
                         flag = FLAG_NZ_BOOL;
@@ -158,14 +158,14 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                     }
                 } else if (binary_type == XOR) {
                     unsigned value =
-                        ast_integer_get_uint(&right->immediate->value, 32);
+                        ast_integer_get_uint(&right->immediate->value);
                     if (value != 0) {
                         emit_instr_format(out, "xorl", "$%u, %%eax", value);
                         flag = FLAG_Z_VALID;
                     }
                 } else if (binary_type == RSHIFT) {
                     unsigned value =
-                        ast_integer_get_uint(&right->immediate->value, 32);
+                        ast_integer_get_uint(&right->immediate->value);
                     if (value <= 31) {
                         if (value) {
                             emit_instr_format(out, "sarl", "$%d, %%eax", value);
@@ -177,7 +177,7 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                     }
                 } else if (binary_type == LSHIFT) {
                     unsigned value =
-                        ast_integer_get_uint(&right->immediate->value, 32);
+                        ast_integer_get_uint(&right->immediate->value);
                     if (value <= 31) {
                         if (value) {
                             emit_instr_format(out, "sall", "$%d, %%eax", value);
@@ -189,14 +189,14 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                     }
                 } else if (binary_type == ADDITION) {
                     unsigned value =
-                        ast_integer_get_uint(&right->immediate->value, 32);
+                        ast_integer_get_uint(&right->immediate->value);
                     if (value) {
                         emit_instr_format(out, "addl", "$%d, %%eax", value);
                         flag = FLAG_Z_VALID;
                     }
                 } else if (binary_type == SUBTRACTION) {
                     unsigned value =
-                        ast_integer_get_uint(&right->immediate->value, 32);
+                        ast_integer_get_uint(&right->immediate->value);
                     if (value) {
                         emit_instr_format(out, "subl", "$%d, %%eax", value);
                         flag = FLAG_Z_VALID;
@@ -209,7 +209,7 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                     // To compare x < y in AT&T syntax, we write CMP y,x.
                     // http://stackoverflow.com/q/25493255/509706
                     unsigned value =
-                        ast_integer_get_uint(&right->immediate->value, 32);
+                        ast_integer_get_uint(&right->immediate->value);
                     emit_instr_format(out, "cmpl", "$%d, %%eax", value);
                     // Set the low byte of %eax to 0 or 1 depending on condition
                     // output
@@ -246,7 +246,7 @@ ProcessorFlags write_binary_syntax(FILE *out, BinaryExpressionType binary_type,
                 } else if (binary_type == LOGICAL_OR ||
                            binary_type == LOGICAL_AND) {
                     unsigned value =
-                        ast_integer_get_uint(&right->immediate->value, 32);
+                        ast_integer_get_uint(&right->immediate->value);
                     value = !!value;
                     if (flag == FLAG_Z_VALID) {
                         emit_instr(out, "setnz", "%al");

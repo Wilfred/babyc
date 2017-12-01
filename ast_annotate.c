@@ -23,10 +23,12 @@ bool ast_optimize = false;
  * Get the right type on intermediate AST values
  * ---------------------------------------------------------------- */
 
-ObjectType ast_annotate_expressions_syntax(Syntax *syntax, ObjectType dest);
-ObjectType ast_annotate_expressions_list(List *list, ObjectType dest);
+static ObjectType ast_annotate_expressions_syntax(Syntax *syntax,
+                                                  ObjectType dest);
+static ObjectType ast_annotate_expressions_list(List *list, ObjectType dest);
 
-ObjectType ast_annotate_expressions_syntax(Syntax *syntax, ObjectType destType) {
+static ObjectType ast_annotate_expressions_syntax(Syntax *syntax,
+                                                  ObjectType destType) {
     ObjectType type;
 
     if (syntax->type == BLOCK) {
@@ -37,6 +39,8 @@ ObjectType ast_annotate_expressions_syntax(Syntax *syntax, ObjectType destType) 
             syntax->unary_expression->expression, destType);
         if (syntax->unary_expression->objectType == O_UNDEF) {
             syntax->unary_expression->objectType = type;
+        } else {
+            type = syntax->unary_expression->objectType;
         }
     } else if (syntax->type == BINARY_OPERATOR) {
         ObjectType r = ast_annotate_expressions_syntax(
@@ -47,6 +51,8 @@ ObjectType ast_annotate_expressions_syntax(Syntax *syntax, ObjectType destType) 
         type = (r > l) ? r : l;
         if (syntax->binary_expression->objectType == O_UNDEF) {
             syntax->binary_expression->objectType = type;
+        } else {
+            type = syntax->binary_expression->objectType;
         }
     } else if (syntax->type == FUNCTION_ARGUMENT) {
         type = syntax->function_argument->objectType;
@@ -91,7 +97,8 @@ ObjectType ast_annotate_expressions_syntax(Syntax *syntax, ObjectType destType) 
         ast_annotate_expressions_syntax(syntax->assignment->expression, type);
     } else if (syntax->type == RETURN_STATEMENT) {
         type = syntax->return_statement->objectType;
-        ast_annotate_expressions_syntax(syntax->return_statement->expression, type);
+        ast_annotate_expressions_syntax(syntax->return_statement->expression,
+                                        type);
     } else if (syntax->type == ASSIGNMENT_STATIC) {
         type = syntax->assignment->variable->objectType;
         ast_annotate_expressions_syntax(syntax->assignment->expression, type);
@@ -102,12 +109,13 @@ ObjectType ast_annotate_expressions_syntax(Syntax *syntax, ObjectType destType) 
         type = ast_annotate_expressions_syntax(syntax->address->identifier,
                                                destType);
     } else if (syntax->type == READ_ADDRESS) {
+        ast_annotate_expressions_syntax(syntax->read_address->offset, O_INT32);
         type = ast_annotate_expressions_syntax(syntax->read_address->address,
                                                destType);
     } else if (syntax->type == WRITE_ADDRESS) {
-        type = ast_annotate_expressions_syntax(syntax->write_address->address,
-                                               O_UNDEF);
         ast_annotate_expressions_syntax(syntax->write_address->offset, O_INT32);
+        type = ast_annotate_expressions_syntax(syntax->write_address->address,
+                                               destType);
         type = ast_annotate_expressions_syntax(
             syntax->write_address->expression, type);
     } else if (syntax->type == IMMEDIATE) {
@@ -118,7 +126,8 @@ ObjectType ast_annotate_expressions_syntax(Syntax *syntax, ObjectType destType) 
     return type;
 }
 
-ObjectType ast_annotate_expressions_list(List *list, ObjectType destType) {
+static ObjectType ast_annotate_expressions_list(List *list,
+                                                ObjectType destType) {
 
     for (int i = 0; i < list_length(list); i++) {
         ast_annotate_expressions_syntax(list_get(list, i), destType);
@@ -129,10 +138,11 @@ ObjectType ast_annotate_expressions_list(List *list, ObjectType destType) {
 /* ----------------------------------------------------------------
  * Resolve function calls and function parameters
  * ---------------------------------------------------------------- */
-void ast_annotate_function_calls_syntax(Syntax *syntax, Syntax *root);
-void ast_annotate_function_calls_list(List *list, Syntax *root);
+static void ast_annotate_function_calls_syntax(Syntax *syntax, Syntax *root);
+static void ast_annotate_function_calls_list(List *list, Syntax *root);
 
-void ast_link_function_definition(FunctionCall *function_call, Syntax *root) {
+static void ast_link_function_definition(FunctionCall *function_call,
+                                         Syntax *root) {
     if (root->type != BLOCK) {
         log_error("Unvalid AST root");
     }
@@ -140,6 +150,15 @@ void ast_link_function_definition(FunctionCall *function_call, Syntax *root) {
     int alen = list_length(function_call->arguments);
     List *top = root->block->statements;
     int jlen = list_length(top);
+    if (!strcmp(name, "_alloca")) {
+        function_call->objectType = O_VOID | O_ADDRESS;
+        for (int i = 0; i < alen; i++) {
+            Syntax *sa = list_get(function_call->arguments, i);
+            FunctionArgument *a = sa->function_argument;
+            a->objectType = O_UINT32;
+        }
+        return;
+    }
 
     for (int j = 0; j < jlen; j++) {
         Syntax *s = list_get(top, j);
@@ -168,7 +187,7 @@ void ast_link_function_definition(FunctionCall *function_call, Syntax *root) {
     }
 }
 
-void ast_annotate_function_calls_syntax(Syntax *syntax, Syntax *root) {
+static void ast_annotate_function_calls_syntax(Syntax *syntax, Syntax *root) {
     if (syntax->type == BLOCK) {
         ast_annotate_function_calls_list(syntax->block->statements, root);
     } else if (syntax->type == UNARY_OPERATOR) {
@@ -230,15 +249,22 @@ void ast_annotate_function_calls_syntax(Syntax *syntax, Syntax *root) {
     }
 }
 
-void ast_annotate_function_calls_list(List *list, Syntax *root) {
+static void ast_annotate_function_calls_list(List *list, Syntax *root) {
     for (int i = 0; i < list_length(list); i++) {
         ast_annotate_function_calls_syntax(list_get(list, i), root);
     }
 }
 
+/* ----------------------------------------------------------------
+ * AST rework
+ * ---------------------------------------------------------------- */
 void ast_annotate_syntax_tree(Syntax *syntax) {
+    /* these are not optimizations, this is needed for correctness */
     ast_annotate_function_calls_syntax(syntax, syntax);
-
     ast_annotate_expressions_syntax(syntax, O_UNDEF);
-}
 
+    // TODO optimizations
+    // todo propagate constants
+    // todo simplify zero idiom
+    // todo remove idiotic and dead code
+}

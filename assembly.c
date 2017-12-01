@@ -254,7 +254,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
                            unary_syntax->expression, ctx);
     } else if (syntax->type == IMMEDIATE) {
         emit_instr_format(out, "movl", "$%d, %%eax",
-                          ast_integer_get_int(&syntax->immediate->value, 31));
+                          ast_integer_get_int(&syntax->immediate->value));
     } else if (syntax->type == VARIABLE) {
         emit_instr_format(out, "movl", "%s, %%eax",
                           get_var_name(syntax->variable));
@@ -265,60 +265,62 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         write_syntax(out, syntax->read_address->address, ctx);
         if (syntax->read_address->offset->type == IMMEDIATE) {
             int value = ast_integer_get_int(
-                &syntax->read_address->offset->immediate->value, 27);
-
-            emit_instr_format(out, "movl", "%d(%%eax), %%eax",
-                              elemLength * value);
+                &syntax->read_address->offset->immediate->value);
+            value *= elemLength;
+            if (value != 0) {
+                emit_instr_format(out, "movl", "%d(%%eax), %%eax", value);
+            } else {
+                emit_instr(out, "movl", "(%eax), %eax");
+            }
         } else {
             emit_instr(out, "pushl", "%eax");
             write_syntax(out, syntax->read_address->offset, ctx);
             emit_instr(out, "popl", "%ecx");
-            emit_instr_format(out, "leal", "(%%ecx,%%eax,%d), %%eax",
+            emit_instr_format(out, "movl", "(%%ecx,%%eax,%d), %%eax",
                               elemLength);
-            emit_instr(out, "movl", "(%eax), %eax");
         }
     } else if (syntax->type == WRITE_ADDRESS) {
-        int value = 0;
+        int elemLength =
+            object_type_size_value(syntax->write_address->objectType);
 
         write_syntax(out, syntax->write_address->address, ctx);
-        emit_instr(out, "pushl", "%eax");
         if (syntax->write_address->offset->type == IMMEDIATE) {
-            value = ast_integer_get_int(
-                &syntax->write_address->offset->immediate->value, 27);
+            int value = ast_integer_get_int(
+                &syntax->write_address->offset->immediate->value);
+            value *= elemLength;
+            if (value != 0) {
+                emit_instr_format(out, "leal", "%d(%%eax), %%eax", value);
+            }
+            emit_instr(out, "pushl", "%eax");
         } else {
+            emit_instr(out, "pushl", "%eax");
             write_syntax(out, syntax->write_address->offset, ctx);
             emit_instr(out, "popl", "%ecx");
-            emit_instr_format(
-                out, "leal", "(%%ecx,%%eax,%d), %%eax",
-                object_type_size_value(syntax->write_address->objectType));
+            emit_instr_format(out, "leal", "(%%ecx,%%eax,%d), %%eax",
+                              elemLength);
             emit_instr(out, "pushl", "%eax");
         }
         write_syntax(out, syntax->write_address->expression, ctx);
         emit_instr(out, "popl", "%ecx");
-        emit_instr_format(
-            out, "movl", "%%eax, %d(%%ecx)",
-            object_type_size_value(syntax->write_address->objectType) * value);
+        emit_instr(out, "movl", "%eax, (%ecx)");
     } else if (syntax->type == ADDRESS) {
+        int elemLength = object_type_size_value(
+            syntax->address->identifier->variable->objectType);
+
         emit_var_address(out, syntax->address->identifier->variable);
         if (syntax->address->offset->type == IMMEDIATE) {
-            int value = ast_integer_get_int(
-                &syntax->address->offset->immediate->value, 27);
-
+            int value =
+                ast_integer_get_int(&syntax->address->offset->immediate->value);
+            value *= elemLength;
             if (value) {
-                emit_instr_format(out, "movl", "$%d, %%ecx", value);
-                emit_instr_format(
-                    out, "leal", "(%%eax,%%ecx,%d), %%eax",
-                    object_type_size_value(
-                        syntax->address->identifier->variable->objectType));
+                emit_instr_format(out, "leal", "%d(%%eax), %%eax", value);
             }
         } else {
             emit_instr(out, "pushl", "%eax");
             write_syntax(out, syntax->address->offset, ctx);
             emit_instr(out, "popl", "%ecx");
-            emit_instr_format(
-                out, "leal", "(%%ecx,%%eax,%d), %%eax",
-                object_type_size_value(
-                    syntax->address->identifier->variable->objectType));
+            emit_instr_format(out, "leal", "(%%ecx,%%eax,%d), %%eax",
+                              elemLength);
         }
     } else if (syntax->type == BINARY_OPERATOR) {
         BinaryExpression *binary_syntax = syntax->binary_expression;
@@ -356,7 +358,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
         char *else_label = fresh_local_label("if_else", ctx);
         bool else_empty = empty_syntax(if_statement->if_else);
         ProcessorFlags flags =
-            write_condition_syntax(out, if_statement->condition, ctx);
+            write_top_condition_syntax(out, if_statement->condition, ctx);
 
         if (flags == FLAG_Z_VALID) {
             /* last evaluated to 0 and Z=1 */
@@ -392,7 +394,7 @@ void write_syntax(FILE *out, Syntax *syntax, Context *ctx) {
 
         emit_label(out, start_label);
         ProcessorFlags flags =
-            write_condition_syntax(out, while_statement->condition, ctx);
+            write_top_condition_syntax(out, while_statement->condition, ctx);
 
         if (flags == FLAG_Z_VALID) {
             /* last evaluated to 0 and Z=1 */
@@ -539,17 +541,17 @@ int update_dynamic_syntax(Syntax *syntax) {
     } else if (syntax->type == ADDRESS) {
         int e = update_dynamic_syntax(syntax->address->identifier);
         int a = update_dynamic_syntax(syntax->address->offset);
-
         return (e > a) ? e : a;
     } else if (syntax->type == READ_ADDRESS) {
-        return update_dynamic_syntax(syntax->read_address->address);
+        int a = update_dynamic_syntax(syntax->read_address->address);
+        int o = update_dynamic_syntax(syntax->read_address->offset);
+        return (a > o) ? a : o;
     } else if (syntax->type == WRITE_ADDRESS) {
         int a = update_dynamic_syntax(syntax->write_address->address);
         int o = update_dynamic_syntax(syntax->write_address->offset);
         int e = update_dynamic_syntax(syntax->write_address->expression);
         int r = (a > o) ? a : o;
-
-        return object_type_size_value(O_ADDRESS) + ((e > r) ? e : r);
+        return ((e > r) ? e : r);
     } else if (syntax->type == IMMEDIATE) {
         return 0;
     }

@@ -47,7 +47,7 @@ ProcessorFlags write_unary_syntax(FILE *out, UnaryExpressionType unary_type,
                 emit_instr(out, "movl", "$1, %eax");
                 flag = FLAG_BOOL_VALID;
             } else {
-                unsigned v = ast_integer_get_uint(&value, 32);
+                unsigned v = ast_integer_get_uint(&value);
                 emit_instr_format(out, "movl", "$%u, %%eax", v);
             }
             return flag;
@@ -56,7 +56,9 @@ ProcessorFlags write_unary_syntax(FILE *out, UnaryExpressionType unary_type,
 
     flag = write_condition_syntax(out, expression, ctx);
 
-    if (unary_type == BITWISE_NEGATION) {
+    if (unary_type == CAST) {
+        // TODO
+    } else if (unary_type == BITWISE_NEGATION) {
         emit_instr(out, "notl", "%eax");
         flag = FLAG_Z_VALID;
     } else if (unary_type == ARITHMETIC_NEGATION) {
