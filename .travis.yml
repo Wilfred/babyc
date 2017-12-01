@@ -1,7 +1,8 @@
 language: c
 script:
-  # Babyc works best on 32-bit kernels, so check what we're running.
+  # Babyc run on linux 32 bits (i386) or 64 bits (x86-64) kernels.
   - "uname -a"
+  # Babyc generates 32 bits (ELF i386) code.
   # We deliberately separate building babyc from building the tests,
   # to make it clearer where warnings are coming from.
   - "make"

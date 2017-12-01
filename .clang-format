@@ -1,4 +1,10 @@
 ---
-IndentWidth:     4
+IndentWidth: 4
+UseTab: Never
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: false
+SortIncludes: false
+ContinuationIndentWidth: 4
 ...
 

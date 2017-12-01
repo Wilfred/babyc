@@ -1,1 +1,4 @@
-int main() { return 3 * 4; }
+/* BabyC a toy compiler */
+int main() {
+    return 3 * 4;
+}

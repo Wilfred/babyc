@@ -1,62 +1,197 @@
 
-D			[0-9]
-L			[a-zA-Z_]
+%option prefix="bb"
 
 %{
-#define YYSTYPE char*
-#include "y.tab.h"
 
-void comment();
+/* ----------------------------------------------------------------
+ * 
+ * BabyC Toy compiler for educational purposes
+ * 
+ * ---------------------------------------------------------------- */
 
-void yyerror();
+#include "bb_type.h"
+#include "bb.tab.h"
+#include "log_error.h"
+#include "ast_annotate.h"
+
+static char **raw_symbol_table = NULL;
+static int raw_symbol_size = 0;
+
+static char *symbol(char *s)
+{
+   for (int i = 0; i < raw_symbol_size; i++)
+   { 
+      if (!strcmp(s, raw_symbol_table[i]))
+      {
+         return raw_symbol_table[i];
+      }
+   }
+   raw_symbol_table = realloc(raw_symbol_table, ++raw_symbol_size * sizeof (char *));
+   return (raw_symbol_table[raw_symbol_size - 1] = strdup(s));
+}
+
+static char *number(char *n, int radix)
+{
+    AstInteger s;
+    char str[100];
+    
+    ast_integer_set_str(&s, n, radix);
+    return symbol(ast_integer_get_str(&s, str, 100));
+}
+
+static char *char_escape(char *n, int radix)
+{
+    char temp[10];
+    unsigned long v = 0;
+    
+    if (radix == 8)
+    {
+        v = strtoul(n+2, NULL, 8);
+    }
+    else if (radix == 16)
+    {
+        v = strtoull(n+3, NULL, 16);
+    }
+    else
+    {
+        v = (unsigned char)n[1];
+    }
+    sprintf(temp, "%lu", v);
+    return symbol(temp);    
+}
+
+static int line_number = 1;
+
+#define LVAL(s) do { bblval.line = line_number; if (s) bblval.symbol = s; } while (0)
+
 %}
 
+%option nounput
+%option noinput
+%option noyywrap
+
+%x comment
+%x include
+
+IDENT [a-zA-Z_][0-9a-zA-Z_]*
 
 %%
-"#include"    { return INCLUDE; }
-#[^\n]*       { /* Discard preprocessor comments. */ }
-"//"[^\n]*    { /* Discard c99 comments. */ }
-"/*"          { comment(); }
-[ \t\n]+      { /* Ignore whitespace */ }
 
-"{"           { return OPEN_BRACE; }
-"}"           { return CLOSE_BRACE; }
-"("           { return '('; }
-")"           { return ')'; }
-"~"           { return '~'; }
-"!"           { return '!'; }
-"+"           { return '+'; }
-"-"           { return '-'; }
-"*"           { return '*'; }
-"<"           { return '<'; }
-"<="          { return LESS_OR_EQUAL; }
-"="           { return '='; }
-";"           { return ';'; }
-","           { return ','; }
-[0-9]+        {
-                /* TODO: check numbers are in the legal range, and don't start with 0. */
-                yylval = strdup(yytext); return NUMBER;
+^"#include"  { BEGIN(include); }
+<include>[ \t]+ { }
+<include>"<"[0-9_a-z.]+ { }
+<include>">" { BEGIN(0); }
+
+^"#"[^\n]*                 { /* Discard preprocessor comments. */ }
+
+\"(\\.|[^"\\])*\"       { LVAL(0); bblval.symbol = symbol(yytext); return T_STRING; }
+
+"//"[^\n]*              { /* Discard comment */ }
+
+"/*"                    { BEGIN(comment); }
+
+<comment>[^*\n]*        { /* eat comment */ }
+<comment>"*"?\n         { ++line_number; /* eat comment */ }
+<comment>"*"[^/\n]      { /* eat comment */ }
+<comment>"*/"           { BEGIN(INITIAL); }
+
+[ \t\r]+        { /* Ignore whitespace */ }
+\n            { ++line_number; }
+
+"+="          { LVAL(0); return T_PLUS_EQ; }
+"-="          { LVAL(0); return T_MINUS_EQ; }
+"*="          { LVAL(0); return T_MUL_EQ; }
+"/="          { LVAL(0); return T_DIV_EQ; }
+"%="          { LVAL(0); return T_MOD_EQ; }
+"|="          { LVAL(0); return T_OR_EQ; }
+"&="          { LVAL(0); return T_AND_EQ; }
+"^="          { LVAL(0); return T_XOR_EQ; }
+">>="         { LVAL(0); return T_RSHIFT_EQ; }
+"<<="         { LVAL(0); return T_LSHIFT_EQ; }
+
+"++"          { LVAL(0); return T_INCREMENT; }
+"--"          { LVAL(0); return T_DECREMENT; }
+"||"          { LVAL(0); return T_LOGICAL_OR; }
+"&&"          { LVAL(0); return T_LOGICAL_AND; }
+">>"          { LVAL(0); return T_RSHIFT; }
+"<<"          { LVAL(0); return T_LSHIFT; }
+">="          { LVAL(0); return T_LARGER_OR_EQUAL; }
+"<="          { LVAL(0); return T_LESS_OR_EQUAL; }
+"=="          { LVAL(0); return T_EQUAL; }
+"!="          { LVAL(0); return T_NEQUAL; }
+
+"{"           { LVAL(0); return T_OPEN_BRACE; }
+"}"           { LVAL(0); return T_CLOSE_BRACE; }
+"("           { LVAL(0); return '('; }
+")"           { LVAL(0); return ')'; }
+"["           { LVAL(0); return '['; }
+"]"           { LVAL(0); return ']'; }
+"~"           { LVAL(0); return '~'; }
+"!"           { LVAL(0); return '!'; }
+"+"           { LVAL(0); return '+'; }
+"-"           { LVAL(0); return '-'; }
+"*"           { LVAL(0); return '*'; }
+"/"           { LVAL(0); return '/'; }
+"%"           { LVAL(0); return '%'; }
+"|"           { LVAL(0); return '|'; }
+"&"           { LVAL(0); return '&'; }
+"^"           { LVAL(0); return '^'; }
+"<"           { LVAL(0); return '<'; }
+">"           { LVAL(0); return '>'; }
+"="           { LVAL(0); return '='; }
+";"           { LVAL(0); return ';'; }
+","           { LVAL(0); return ','; }
+":"           { LVAL(0); return ':'; }
+
+[1-9][0-9]*(u|ul|ull|l|ll)?   {
+                LVAL(0); bblval.symbol = number(yytext, 10); return T_NUMBER;
               }
-"if"          { return IF; }
-"while"       { return WHILE; }
-"return"      { return RETURN; }
 
-"int"         { return TYPE; }
-{L}({L}|{D})* { yylval = strdup(yytext); return IDENTIFIER; }
+0[xX][0-9a-fA-F]+(u|ul|ull|l|ll)?  {
+                LVAL(0); bblval.symbol = number(&yytext[2], 16); return T_NUMBER;
+              }
 
-"<"[a-z.]+">" { return HEADER_NAME; }
+0[0-7]*(u|ul|ull|l|ll)?   {
+                LVAL(0); bblval.symbol = number(yytext, 8); return T_NUMBER;
+              }
+
+"'\\x"[0-9a-zA-Z]+"'" {
+                LVAL(0); bblval.symbol = char_escape(yytext, 16); return T_NUMBER;
+              }
+"'\\"[0-7]+"'" {
+                LVAL(0); bblval.symbol = char_escape(yytext, 8); return T_NUMBER;
+              }
+"'"[\x20-\x7f]"'" {
+                LVAL(0); bblval.symbol = char_escape(yytext, 0); return T_NUMBER;
+              }
+"'\\n'"       {
+                LVAL(0); bblval.symbol = symbol("12"); return T_NUMBER;
+              }
+"'\\r'"       {
+                LVAL(0); bblval.symbol = symbol("13"); return T_NUMBER;
+              }
+"'\\t'"       {
+                LVAL(0); bblval.symbol = symbol("8"); return T_NUMBER;
+              }
+
+"if"          { LVAL(0); return T_IF; }
+"else"        { LVAL(0); return T_ELSE; }
+"goto"        { LVAL(0); return T_GOTO; }
+"while"       { LVAL(0); return T_WHILE; }
+"break"       { LVAL(0); return T_BREAK; }
+"continue"    { LVAL(0); return T_CONTINUE; }
+"sizeof"      { LVAL(0); return T_SIZEOF; }
+"return"      { LVAL(0); return T_RETURN; }
+"static"      { LVAL(0); return T_STATIC; }
+"void"        { LVAL(0); return T_VOID; }
+"unsigned"    { LVAL(0); return T_UNSIGNED; }
+"signed"      { LVAL(0); return T_SIGNED; }
+"int"|"intptr_t"|"long"|"bool" { LVAL(0); bblval.symbol = symbol(yytext); return T_TYPE; }
+[u]?"int"[8163264]+"_t" { LVAL(0); bblval.symbol = symbol(yytext); return T_TYPE; }
+{IDENT}/:     { LVAL(0); bblval.symbol = symbol(yytext); return T_LABEL; }
+{IDENT}       { LVAL(0); bblval.symbol = symbol(yytext); return T_IDENTIFIER; }
+
+.             { unsigned char c = *yytext;  log_error("unknown byte 0x%02x line %d", (unsigned)c, line_number); }
+
 %%
 
-#define INPUT_EOF 0
-
-void comment(void) {
-    /* Consume characters up to the closing comment marker. */
-    char c, prev = 0;
-  
-    while ((c = input()) != INPUT_EOF) {
-        if (c == '/' && prev == '*')
-            return;
-        prev = c;
-    }
-    yyerror("unterminated comment");
-}
