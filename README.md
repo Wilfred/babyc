@@ -8,7 +8,7 @@ to x86 assembly
 [assembly directives reference](https://www.sourceware.org/binutils/docs-2.12/as.info/Pseudo-Ops.html),
 [System V ABI reference](http://www.uclibc.org/docs/psABI-i386.pdf)).
 
-Technically targetting C11
+Technically targeting C11
 ([standard PDF](http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf)),
 but we will implement such a small subset of C that it's academic.
 
